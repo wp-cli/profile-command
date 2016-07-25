@@ -86,17 +86,6 @@ class Profile_Command {
 		$this->add_wp_hook( 'all', array( $this, 'wp_hook_begin' ) );
 		$this->load_wordpress_with_template();
 
-		$total_query_time = 0;
-		foreach( $wpdb->queries as $query ) {
-			$total_query_time += $query[1];
-		}
-		$profile = array(
-			'hook_time'         => $this->hook_time,
-			'memory_usage'      => self::convert_size( memory_get_usage( true ) ),
-			'query_count'       => count( $wpdb->queries ),
-			'query_time'        => round( $total_query_time, 3 ) . 's',
-			'template_time'     => round( $this->template_time, 3 ) . 's',
-		);
 		foreach( $this->scope_log as $scope => $data ) {
 			foreach( $data as $key => $value ) {
 				if ( stripos( $key,'_time' ) ) {
