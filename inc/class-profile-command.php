@@ -5,6 +5,11 @@
  */
 class Profile_Command {
 
+	private $start_time;
+	private $hook_count = 0;
+	private $hook_start_time;
+	private $hook_time;
+
 	/**
 	 * Profile the performance of a request to WordPress.
 	 *
@@ -32,31 +37,52 @@ class Profile_Command {
 	public function __invoke( $args, $assoc_args ) {
 		global $wpdb;
 
-		if ( ! defined( 'SAVEQUERIES' ) ) {
-			define( 'SAVEQUERIES', true );
-		}
-
 		if ( ! isset( \WP_CLI::get_runner()->config['url'] ) ) {
 			$this->add_wp_hook( 'muplugins_loaded', function(){
 				WP_CLI::set_url( home_url( '/' ) );
 			});
 		}
 
-		$start_time = microtime( true );
+		if ( ! defined( 'SAVEQUERIES' ) ) {
+			define( 'SAVEQUERIES', true );
+		}
+		$this->add_wp_hook( 'all', array( $this, 'wp_hook_begin' ) );
+		$this->start_time = microtime( true );
 		$this->load_wordpress_with_template();
+		$end_time = microtime( true );
 
 		$total_query_time = 0;
 		foreach( $wpdb->queries as $query ) {
 			$total_query_time += $query[1];
 		}
 		$profile = array(
+			'hook_count'        => $this->hook_count,
+			'hook_time'         => $this->hook_time,
+			'execution_time'    => round( $end_time - $this->start_time, 3 ) . 's',
 			'memory_usage'      => self::convert_size( memory_get_usage( true ) ),
-			'execution_time'    => round( microtime( true ) - $start_time, 3 ) . 's',
 			'query_count'       => count( $wpdb->queries ),
 			'query_time'        => round( $total_query_time, 3 ) . 's',
 		);
 		$formatter = new \WP_CLI\Formatter( $assoc_args, array_keys( $profile ) );
 		$formatter->display_item( $profile );
+	}
+
+	/**
+	 * Profiling verbosity at the beginning of every action and filter
+	 */
+	public function wp_hook_begin() {
+		$this->hook_count++;
+		$this->hook_start_time = microtime( true );
+		$this->add_wp_hook( current_filter(), array( $this, 'wp_hook_end' ), 999 );
+	}
+
+	/**
+	 * Profiling verbosity at the end of every action and filter
+	 */
+	public function wp_hook_end( $filter_value = null ) {
+
+		$this->hook_time += microtime( true ) - $this->hook_start_time;
+		return $filter_value;
 	}
 
 	/**
