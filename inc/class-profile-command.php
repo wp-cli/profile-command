@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Profile the performance of a request to WordPress.
+ * Profile the performance of a WordPress request.
  */
 class Profile_Command {
 
@@ -11,7 +11,7 @@ class Profile_Command {
 	private $hook_time;
 
 	/**
-	 * Profile the performance of a request to WordPress.
+	 * Profile the performance of a WordPress request.
 	 *
 	 * ## OPTIONS
 	 *

@@ -1,6 +1,6 @@
 {
     "name": "runcommand/profile",
-    "description": "Profile the performance of a request to WordPress.",
+    "description": "Profile the performance of a WordPress request.",
     "homepage": "https://runcommand.io/wp/profile/",
     "license": "MIT",
     "authors": [],
