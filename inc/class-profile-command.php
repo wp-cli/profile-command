@@ -23,10 +23,10 @@ class Profile_Command {
 	 * +------------+----------------+-------------+------------+------------+-----------+--------------+
 	 * | scope      | execution_time | query_count | query_time | hook_count | hook_time | memory_usage |
 	 * +------------+----------------+-------------+------------+------------+-----------+--------------+
-	 * | total      | 2.68269s       | 192         | 0.02165s   | 10737      | 0.19395s  | 49.25mb      |
 	 * | bootstrap  | 2.34255s       | 15          | 0.00386s   | 2835       | 0.11172s  | 45mb         |
 	 * | main_query | 0.01155s       | 3           | 0.0004s    | 78         | 0.00117s  | 45.75mb      |
 	 * | template   | 0.32768s       | 174         | 0.0174s    | 7824       | 0.08106s  | 49.25mb      |
+	 * | total      | 2.68269s       | 192         | 0.02165s   | 10737      | 0.19395s  | 49.25mb      |
 	 * +------------+----------------+-------------+------------+------------+-----------+--------------+
 	 * ```
 	 *
@@ -64,7 +64,7 @@ class Profile_Command {
 			'hook_time',
 			'memory_usage',
 		);
-		foreach( array( 'total', 'bootstrap', 'main_query', 'template' ) as $scope ) {
+		foreach( array( 'bootstrap', 'main_query', 'template', 'total' ) as $scope ) {
 			$this->scope_log[ $scope ] = array();
 			foreach( $scope_fields as $field ) {
 				if ( 'scope' === $field ) {
