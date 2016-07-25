@@ -1,7 +1,7 @@
 runcommand/profile
 ==================
 
-Profile the performance of a request to WordPress.
+Profile the performance of a WordPress request.
 
 [![Build Status](https://travis-ci.org/runcommand/profile.svg?branch=master)](https://travis-ci.org/runcommand/profile)
 
