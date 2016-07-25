@@ -10,8 +10,27 @@ Quick links: [Using](#using) | [Installing](#installing) | [Contributing](#contr
 ## Using
 
 ~~~
-wp profile 
+wp profile [--url=<url>] [--field=<field>] [--format=<format>]
 ~~~
+
+**OPTIONS**
+
+	[--url=<url>]
+		Execute a request against a specified URL. Defaults to the home URL.
+
+	[--field=<field>]
+		Display a specific field.
+
+	[--format=<format>]
+		Render output in a particular format.
+		---
+		default: table
+		options:
+		  - table
+		  - json
+		  - yaml
+		  - csv
+		---
 
 ## Installing
 
