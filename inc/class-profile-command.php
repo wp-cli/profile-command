@@ -42,7 +42,7 @@ class Profile_Command {
 
 		$profile = array(
 			'memory_usage'      => self::convert_size( memory_get_usage( true ) ),
-			'total_time'        => round( microtime( true ) - $start_time, 3 ) . 's',
+			'total_time'        => round( microtime( true ) - $start_time, 3 ) . ' s',
 		);
 		$formatter = new \WP_CLI\Formatter( $assoc_args, array_keys( $profile ) );
 		$formatter->display_item( $profile );
