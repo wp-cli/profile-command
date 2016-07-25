@@ -13,6 +13,20 @@ class Profile_Command {
 	 * [--url=<url>]
 	 * : Execute a request against a specified URL. Defaults to the home URL.
 	 *
+	 * [--field=<field>]
+	 * : Display a specific field.
+	 *
+	 * [--format=<format>]
+	 * : Render output in a particular format.
+	 * ---
+	 * default: table
+	 * options:
+	 *   - table
+	 *   - json
+	 *   - yaml
+	 *   - csv
+	 * ---
+	 *
 	 * @when before_wp_load
 	 */
 	public function __invoke( $args, $assoc_args ) {
