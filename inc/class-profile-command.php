@@ -30,6 +30,11 @@ class Profile_Command {
 	 * @when before_wp_load
 	 */
 	public function __invoke( $args, $assoc_args ) {
+		global $wpdb;
+
+		if ( ! defined( 'SAVEQUERIES' ) ) {
+			define( 'SAVEQUERIES', true );
+		}
 
 		if ( ! isset( \WP_CLI::get_runner()->config['url'] ) ) {
 			$this->add_wp_hook( 'muplugins_loaded', function(){
@@ -40,9 +45,15 @@ class Profile_Command {
 		$start_time = microtime( true );
 		$this->load_wordpress_with_template();
 
+		$total_query_time = 0;
+		foreach( $wpdb->queries as $query ) {
+			$total_query_time += $query[1];
+		}
 		$profile = array(
 			'memory_usage'      => self::convert_size( memory_get_usage( true ) ),
-			'total_time'        => round( microtime( true ) - $start_time, 3 ) . ' s',
+			'total_time'        => round( microtime( true ) - $start_time, 3 ) . 's',
+			'total_query_count' => count( $wpdb->queries ),
+			'total_query_time'  => round( $total_query_time, 3 ) . 's',
 		);
 		$formatter = new \WP_CLI\Formatter( $assoc_args, array_keys( $profile ) );
 		$formatter->display_item( $profile );
@@ -79,7 +90,7 @@ class Profile_Command {
 	 */
 	private static function convert_size( $size ) {
 		$unit = array( 'b', 'kb', 'mb', 'gb', 'tb', 'pb' );
-		return @round( $size / pow( 1024, ( $i= floor( log( $size,1024 ) ) ) ), 2 ) . ' ' . $unit[ $i ];
+		return @round( $size / pow( 1024, ( $i= floor( log( $size,1024 ) ) ) ), 2 ) . $unit[ $i ];
 	}
 
 	/**
