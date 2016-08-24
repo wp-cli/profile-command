@@ -62,7 +62,6 @@ class Profile_Command {
 			'query_time',
 			'hook_count',
 			'hook_time',
-			'memory_usage',
 		);
 		foreach( array( 'total', 'bootstrap', 'main_query', 'template' ) as $scope ) {
 			$this->scope_log[ $scope ] = array();
@@ -166,7 +165,6 @@ class Profile_Command {
 	 */
 	private function scope_track_end( $scope ) {
 		global $wpdb;
-		$this->scope_log[ $scope ]['memory_usage'] = self::convert_size( memory_get_usage( true ) );
 		$this->scope_log[ $scope ]['execution_time'] = microtime( true ) - $this->scope_log[ $scope ]['execution_time'];
 		$query_offset = 'total' === $scope ? 0 : $this->query_offset;
 		for ( $i = $query_offset; $i < count( $wpdb->queries ); $i++ ) {
@@ -176,16 +174,6 @@ class Profile_Command {
 		$this->query_offset = count( $wpdb->queries );
 		$hook_time = 'total' === $scope ? $this->hook_time : $this->hook_time - $this->hook_offset;
 		$this->scope_log[ $scope ]['hook_time'] = $hook_time;
-	}
-
-	/**
-	 * Convert a memory size to something human-readable
-	 *
-	 * @see http://php.net/manual/en/function.memory-get-usage.php#96280
-	 */
-	private static function convert_size( $size ) {
-		$unit = array( 'b', 'kb', 'mb', 'gb', 'tb', 'pb' );
-		return @round( $size / pow( 1024, ( $i= floor( log( $size,1024 ) ) ) ), 2 ) . $unit[ $i ];
 	}
 
 }
