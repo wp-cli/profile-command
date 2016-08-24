@@ -88,9 +88,9 @@ class Profile_Command {
 
 		foreach( $this->scope_log as $scope => $data ) {
 			foreach( $data as $key => $value ) {
-				// Round times to 5 decimal points
+				// Round times to 4 decimal points
 				if ( stripos( $key,'_time' ) ) {
-					$this->scope_log[ $scope ][ $key ] = round( $value, 5 ) . 's';
+					$this->scope_log[ $scope ][ $key ] = round( $value, 4 ) . 's';
 				}
 			}
 		}
