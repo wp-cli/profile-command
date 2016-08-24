@@ -64,7 +64,7 @@ class Profile_Command {
 			'hook_time',
 			'memory_usage',
 		);
-		foreach( array( 'bootstrap', 'main_query', 'template', 'total' ) as $scope ) {
+		foreach( array( 'total', 'bootstrap', 'main_query', 'template' ) as $scope ) {
 			$this->scope_log[ $scope ] = array();
 			foreach( $scope_fields as $field ) {
 				if ( 'scope' === $field ) {
