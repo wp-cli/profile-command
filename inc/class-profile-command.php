@@ -9,7 +9,11 @@ class Profile_Command {
 	private $hook_time = 0;
 	private $scope_log;
 	private $current_scope;
+	private $focus_scope;
+	private $focus_start_time;
+	private $focus_log = array();
 	private $query_offset = 0;
+	private $focus_query_offset = 0;
 	private $hook_offset = 0;
 
 	/**
@@ -34,6 +38,15 @@ class Profile_Command {
 	 *
 	 * [--url=<url>]
 	 * : Execute a request against a specified URL. Defaults to the home URL.
+	 *
+	 * [--scope=<scope>]
+	 * : Drill down into a specific scope.
+	 * ---
+	 * options:
+	 *   - bootstrap
+	 *   - main_query
+	 *   - template
+	 * ---
 	 *
 	 * [--fields=<fields>]
 	 * : Display one or more fields.
@@ -74,6 +87,8 @@ class Profile_Command {
 			}
 		}
 
+		$this->focus_scope = WP_CLI\Utils\get_flag_value( $assoc_args, 'scope' );
+
 		if ( ! isset( \WP_CLI::get_runner()->config['url'] ) ) {
 			WP_CLI::add_wp_hook( 'muplugins_loaded', function(){
 				WP_CLI::set_url( home_url( '/' ) );
@@ -85,25 +100,63 @@ class Profile_Command {
 		WP_CLI::add_wp_hook( 'all', array( $this, 'wp_hook_begin' ) );
 		$this->load_wordpress_with_template();
 
-		foreach( $this->scope_log as $scope => $data ) {
-			foreach( $data as $key => $value ) {
-				// Round times to 4 decimal points
-				if ( stripos( $key,'_time' ) ) {
-					$this->scope_log[ $scope ][ $key ] = round( $value, 4 ) . 's';
+		if ( $this->focus_scope ) {
+			$focus_fields = array(
+				'hook',
+				'execution_time',
+				'query_time',
+				'query_count',
+			);
+			foreach( $this->focus_log as $hook => $data ) {
+				foreach( $data as $key => $value ) {
+					// Round times to 4 decimal points
+					if ( stripos( $key,'_time' ) ) {
+						$this->focus_log[ $hook ][ $key ] = round( $value, 4 ) . 's';
+					}
+				}
+				// Drop hook labels with 'pre_' in the name
+				if ( 0 === strpos( $hook, 'pre_' ) ) {
+					$this->focus_log[ $hook ]['hook'] = '';
 				}
 			}
+			$formatter = new \WP_CLI\Formatter( $assoc_args, $focus_fields );
+			$formatter->display_items( $this->focus_log );
+		} else {
+
+			foreach( $this->scope_log as $scope => $data ) {
+				foreach( $data as $key => $value ) {
+					// Round times to 4 decimal points
+					if ( stripos( $key,'_time' ) ) {
+						$this->scope_log[ $scope ][ $key ] = round( $value, 4 ) . 's';
+					}
+				}
+			}
+			$formatter = new \WP_CLI\Formatter( $assoc_args, $scope_fields );
+			$formatter->display_items( $this->scope_log );
 		}
-		$formatter = new \WP_CLI\Formatter( $assoc_args, $scope_fields );
-		$formatter->display_items( $this->scope_log );
 	}
 
 	/**
 	 * Profiling verbosity at the beginning of every action and filter
 	 */
 	public function wp_hook_begin() {
+		global $wpdb;
+
 		$this->scope_log['total']['hook_count']++;
 		$this->scope_log[ $this->current_scope ]['hook_count']++;
 		$this->hook_start_time = microtime( true );
+
+		$current_filter = current_filter();
+		if ( array_key_exists( $current_filter, $this->focus_log ) ) {
+			$this->focus_log["pre_{$current_filter}"]['execution_time'] = microtime( true ) - $this->focus_start_time;
+			$this->focus_start_time = microtime( true );
+			for ( $i = $this->focus_query_offset; $i < count( $wpdb->queries ); $i++ ) {
+				$this->focus_log["pre_{$current_filter}"]['query_time'] += $wpdb->queries[ $i ][1];
+				$this->focus_log["pre_{$current_filter}"]['query_count']++;
+			}
+			$this->focus_query_offset = count( $wpdb->queries );
+		}
+
 		WP_CLI::add_wp_hook( current_filter(), array( $this, 'wp_hook_end' ), 999 );
 	}
 
@@ -111,6 +164,18 @@ class Profile_Command {
 	 * Profiling verbosity at the end of every action and filter
 	 */
 	public function wp_hook_end( $filter_value = null ) {
+		global $wpdb;
+
+		$current_filter = current_filter();
+		if ( array_key_exists( $current_filter, $this->focus_log ) ) {
+			$this->focus_log[ $current_filter ]['execution_time'] = microtime( true ) - $this->focus_start_time;
+			$this->focus_start_time = microtime( true );
+			for ( $i = $this->focus_query_offset; $i < count( $wpdb->queries ); $i++ ) {
+				$this->focus_log[ $current_filter ]['query_time'] += $wpdb->queries[ $i ][1];
+				$this->focus_log[ $current_filter ]['query_count']++;
+			}
+			$this->focus_query_offset = count( $wpdb->queries );
+		}
 
 		$this->hook_time += microtime( true ) - $this->hook_start_time;
 		return $filter_value;
@@ -124,6 +189,16 @@ class Profile_Command {
 
 		$this->scope_track_begin( 'total' );
 		$this->scope_track_begin( 'bootstrap' );
+		if ( 'bootstrap' === $this->focus_scope ) {
+			$this->fill_hooks( array(
+				'muplugins_loaded',
+				'plugins_loaded',
+				'setup_theme',
+				'after_setup_theme',
+				'init',
+				'wp_loaded',
+			) );
+		}
 		WP_CLI::get_runner()->load_wordpress();
 		$this->scope_track_end( 'bootstrap' );
 
@@ -174,6 +249,23 @@ class Profile_Command {
 		$this->query_offset = count( $wpdb->queries );
 		$hook_time = 'total' === $scope ? $this->hook_time : $this->hook_time - $this->hook_offset;
 		$this->scope_log[ $scope ]['hook_time'] = $hook_time;
+	}
+
+	/**
+	 * Fill the hooks with start data
+	 */
+	private function fill_hooks( $hooks ) {
+		foreach( $hooks as $hook ) {
+			foreach( array( "pre_{$hook}", $hook ) as $k ) {
+				$this->focus_log[ $k ] = array(
+					'hook'             => $k,
+					'execution_time'   => 0,
+					'query_count'      => 0,
+					'query_time'       => 0,
+				);
+			}
+		}
+		$this->focus_start_time = microtime( true );
 	}
 
 }
