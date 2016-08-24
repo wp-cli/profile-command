@@ -106,11 +106,16 @@ class Profile_Command {
 				'query_count',
 				'query_time',
 			);
+			foreach( $this->hook_log as $hook => $data ) {
+				foreach( $data as $key => $value ) {
+					// Round times to 4 decimal points
+					if ( stripos( $key,'_time' ) ) {
+						$this->hook_log[ $hook ][ $key ] = round( $value, 4 ) . 's';
+					}
+				}
+			}
 			$formatter = new \WP_CLI\Formatter( $assoc_args, $hook_fields );
-
-			// $formatter->display_items( $this->hook_log );
-			$vals = wp_list_pluck( $this->hook_log, 'execution_time' );
-			WP_CLI::log( array_sum( $vals ) );
+			$formatter->display_items( $this->hook_log );
 		} else {
 			foreach( $this->scope_log as $scope => $data ) {
 				foreach( $data as $key => $value ) {
@@ -156,7 +161,7 @@ class Profile_Command {
 		$this->hook_time += microtime( true ) - $this->hook_start_time;
 		if ( $this->focus_scope && $this->focus_scope === $this->current_scope ) {
 			$current_filter = current_filter();
-			$this->hook_log[ $current_filter ]['execution_time'] += $this->hook_time;
+			$this->hook_log[ $current_filter ]['execution_time'] += microtime( true ) - $this->hook_start_time;
 		}
 		return $filter_value;
 	}
