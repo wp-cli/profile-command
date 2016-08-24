@@ -8,7 +8,9 @@ class Profile_Command {
 	private $hook_start_time = 0;
 	private $hook_time = 0;
 	private $scope_log;
+	private $hook_log = array();
 	private $current_scope;
+	private $focus_scope = null;
 	private $query_offset = 0;
 	private $hook_offset = 0;
 
@@ -34,6 +36,15 @@ class Profile_Command {
 	 *
 	 * [--url=<url>]
 	 * : Execute a request against a specified URL. Defaults to the home URL.
+	 *
+	 * [--focus=<scope>]
+	 * : Focus profiling on a particular scope.
+	 * ---
+	 * options:
+	 *   - bootstrap
+	 *   - main_query
+	 *   - template
+	 * ---
 	 *
 	 * [--fields=<fields>]
 	 * : Display one or more fields.
@@ -74,6 +85,8 @@ class Profile_Command {
 			}
 		}
 
+		$this->focus_scope = WP_CLI\Utils\get_flag_value( $assoc_args, 'focus' );
+
 		if ( ! isset( \WP_CLI::get_runner()->config['url'] ) ) {
 			WP_CLI::add_wp_hook( 'muplugins_loaded', function(){
 				WP_CLI::set_url( home_url( '/' ) );
@@ -85,16 +98,31 @@ class Profile_Command {
 		WP_CLI::add_wp_hook( 'all', array( $this, 'wp_hook_begin' ) );
 		$this->load_wordpress_with_template();
 
-		foreach( $this->scope_log as $scope => $data ) {
-			foreach( $data as $key => $value ) {
-				// Round times to 4 decimal points
-				if ( stripos( $key,'_time' ) ) {
-					$this->scope_log[ $scope ][ $key ] = round( $value, 4 ) . 's';
+		if ( $this->focus_scope ) {
+			$hook_fields = array(
+				'hook',
+				'call_count',
+				'execution_time',
+				'query_count',
+				'query_time',
+			);
+			$formatter = new \WP_CLI\Formatter( $assoc_args, $hook_fields );
+
+			// $formatter->display_items( $this->hook_log );
+			$vals = wp_list_pluck( $this->hook_log, 'execution_time' );
+			WP_CLI::log( array_sum( $vals ) );
+		} else {
+			foreach( $this->scope_log as $scope => $data ) {
+				foreach( $data as $key => $value ) {
+					// Round times to 4 decimal points
+					if ( stripos( $key,'_time' ) ) {
+						$this->scope_log[ $scope ][ $key ] = round( $value, 4 ) . 's';
+					}
 				}
 			}
+			$formatter = new \WP_CLI\Formatter( $assoc_args, $scope_fields );
+			$formatter->display_items( $this->scope_log );
 		}
-		$formatter = new \WP_CLI\Formatter( $assoc_args, $scope_fields );
-		$formatter->display_items( $this->scope_log );
 	}
 
 	/**
@@ -104,6 +132,19 @@ class Profile_Command {
 		$this->scope_log['total']['hook_count']++;
 		$this->scope_log[ $this->current_scope ]['hook_count']++;
 		$this->hook_start_time = microtime( true );
+		if ( $this->focus_scope && $this->focus_scope === $this->current_scope ) {
+			$current_filter = current_filter();
+			if ( ! isset( $this->hook_log[ $current_filter ] ) ) {
+				$this->hook_log[ $current_filter ] = array(
+					'hook'            => $current_filter,
+					'call_count'      => 0,
+					'execution_time'  => 0,
+					'query_count'     => 0,
+					'query_time'      => 0,
+				);
+			}
+			$this->hook_log[ $current_filter ]['call_count']++;
+		}
 		WP_CLI::add_wp_hook( current_filter(), array( $this, 'wp_hook_end' ), 999 );
 	}
 
@@ -113,6 +154,10 @@ class Profile_Command {
 	public function wp_hook_end( $filter_value = null ) {
 
 		$this->hook_time += microtime( true ) - $this->hook_start_time;
+		if ( $this->focus_scope && $this->focus_scope === $this->current_scope ) {
+			$current_filter = current_filter();
+			$this->hook_log[ $current_filter ]['execution_time'] += $this->hook_time;
+		}
 		return $filter_value;
 	}
 
