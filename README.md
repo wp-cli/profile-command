@@ -3,7 +3,7 @@ runcommand/profile
 
 Profile the performance of a WordPress request.
 
-[![Build Status](https://travis-ci.org/runcommand/profile.svg?branch=master)](https://travis-ci.org/runcommand/profile)
+[![CircleCI](https://circleci.com/gh/runcommand/profile/tree/master.svg?style=svg&circle-token=d916e588bf7c8ac469a3bd01930cf9eed886debe)](https://circleci.com/gh/runcommand/profile/tree/master)
 
 Quick links: [Using](#using) | [Installing](#installing) | [Contributing](#contributing)
 
