@@ -2,7 +2,7 @@
     "name": "runcommand/profile",
     "description": "Profile the performance of a WordPress request.",
     "homepage": "https://runcommand.io/wp/profile/",
-    "license": "MIT",
+    "license": "GPL-2.0",
     "authors": [],
     "minimum-stability": "dev",
     "autoload": {
