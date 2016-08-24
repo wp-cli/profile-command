@@ -76,14 +76,14 @@ class Profile_Command {
 		}
 
 		if ( ! isset( \WP_CLI::get_runner()->config['url'] ) ) {
-			$this->add_wp_hook( 'muplugins_loaded', function(){
+			WP_CLI::add_wp_hook( 'muplugins_loaded', function(){
 				WP_CLI::set_url( home_url( '/' ) );
 			});
 		}
 		if ( ! defined( 'SAVEQUERIES' ) ) {
 			define( 'SAVEQUERIES', true );
 		}
-		$this->add_wp_hook( 'all', array( $this, 'wp_hook_begin' ) );
+		WP_CLI::add_wp_hook( 'all', array( $this, 'wp_hook_begin' ) );
 		$this->load_wordpress_with_template();
 
 		foreach( $this->scope_log as $scope => $data ) {
@@ -105,7 +105,7 @@ class Profile_Command {
 		$this->scope_log['total']['hook_count']++;
 		$this->scope_log[ $this->current_scope ]['hook_count']++;
 		$this->hook_start_time = microtime( true );
-		$this->add_wp_hook( current_filter(), array( $this, 'wp_hook_end' ), 999 );
+		WP_CLI::add_wp_hook( current_filter(), array( $this, 'wp_hook_end' ), 999 );
 	}
 
 	/**
@@ -186,86 +186,6 @@ class Profile_Command {
 	private static function convert_size( $size ) {
 		$unit = array( 'b', 'kb', 'mb', 'gb', 'tb', 'pb' );
 		return @round( $size / pow( 1024, ( $i= floor( log( $size,1024 ) ) ) ), 2 ) . $unit[ $i ];
-	}
-
-	/**
-	 * Add a callback to a WordPress action or filter
-	 *
-	 * Essentially add_filter() without needing access to add_filter()
-	 */
-	private function add_wp_hook( $tag, $function_to_add, $priority = 10, $accepted_args = 1 ) {
-		global $wp_filter, $merged_filters;
-		$idx = $this->wp_hook_build_unique_id($tag, $function_to_add, $priority);
-		$wp_filter[$tag][$priority][$idx] = array('function' => $function_to_add, 'accepted_args' => $accepted_args);
-		unset( $merged_filters[ $tag ] );
-		return true;
-	}
-
-	/**
-	 * Remove a callback from a WordPress action or filter
-	 *
-	 * Essentially remove_filter() without needing access to remove_filter()
-	 */
-	private function remove_wp_hook( $tag, $function_to_add, $priority = 10, $accepted_args = 1 ) {
-		$function_to_remove = $this->wp_hook_build_unique_id( $tag, $function_to_remove, $priority );
-
-		$r = isset( $GLOBALS['wp_filter'][ $tag ][ $priority ][ $function_to_remove ] );
-
-		if ( true === $r ) {
-			unset( $GLOBALS['wp_filter'][ $tag ][ $priority ][ $function_to_remove ] );
-			if ( empty( $GLOBALS['wp_filter'][ $tag ][ $priority ] ) ) {
-				unset( $GLOBALS['wp_filter'][ $tag ][ $priority ] );
-			}
-			if ( empty( $GLOBALS['wp_filter'][ $tag ] ) ) {
-				$GLOBALS['wp_filter'][ $tag ] = array();
-			}
-			unset( $GLOBALS['merged_filters'][ $tag ] );
-		}
-
-		return $r;
-	}
-
-	/**
-	 * Build Unique ID for storage and retrieval.
-	 *
-	 * Essentially _wp_filter_build_unique_id() without needing access to _wp_filter_build_unique_id()
-	 */
-	private function wp_hook_build_unique_id( $tag, $function, $priority ) {
-		global $wp_filter;
-		static $filter_id_count = 0;
-
-		if ( is_string($function) )
-			return $function;
-
-		if ( is_object($function) ) {
-			// Closures are currently implemented as objects
-			$function = array( $function, '' );
-		} else {
-			$function = (array) $function;
-		}
-
-		if (is_object($function[0]) ) {
-			// Object Class Calling
-			if ( function_exists('spl_object_hash') ) {
-				return spl_object_hash($function[0]) . $function[1];
-			} else {
-				$obj_idx = get_class($function[0]).$function[1];
-				if ( !isset($function[0]->wp_filter_id) ) {
-					if ( false === $priority )
-						return false;
-					$obj_idx .= isset($wp_filter[$tag][$priority]) ? count((array)$wp_filter[$tag][$priority]) : $filter_id_count;
-					$function[0]->wp_filter_id = $filter_id_count;
-					++$filter_id_count;
-				} else {
-					$obj_idx .= $function[0]->wp_filter_id;
-				}
-
-				return $obj_idx;
-			}
-		} elseif ( is_string( $function[0] ) ) {
-			// Static Calling
-			return $function[0] . '::' . $function[1];
-		}
 	}
 
 }
