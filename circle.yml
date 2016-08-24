@@ -1,0 +1,15 @@
+machine:
+  php:
+    version: 5.6.14
+  environment:
+    WP_CLI_BIN_DIR: /tmp/wp-cli-phar
+
+dependencies:
+  cache_directories:
+    - ~/.composer/cache
+
+test:
+  pre:
+    - bash bin/install-package-tests.sh
+  override:
+    - ./vendor/bin/behat --strict
