@@ -14,8 +14,7 @@ class Profile_Command {
 	private $focus_log = array();
 	private $hook_scope;
 	private $hook_log = array();
-	private $backup_wp_filter = null;
-	private $backup_wp_filter_callbacks = array();
+	private $current_filter_callbacks = array();
 	private $query_offset = 0;
 	private $focus_query_offset = 0;
 	private $hook_offset = 0;
@@ -183,10 +182,10 @@ class Profile_Command {
 		}
 
 		if ( $this->focus_hook && $current_filter === $this->focus_hook ) {
-			$this->backup_wp_filter = $current_filter;
-			$this->backup_wp_filter_callbacks = $wp_filter[ $current_filter ];
+			$this->current_filter_callbacks = $wp_filter[ $current_filter ];
 			unset( $wp_filter[ $current_filter ] );
 			call_user_func_array( array( $this, 'do_action' ), func_get_args() );
+			throw new Exception( "Need to bail, because can't restore the hooks" );
 		}
 
 		WP_CLI::add_wp_hook( $current_filter, array( $this, 'wp_hook_end' ), 999 );
@@ -198,7 +197,7 @@ class Profile_Command {
 	private function do_action( $tag, $arg = '' ) {
 		global $wp_actions, $merged_filters, $wp_current_filter, $wpdb;
 		$wp_filter = array();
-		$wp_filter[ $tag ] = $this->backup_wp_filter_callbacks;
+		$wp_filter[ $tag ] = $this->current_filter_callbacks;
 
 		if ( ! isset($wp_actions[$tag]) )
 			$wp_actions[$tag] = 1;
@@ -267,12 +266,6 @@ class Profile_Command {
 			$this->focus_query_offset = count( $wpdb->queries );
 		}
 
-		if ( ! empty( $this->backup_wp_filter ) ) {
-			// $wp_filter[ $current_filter ] = $this->backup_wp_filter_callbacks;
-			unset( $this->backup_wp_filter );
-			unset( $this->backup_wp_filter_callbacks );
-		}
-
 		$this->hook_time += microtime( true ) - $this->hook_start_time;
 		return $filter_value;
 	}
@@ -283,41 +276,46 @@ class Profile_Command {
 	private function load_wordpress_with_template() {
 		global $wp_query;
 
-		$this->scope_track_begin( 'total' );
-		$this->scope_track_begin( 'bootstrap' );
-		if ( 'bootstrap' === $this->focus_scope ) {
-			$this->fill_hooks( array(
-				'muplugins_loaded',
-				'plugins_loaded',
-				'setup_theme',
-				'after_setup_theme',
-				'init',
-				'wp_loaded',
-			) );
+		try {
+
+			$this->scope_track_begin( 'total' );
+			$this->scope_track_begin( 'bootstrap' );
+			if ( 'bootstrap' === $this->focus_scope ) {
+				$this->fill_hooks( array(
+					'muplugins_loaded',
+					'plugins_loaded',
+					'setup_theme',
+					'after_setup_theme',
+					'init',
+					'wp_loaded',
+				) );
+			}
+			WP_CLI::get_runner()->load_wordpress();
+			$this->scope_track_end( 'bootstrap' );
+
+			// Set up the main WordPress query.
+			$this->current_scope = 'main_query';
+			$this->scope_track_begin( 'main_query' );
+			wp();
+			$this->scope_track_end( 'main_query' );
+
+			define( 'WP_USE_THEMES', true );
+
+			// Template is normally loaded in global scope, so we need to replicate
+			foreach( $GLOBALS as $key => $value ) {
+				global $$key;
+			}
+
+			// Load the theme template.
+			$this->scope_track_begin( 'template' );
+			ob_start();
+			require_once( ABSPATH . WPINC . '/template-loader.php' );
+			ob_get_clean();
+			$this->scope_track_end( 'template' );
+			$this->scope_track_end( 'total' );
+		} catch( Exception $e ) {
+			return;
 		}
-		WP_CLI::get_runner()->load_wordpress();
-		$this->scope_track_end( 'bootstrap' );
-
-		// Set up the main WordPress query.
-		$this->current_scope = 'main_query';
-		$this->scope_track_begin( 'main_query' );
-		wp();
-		$this->scope_track_end( 'main_query' );
-
-		define( 'WP_USE_THEMES', true );
-
-		// Template is normally loaded in global scope, so we need to replicate
-		foreach( $GLOBALS as $key => $value ) {
-			global $$key;
-		}
-
-		// Load the theme template.
-		$this->scope_track_begin( 'template' );
-		ob_start();
-		require_once( ABSPATH . WPINC . '/template-loader.php' );
-		ob_get_clean();
-		$this->scope_track_end( 'template' );
-		$this->scope_track_end( 'total' );
 	}
 
 	/**
