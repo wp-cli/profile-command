@@ -105,7 +105,11 @@ class Profile_Command {
 			define( 'SAVEQUERIES', true );
 		}
 		WP_CLI::add_wp_hook( 'all', array( $this, 'wp_hook_begin' ) );
-		$this->load_wordpress_with_template();
+		try {
+			$this->load_wordpress_with_template();
+		} catch( Exception $e ) {
+			// pass through
+		}
 
 		if ( $this->focus_scope ) {
 			$focus_fields = array(
@@ -276,46 +280,41 @@ class Profile_Command {
 	private function load_wordpress_with_template() {
 		global $wp_query;
 
-		try {
-
-			$this->scope_track_begin( 'total' );
-			$this->scope_track_begin( 'bootstrap' );
-			if ( 'bootstrap' === $this->focus_scope ) {
-				$this->fill_hooks( array(
-					'muplugins_loaded',
-					'plugins_loaded',
-					'setup_theme',
-					'after_setup_theme',
-					'init',
-					'wp_loaded',
-				) );
-			}
-			WP_CLI::get_runner()->load_wordpress();
-			$this->scope_track_end( 'bootstrap' );
-
-			// Set up the main WordPress query.
-			$this->current_scope = 'main_query';
-			$this->scope_track_begin( 'main_query' );
-			wp();
-			$this->scope_track_end( 'main_query' );
-
-			define( 'WP_USE_THEMES', true );
-
-			// Template is normally loaded in global scope, so we need to replicate
-			foreach( $GLOBALS as $key => $value ) {
-				global $$key;
-			}
-
-			// Load the theme template.
-			$this->scope_track_begin( 'template' );
-			ob_start();
-			require_once( ABSPATH . WPINC . '/template-loader.php' );
-			ob_get_clean();
-			$this->scope_track_end( 'template' );
-			$this->scope_track_end( 'total' );
-		} catch( Exception $e ) {
-			return;
+		$this->scope_track_begin( 'total' );
+		$this->scope_track_begin( 'bootstrap' );
+		if ( 'bootstrap' === $this->focus_scope ) {
+			$this->fill_hooks( array(
+				'muplugins_loaded',
+				'plugins_loaded',
+				'setup_theme',
+				'after_setup_theme',
+				'init',
+				'wp_loaded',
+			) );
 		}
+		WP_CLI::get_runner()->load_wordpress();
+		$this->scope_track_end( 'bootstrap' );
+
+		// Set up the main WordPress query.
+		$this->current_scope = 'main_query';
+		$this->scope_track_begin( 'main_query' );
+		wp();
+		$this->scope_track_end( 'main_query' );
+
+		define( 'WP_USE_THEMES', true );
+
+		// Template is normally loaded in global scope, so we need to replicate
+		foreach( $GLOBALS as $key => $value ) {
+			global $$key;
+		}
+
+		// Load the theme template.
+		$this->scope_track_begin( 'template' );
+		ob_start();
+		require_once( ABSPATH . WPINC . '/template-loader.php' );
+		ob_get_clean();
+		$this->scope_track_end( 'template' );
+		$this->scope_track_end( 'total' );
 	}
 
 	/**
