@@ -228,15 +228,8 @@ class Profile_Command {
 			foreach ( (array) current($wp_filter[$tag]) as $i => $the_ )
 				if ( !is_null($the_['function']) ) {
 					if ( ! isset( $this->hook_log[ $i ] ) ) {
-						if ( is_array( $the_['function'] ) && is_object( $the_['function'][0] ) ) {
-							$callback = get_class( $the_['function'][0] ) . '->' . $the_['function'][1];
-						} elseif ( is_array( $the_['function'] ) && method_exists( $the_['function'][0], $the_['function'][1] ) ) {
-							$callback = $the_['function'][0] . '::' . $the_['function'][1];
-						} elseif ( is_object( $the_['function'] ) && is_a( $the_['function'], 'Closure' ) ) {
-							$callback = 'function(){}';
-						}
 						$this->hook_log[ $i ] = array(
-							'callback'        => $callback,
+							'callback'        => self::get_name_from_callback( $the_['function'] ),
 							'execution_time'  => 0,
 							'query_count'     => 0,
 							'query_time'      => 0,
@@ -369,6 +362,23 @@ class Profile_Command {
 			}
 		}
 		$this->focus_start_time = microtime( true );
+	}
+
+	/**
+	 * Get a human-readable name from a callback
+	 */
+	private static function get_name_from_callback( $callback ) {
+		$name = '';
+		if ( is_array( $callback ) && is_object( $callback[0] ) ) {
+			$name = get_class( $callback[0] ) . '->' . $callback[1] . '()';
+		} elseif ( is_array( $callback ) && method_exists( $callback[0], $callback[1] ) ) {
+			$name = $callback[0] . '::' . $callback[1] . '()';
+		} elseif ( is_object( $callback ) && is_a( $callback, 'Closure' ) ) {
+			$name = 'function(){}';
+		} else if ( is_string( $callback ) ) {
+			$name = $callback . '()';
+		}
+		return $name;
 	}
 
 }
