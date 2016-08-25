@@ -12,6 +12,10 @@ class Profile_Command {
 	private $focus_scope;
 	private $focus_start_time;
 	private $focus_log = array();
+	private $hook_scope;
+	private $hook_log = array();
+	private $backup_wp_filter = null;
+	private $backup_wp_filter_callbacks = array();
 	private $query_offset = 0;
 	private $focus_query_offset = 0;
 	private $hook_offset = 0;
@@ -47,6 +51,9 @@ class Profile_Command {
 	 *   - main_query
 	 *   - template
 	 * ---
+	 *
+	 * [--hook=<hook>]
+	 * : Drill down into a specific hook.
 	 *
 	 * [--fields=<fields>]
 	 * : Display one or more fields.
@@ -88,6 +95,7 @@ class Profile_Command {
 		}
 
 		$this->focus_scope = WP_CLI\Utils\get_flag_value( $assoc_args, 'scope' );
+		$this->focus_hook = WP_CLI\Utils\get_flag_value( $assoc_args, 'hook' );
 
 		if ( ! isset( \WP_CLI::get_runner()->config['url'] ) ) {
 			WP_CLI::add_wp_hook( 'muplugins_loaded', function(){
@@ -121,6 +129,23 @@ class Profile_Command {
 			}
 			$formatter = new \WP_CLI\Formatter( $assoc_args, $focus_fields );
 			$formatter->display_items( $this->focus_log );
+		} else if ( $this->focus_hook ) {
+			$hook_fields = array(
+				'callback',
+				'execution_time',
+				'query_time',
+				'query_count',
+			);
+			foreach( $this->hook_log as $id => $data ) {
+				foreach( $data as $key => $value ) {
+					// Round times to 4 decimal points
+					if ( stripos( $key,'_time' ) ) {
+						$this->hook_log[ $id ][ $key ] = round( $value, 4 ) . 's';
+					}
+				}
+			}
+			$formatter = new \WP_CLI\Formatter( $assoc_args, $hook_fields );
+			$formatter->display_items( $this->hook_log );
 		} else {
 
 			foreach( $this->scope_log as $scope => $data ) {
@@ -140,7 +165,7 @@ class Profile_Command {
 	 * Profiling verbosity at the beginning of every action and filter
 	 */
 	public function wp_hook_begin() {
-		global $wpdb;
+		global $wpdb, $wp_filter;
 
 		$this->scope_log['total']['hook_count']++;
 		$this->scope_log[ $this->current_scope ]['hook_count']++;
@@ -157,14 +182,86 @@ class Profile_Command {
 			$this->focus_query_offset = count( $wpdb->queries );
 		}
 
-		WP_CLI::add_wp_hook( current_filter(), array( $this, 'wp_hook_end' ), 999 );
+		if ( $this->focus_hook && $current_filter === $this->focus_hook ) {
+			$this->backup_wp_filter = $current_filter;
+			$this->backup_wp_filter_callbacks = $wp_filter[ $current_filter ];
+			unset( $wp_filter[ $current_filter ] );
+			call_user_func_array( array( $this, 'do_action' ), func_get_args() );
+		}
+
+		WP_CLI::add_wp_hook( $current_filter, array( $this, 'wp_hook_end' ), 999 );
+	}
+
+	/**
+	 * Instrumented version of do_action()
+	 */
+	private function do_action( $tag, $arg = '' ) {
+		global $wp_actions, $merged_filters, $wp_current_filter, $wpdb;
+		$wp_filter = array();
+		$wp_filter[ $tag ] = $this->backup_wp_filter_callbacks;
+
+		if ( ! isset($wp_actions[$tag]) )
+			$wp_actions[$tag] = 1;
+		else
+			++$wp_actions[$tag];
+
+		if ( !isset($wp_filter['all']) )
+			$wp_current_filter[] = $tag;
+
+		$args = array();
+		if ( is_array($arg) && 1 == count($arg) && isset($arg[0]) && is_object($arg[0]) ) // array(&$this)
+			$args[] =& $arg[0];
+		else
+			$args[] = $arg;
+		for ( $a = 2, $num = func_num_args(); $a < $num; $a++ )
+			$args[] = func_get_arg($a);
+
+		// Sort
+		if ( !isset( $merged_filters[ $tag ] ) ) {
+			ksort($wp_filter[$tag]);
+			$merged_filters[ $tag ] = true;
+		}
+
+		reset( $wp_filter[ $tag ] );
+
+		do {
+			foreach ( (array) current($wp_filter[$tag]) as $i => $the_ )
+				if ( !is_null($the_['function']) ) {
+					if ( ! isset( $this->hook_log[ $i ] ) ) {
+						if ( is_array( $the_['function'] ) && is_object( $the_['function'][0] ) ) {
+							$callback = get_class( $the_['function'][0] ) . '->' . $the_['function'][1];
+						} elseif ( is_array( $the_['function'] ) && method_exists( $the_['function'][0], $the_['function'][1] ) ) {
+							$callback = $the_['function'][0] . '::' . $the_['function'][1];
+						} elseif ( is_object( $the_['function'] ) && is_a( $the_['function'], 'Closure' ) ) {
+							$callback = 'function(){}';
+						}
+						$this->hook_log[ $i ] = array(
+							'callback'        => $callback,
+							'execution_time'  => 0,
+							'query_count'     => 0,
+							'query_time'      => 0,
+						);
+					}
+					$start_time = microtime( true );
+					$query_offset = count( $wpdb->queries );
+					call_user_func_array($the_['function'], array_slice($args, 0, (int) $the_['accepted_args']));
+					$this->hook_log[ $i ]['execution_time'] = microtime( true ) - $start_time;
+					for ( $j = $query_offset; $j < count( $wpdb->queries ); $j++ ) {
+						$this->hook_log[ $i ]['query_time'] += $wpdb->queries[ $i ][1];
+						$this->hook_log[ $i ]['query_count']++;
+					}
+				}
+
+		} while ( next($wp_filter[$tag]) !== false );
+
+		array_pop($wp_current_filter);
 	}
 
 	/**
 	 * Profiling verbosity at the end of every action and filter
 	 */
 	public function wp_hook_end( $filter_value = null ) {
-		global $wpdb;
+		global $wpdb, $wp_filter;
 
 		$current_filter = current_filter();
 		if ( array_key_exists( $current_filter, $this->focus_log ) ) {
@@ -175,6 +272,12 @@ class Profile_Command {
 				$this->focus_log[ $current_filter ]['query_count']++;
 			}
 			$this->focus_query_offset = count( $wpdb->queries );
+		}
+
+		if ( ! empty( $this->backup_wp_filter ) ) {
+			// $wp_filter[ $current_filter ] = $this->backup_wp_filter_callbacks;
+			unset( $this->backup_wp_filter );
+			unset( $this->backup_wp_filter_callbacks );
 		}
 
 		$this->hook_time += microtime( true ) - $this->hook_start_time;
