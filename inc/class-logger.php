@@ -9,11 +9,14 @@ class Logger {
 	public $query_time = 0;
 	public $hook_count = 0;
 	public $hook_time = 0;
+	public $request_count = 0;
+	public $request_time = 0;
 
 	private $start_time = null;
 	private $query_offset = null;
 	private $hook_start_time = null;
 	private $hook_depth = 0;
+	private $request_start_time = null;
 
 	public static $active_loggers = array();
 
@@ -81,6 +84,24 @@ class Logger {
 			}
 			$this->hook_start_time = null;
 		}
+	}
+
+	/**
+	 * Start this logger's request timer
+	 */
+	public function start_request_timer() {
+		$this->request_count++;
+		$this->request_start_time = microtime( true );
+	}
+
+	/**
+	 * Stop this logger's request timer
+	 */
+	public function stop_request_timer() {
+		if ( ! is_null( $this->request_start_time ) ) {
+			$this->request_time += microtime( true ) - $this->request_start_time;
+		}
+		$this->request_start_time = null;
 	}
 
 }
