@@ -60,9 +60,31 @@ class Formatter {
 
 		$table->setHeaders( $fields );
 
+		$totals = array(
+			'total',
+		);
 		foreach ( $items as $item ) {
-			$table->addRow( array_values( \WP_CLI\Utils\pick_fields( $item, $fields ) ) );
+			$values = array_values( \WP_CLI\Utils\pick_fields( $item, $fields ) );
+			foreach( $values as $i => $value ) {
+				if ( 0 === $i ) {
+					continue;
+				}
+				if ( ! isset( $totals[ $i ] ) ) {
+					$totals[ $i ] = 0;
+				}
+				$totals[ $i ] += $value;
+				if ( stripos( $fields[ $i ], '_time' ) ) {
+					$values[ $i ] = round( $value, 4 ) . 's';
+				}
+			}
+			$table->addRow( $values );
 		}
+		foreach( $totals as $i => $value ) {
+			if ( stripos( $fields[ $i ], '_time' ) ) {
+				$totals[ $i ] = round( $value, 4 ) . 's';
+			}
+		}
+		$table->setFooters( $totals );
 
 		foreach( $table->getDisplayLines() as $line ) {
 			\WP_CLI::line( $line );
