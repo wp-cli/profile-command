@@ -85,6 +85,8 @@ class Command {
 			define( 'SAVEQUERIES', true );
 		}
 		WP_CLI::add_wp_hook( 'all', array( $this, 'wp_hook_begin' ) );
+		WP_CLI::add_wp_hook( 'pre_http_request', array( $this, 'wp_request_begin' ) );
+		WP_CLI::add_wp_hook( 'http_api_debug', array( $this, 'wp_request_end' ) );
 		try {
 			$this->load_wordpress_with_template();
 		} catch( \Exception $e ) {
@@ -121,6 +123,8 @@ class Command {
 				'query_time',
 				'hook_count',
 				'hook_time',
+				'request_count',
+				'request_time',
 			);
 			$data = $this->scope_log;
 		}
@@ -240,6 +244,26 @@ class Command {
 			$logger->stop_hook_timer();
 		}
 
+		return $filter_value;
+	}
+
+	/**
+	 * Profiling request time for any active Loggers
+	 */
+	public function wp_request_begin( $filter_value = null ) {
+		foreach( Logger::$active_loggers as $logger ) {
+			$logger->start_request_timer();
+		}
+		return $filter_value;
+	}
+
+	/**
+	 * Profiling request time for any active Loggers
+	 */
+	public function wp_request_end( $filter_value = null ) {
+		foreach( Logger::$active_loggers as $logger ) {
+			$logger->stop_request_timer();
+		}
 		return $filter_value;
 	}
 
