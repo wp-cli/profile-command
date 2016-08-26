@@ -5,23 +5,15 @@ namespace runcommand\Profile;
 class Logger {
 
 	public $time = 0;
-	public $queries = array(
-		'count'   => 0,
-		'time'    => 0,
-	);
-	public $cache = array(
-		'ratio'   => 0,
-		'hits'    => 0,
-		'misses'  => 0,
-	);
-	public $hooks = array(
-		'count'   => 0,
-		'time'    => 0,
-	);
-	public $requests = array(
-		'count'   => 0,
-		'time'    => 0,
-	);
+	public $query_count = 0;
+	public $query_time = 0;
+	public $cache_hits = 0;
+	public $cache_misses = 0;
+	public $cache_ratio = 0;
+	public $hook_count = 0;
+	public $hook_time = 0;
+	public $request_count = 0;
+	public $request_time = 0;
 
 	private $start_time = null;
 	private $query_offset = null;
@@ -62,20 +54,20 @@ class Logger {
 		}
 		if ( ! is_null( $this->query_offset ) ) {
 			for ( $i = $this->query_offset; $i < count( $wpdb->queries ); $i++ ) {
-				$this->queries['time'] += $wpdb->queries[ $i ][1];
-				$this->queries['count']++;
+				$this->query_time += $wpdb->queries[ $i ][1];
+				$this->query_count++;
 			}
 		}
 
 		if ( ! is_null( $this->cache_hit_offset ) && ! is_null( $this->cache_miss_offset ) ) {
 			$cache_hits = ! empty( $wp_object_cache->cache_hits ) ? $wp_object_cache->cache_hits : 0;
 			$cache_misses = ! empty( $wp_object_cache->cache_misses ) ? $wp_object_cache->cache_misses : 0;
-			$this->cache['hits'] = $cache_hits - $this->cache_hit_offset;
-			$this->cache['misses'] = $cache_misses - $this->cache_miss_offset;
-			$cache_total = $this->cache['hits'] + $this->cache['misses'];
+			$this->cache_hits = $cache_hits - $this->cache_hit_offset;
+			$this->cache_misses = $cache_misses - $this->cache_miss_offset;
+			$cache_total = $this->cache_hits + $this->cache_misses;
 			if ( $cache_total ) {
-				$ratio = ( $this->cache['hits'] / $cache_total ) * 100;
-				$this->cache['ratio'] = round( $ratio, 2 ) . '%';
+				$ratio = ( $this->cache_hits / $cache_total ) * 100;
+				$this->cache_ratio = round( $ratio, 2 ) . '%';
 			}
 		}
 
@@ -92,7 +84,7 @@ class Logger {
 	 * Start this logger's hook timer
 	 */
 	public function start_hook_timer() {
-		$this->hooks['count']++;
+		$this->hook_count++;
 		// Timer already running means a subhook has been called
 		if ( ! is_null( $this->hook_start_time ) ) {
 			$this->hook_depth++;
@@ -109,7 +101,7 @@ class Logger {
 			$this->hook_depth--;
 		} else {
 			if ( ! is_null( $this->hook_start_time ) ) {
-				$this->hooks['time'] += microtime( true ) - $this->hook_start_time;
+				$this->hook_time += microtime( true ) - $this->hook_start_time;
 			}
 			$this->hook_start_time = null;
 		}
@@ -119,7 +111,7 @@ class Logger {
 	 * Start this logger's request timer
 	 */
 	public function start_request_timer() {
-		$this->requests['count']++;
+		$this->request_count++;
 		$this->request_start_time = microtime( true );
 	}
 
@@ -128,7 +120,7 @@ class Logger {
 	 */
 	public function stop_request_timer() {
 		if ( ! is_null( $this->request_start_time ) ) {
-			$this->requests['time'] += microtime( true ) - $this->request_start_time;
+			$this->request_time += microtime( true ) - $this->request_start_time;
 		}
 		$this->request_start_time = null;
 	}
