@@ -4,7 +4,7 @@ namespace runcommand\Profile;
 
 class Logger {
 
-	public $execution_time = 0;
+	public $time = 0;
 	public $queries = array(
 		'count'   => 0,
 		'time'    => 0,
@@ -58,7 +58,7 @@ class Logger {
 		global $wpdb, $wp_object_cache;
 
 		if ( ! is_null( $this->start_time ) ) {
-			$this->execution_time += microtime( true ) - $this->start_time;
+			$this->time += microtime( true ) - $this->start_time;
 		}
 		if ( ! is_null( $this->query_offset ) ) {
 			for ( $i = $this->query_offset; $i < count( $wpdb->queries ); $i++ ) {

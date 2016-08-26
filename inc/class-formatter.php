@@ -91,7 +91,7 @@ class Formatter {
 					$values[ $i ] = rtrim( $new_value, '/ ' );
 				} else {
 					$totals[ $i ] += $value;
-					if ( stripos( $fields[ $i ], '_time' ) ) {
+					if ( stripos( $fields[ $i ], '_time' ) || 'time' === $fields[ $i ] ) {
 						$values[ $i ] = round( $value, 4 ) . 's';
 					}
 				}
@@ -99,7 +99,7 @@ class Formatter {
 			$table->addRow( $values );
 		}
 		foreach( $totals as $i => $value ) {
-			if ( stripos( $fields[ $i ], '_time' ) ) {
+			if ( stripos( $fields[ $i ], '_time' ) || 'time' === $fields[ $i ] ) {
 				$totals[ $i ] = round( $value, 4 ) . 's';
 			}
 			if ( is_array( $value ) ) {
