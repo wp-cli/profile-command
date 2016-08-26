@@ -119,12 +119,9 @@ class Command {
 			$fields = array(
 				'scope',
 				'execution_time',
-				'query_count',
-				'query_time',
-				'hook_count',
-				'hook_time',
-				'request_count',
-				'request_time',
+				'queries',
+				'hooks',
+				'requests',
 			);
 			$data = $this->scope_log;
 		}
