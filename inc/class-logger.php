@@ -69,11 +69,11 @@ class Logger {
 	 * Start this logger's hook timer
 	 */
 	public function start_hook_timer() {
+		$this->hooks['count']++;
 		// Timer already running means a subhook has been called
 		if ( ! is_null( $this->hook_start_time ) ) {
 			$this->hook_depth++;
 		} else {
-			$this->hooks['count']++;
 			$this->hook_start_time = microtime( true );
 		}
 	}
