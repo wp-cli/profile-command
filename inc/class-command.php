@@ -120,6 +120,7 @@ class Command {
 				'scope',
 				'execution_time',
 				'queries',
+				'cache',
 				'hooks',
 				'requests',
 			);
