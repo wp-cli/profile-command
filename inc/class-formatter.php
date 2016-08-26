@@ -70,11 +70,30 @@ class Formatter {
 					continue;
 				}
 				if ( ! isset( $totals[ $i ] ) ) {
-					$totals[ $i ] = 0;
+					if ( is_array( $value ) ) {
+						$totals[ $i ] = array();
+					} else {
+						$totals[ $i ] = 0;
+					}
 				}
-				$totals[ $i ] += $value;
-				if ( stripos( $fields[ $i ], '_time' ) ) {
-					$values[ $i ] = round( $value, 4 ) . 's';
+				if ( is_array( $value ) ) {
+					$new_value = '';
+					foreach( $value as $k => $j ) {
+						if ( ! isset( $totals[ $i ][ $k ] ) ) {
+							$totals[ $i ][ $k ] = 0;
+						}
+						$totals[ $i ][ $k ] += $j;
+						if ( 'time' === $k ) {
+							$j = round( $j, 4 ) . 's';
+						}
+						$new_value .= "{$j} / ";
+					}
+					$values[ $i ] = rtrim( $new_value, '/ ' );
+				} else {
+					$totals[ $i ] += $value;
+					if ( stripos( $fields[ $i ], '_time' ) ) {
+						$values[ $i ] = round( $value, 4 ) . 's';
+					}
 				}
 			}
 			$table->addRow( $values );
@@ -82,6 +101,16 @@ class Formatter {
 		foreach( $totals as $i => $value ) {
 			if ( stripos( $fields[ $i ], '_time' ) ) {
 				$totals[ $i ] = round( $value, 4 ) . 's';
+			}
+			if ( is_array( $value ) ) {
+				$new_value = '';
+				foreach( $value as $k => $j ) {
+					if ( 'time' === $k ) {
+						$j = round( $j, 4 ) . 's';
+					}
+					$new_value .= "{$j} / ";
+				}
+				$totals[ $i ] = rtrim( $new_value, '/ ' );
 			}
 		}
 		$table->setFooters( $totals );
