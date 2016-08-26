@@ -87,7 +87,7 @@ class Command {
 			'hook_count',
 			'hook_time',
 		);
-		foreach( array( 'total', 'bootstrap', 'main_query', 'template' ) as $scope ) {
+		foreach( array( 'bootstrap', 'main_query', 'template' ) as $scope ) {
 			$this->scope_log[ $scope ] = array();
 			foreach( $scope_fields as $field ) {
 				if ( 'scope' === $field ) {
@@ -112,7 +112,7 @@ class Command {
 		WP_CLI::add_wp_hook( 'all', array( $this, 'wp_hook_begin' ) );
 		try {
 			$this->load_wordpress_with_template();
-		} catch( Exception $e ) {
+		} catch( \Exception $e ) {
 			// pass through
 		}
 
@@ -124,12 +124,6 @@ class Command {
 				'query_count',
 			);
 			foreach( $this->focus_log as $hook => $data ) {
-				foreach( $data as $key => $value ) {
-					// Round times to 4 decimal points
-					if ( stripos( $key,'_time' ) ) {
-						$this->focus_log[ $hook ][ $key ] = round( $value, 4 ) . 's';
-					}
-				}
 				// Drop hook labels with 'pre_' in the name
 				if ( 0 === strpos( $hook, 'pre_' ) ) {
 					$this->focus_log[ $hook ]['hook'] = '';
@@ -144,26 +138,9 @@ class Command {
 				'query_time',
 				'query_count',
 			);
-			foreach( $this->hook_log as $id => $data ) {
-				foreach( $data as $key => $value ) {
-					// Round times to 4 decimal points
-					if ( stripos( $key,'_time' ) ) {
-						$this->hook_log[ $id ][ $key ] = round( $value, 4 ) . 's';
-					}
-				}
-			}
 			$formatter = new Formatter( $assoc_args, $hook_fields );
 			$formatter->display_items( $this->hook_log );
 		} else {
-
-			foreach( $this->scope_log as $scope => $data ) {
-				foreach( $data as $key => $value ) {
-					// Round times to 4 decimal points
-					if ( stripos( $key,'_time' ) ) {
-						$this->scope_log[ $scope ][ $key ] = round( $value, 4 ) . 's';
-					}
-				}
-			}
 			$formatter = new Formatter( $assoc_args, $scope_fields );
 			$formatter->display_items( $this->scope_log );
 		}
@@ -175,7 +152,6 @@ class Command {
 	public function wp_hook_begin() {
 		global $wpdb, $wp_filter;
 
-		$this->scope_log['total']['hook_count']++;
 		$this->scope_log[ $this->current_scope ]['hook_count']++;
 		$this->hook_start_time = microtime( true );
 
@@ -194,7 +170,7 @@ class Command {
 			$this->current_filter_callbacks = $wp_filter[ $current_filter ];
 			unset( $wp_filter[ $current_filter ] );
 			call_user_func_array( array( $this, 'do_action' ), func_get_args() );
-			throw new Exception( "Need to bail, because can't restore the hooks" );
+			throw new \Exception( "Need to bail, because can't restore the hooks" );
 		}
 
 		WP_CLI::add_wp_hook( $current_filter, array( $this, 'wp_hook_end' ), 999 );
@@ -285,7 +261,6 @@ class Command {
 	private function load_wordpress_with_template() {
 		global $wp_query;
 
-		$this->scope_track_begin( 'total' );
 		$this->scope_track_begin( 'bootstrap' );
 		if ( 'bootstrap' === $this->focus_scope ) {
 			$this->fill_hooks( array(
@@ -319,16 +294,13 @@ class Command {
 		require_once( ABSPATH . WPINC . '/template-loader.php' );
 		ob_get_clean();
 		$this->scope_track_end( 'template' );
-		$this->scope_track_end( 'total' );
 	}
 
 	/**
 	 * Start tracking the current scope
 	 */
 	private function scope_track_begin( $scope ) {
-		if ( 'total' !== $scope ) {
-			$this->current_scope = $scope;
-		}
+		$this->current_scope = $scope;
 		$this->scope_log[ $scope ]['execution_time'] = microtime( true );
 		$this->hook_offset = $this->hook_time;
 	}
@@ -339,13 +311,13 @@ class Command {
 	private function scope_track_end( $scope ) {
 		global $wpdb;
 		$this->scope_log[ $scope ]['execution_time'] = microtime( true ) - $this->scope_log[ $scope ]['execution_time'];
-		$query_offset = 'total' === $scope ? 0 : $this->query_offset;
+		$query_offset = $this->query_offset;
 		for ( $i = $query_offset; $i < count( $wpdb->queries ); $i++ ) {
 			$this->scope_log[ $scope ]['query_time'] += $wpdb->queries[ $i ][1];
 			$this->scope_log[ $scope ]['query_count']++;
 		}
 		$this->query_offset = count( $wpdb->queries );
-		$hook_time = 'total' === $scope ? $this->hook_time : $this->hook_time - $this->hook_offset;
+		$hook_time = $this->hook_time - $this->hook_offset;
 		$this->scope_log[ $scope ]['hook_time'] = $hook_time;
 	}
 
