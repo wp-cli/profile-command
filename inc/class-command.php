@@ -135,7 +135,7 @@ class Command {
 					$this->focus_log[ $hook ]['hook'] = '';
 				}
 			}
-			$formatter = new \WP_CLI\Formatter( $assoc_args, $focus_fields );
+			$formatter = new Formatter( $assoc_args, $focus_fields );
 			$formatter->display_items( $this->focus_log );
 		} else if ( $this->focus_hook ) {
 			$hook_fields = array(
@@ -152,7 +152,7 @@ class Command {
 					}
 				}
 			}
-			$formatter = new \WP_CLI\Formatter( $assoc_args, $hook_fields );
+			$formatter = new Formatter( $assoc_args, $hook_fields );
 			$formatter->display_items( $this->hook_log );
 		} else {
 
@@ -164,7 +164,7 @@ class Command {
 					}
 				}
 			}
-			$formatter = new \WP_CLI\Formatter( $assoc_args, $scope_fields );
+			$formatter = new Formatter( $assoc_args, $scope_fields );
 			$formatter->display_items( $this->scope_log );
 		}
 	}
