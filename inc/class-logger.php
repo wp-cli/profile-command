@@ -70,11 +70,11 @@ class Logger {
 		if ( ! is_null( $this->cache_hit_offset ) && ! is_null( $this->cache_miss_offset ) ) {
 			$cache_hits = ! empty( $wp_object_cache->cache_hits ) ? $wp_object_cache->cache_hits : 0;
 			$cache_misses = ! empty( $wp_object_cache->cache_misses ) ? $wp_object_cache->cache_misses : 0;
-			$cache_total = $cache_hits + $cache_misses;
 			$this->cache['hits'] = $cache_hits - $this->cache_hit_offset;
 			$this->cache['misses'] = $cache_misses - $this->cache_miss_offset;
+			$cache_total = $this->cache['hits'] + $this->cache['misses'];
 			if ( $cache_total ) {
-				$ratio = ( $cache_hits / $cache_total ) * 100;
+				$ratio = ( $this->cache['hits'] / $cache_total ) * 100;
 				$this->cache['ratio'] = round( $ratio, 2 ) . '%';
 			}
 		}
