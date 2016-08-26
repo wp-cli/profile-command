@@ -94,7 +94,7 @@ class Command {
 		if ( $this->focus_scope ) {
 			$fields = array(
 				'hook',
-				'execution_time',
+				'time',
 				'queries',
 				'cache',
 				'requests',
@@ -102,7 +102,7 @@ class Command {
 		} else if ( $this->focus_hook ) {
 			$fields = array(
 				'callback',
-				'execution_time',
+				'time',
 				'queries',
 				'cache',
 				'requests',
@@ -110,7 +110,7 @@ class Command {
 		} else {
 			$fields = array(
 				'scope',
-				'execution_time',
+				'time',
 				'queries',
 				'cache',
 				'hooks',
