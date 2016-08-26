@@ -12,7 +12,7 @@ class Command {
 
 	private $loggers = array();
 	private $focus_scope;
-	private $focus_hooks = array();
+	private $scope_hooks = array();
 	private $hook_scope;
 	private $hook_log = array();
 	private $current_filter_callbacks = array();
@@ -271,7 +271,7 @@ class Command {
 				'init',
 				'wp_loaded',
 			) );
-		} else {
+		} else if ( ! $this->focus_scope && ! $this->focus_hook ) {
 			$logger = new Logger( 'scope', 'bootstrap' );
 			$logger->start();
 		}
@@ -281,8 +281,16 @@ class Command {
 			$this->scope_log[] = $logger;
 		}
 
-		// Set up the main WordPress query.
-		if ( ! $this->focus_scope && ! $this->focus_hook ) {
+		// Set up main_query main WordPress query.
+		if ( 'main_query' === $this->focus_scope ) {
+			$this->set_scope_hooks( array(
+				'parse_request',
+				'send_headers',
+				'pre_get_posts',
+				'the_posts',
+				'wp',
+			) );
+		} else if ( ! $this->focus_scope && ! $this->focus_hook ) {
 			$logger = new Logger( 'scope', 'main_query' );
 			$logger->start();
 		}
