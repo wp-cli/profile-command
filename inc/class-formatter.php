@@ -70,9 +70,19 @@ class Formatter {
 					continue;
 				}
 				if ( ! isset( $totals[ $i ] ) ) {
-					$totals[ $i ] = 0;
+					if ( stripos( $fields[ $i ], '_ratio' ) ) {
+						$totals[ $i ] = array();
+					} else {
+						$totals[ $i ] = 0;
+					}
 				}
-				$totals[ $i ] += $value;
+				if ( stripos( $fields[ $i ], '_ratio' ) ) {
+					if ( ! is_null( $value ) ) {
+						$totals[ $i ][] = $value;
+					}
+				} else {
+					$totals[ $i ] += $value;
+				}
 				if ( stripos( $fields[ $i ], '_time' ) || 'time' === $fields[ $i ] ) {
 					$values[ $i ] = round( $value, 4 ) . 's';
 				}
@@ -84,14 +94,11 @@ class Formatter {
 				$totals[ $i ] = round( $value, 4 ) . 's';
 			}
 			if ( is_array( $value ) ) {
-				$new_value = '';
-				foreach( $value as $k => $j ) {
-					if ( 'time' === $k ) {
-						$j = round( $j, 4 ) . 's';
-					}
-					$new_value .= "{$j} / ";
+				if ( ! empty( $value ) ) {
+					$totals[ $i ] = round( ( array_sum( $value ) / count( $value ) ), 2 ) . '%';
+				} else {
+					$totals[ $i ] = null;
 				}
-				$totals[ $i ] = rtrim( $new_value, '/ ' );
 			}
 		}
 		$table->setFooters( $totals );

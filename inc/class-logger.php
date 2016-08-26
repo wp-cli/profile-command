@@ -9,7 +9,7 @@ class Logger {
 	public $query_time = 0;
 	public $cache_hits = 0;
 	public $cache_misses = 0;
-	public $cache_ratio = 0;
+	public $cache_ratio = null;
 	public $hook_count = 0;
 	public $hook_time = 0;
 	public $request_count = 0;
