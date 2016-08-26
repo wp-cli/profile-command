@@ -1,9 +1,14 @@
 <?php
 
+namespace runcommand\Profile;
+
+use WP_CLI;
+use WP_CLI\Utils;
+
 /**
  * Profile the performance of a WordPress request.
  */
-class Profile_Command {
+class Command {
 
 	private $hook_start_time = 0;
 	private $hook_time = 0;
@@ -93,10 +98,10 @@ class Profile_Command {
 			}
 		}
 
-		$this->focus_scope = WP_CLI\Utils\get_flag_value( $assoc_args, 'scope' );
-		$this->focus_hook = WP_CLI\Utils\get_flag_value( $assoc_args, 'hook' );
+		$this->focus_scope = Utils\get_flag_value( $assoc_args, 'scope' );
+		$this->focus_hook = Utils\get_flag_value( $assoc_args, 'hook' );
 
-		if ( ! isset( \WP_CLI::get_runner()->config['url'] ) ) {
+		if ( ! isset( WP_CLI::get_runner()->config['url'] ) ) {
 			WP_CLI::add_wp_hook( 'muplugins_loaded', function(){
 				WP_CLI::set_url( home_url( '/' ) );
 			});
