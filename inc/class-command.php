@@ -13,8 +13,7 @@ class Command {
 	private $loggers = array();
 	private $focus_scope;
 	private $scope_hooks = array();
-	private $hook_scope;
-	private $hook_log = array();
+	private $focus_hook;
 	private $current_filter_callbacks = array();
 	private $focus_query_offset = 0;
 
@@ -100,15 +99,14 @@ class Command {
 				'cache',
 				'requests',
 			);
-			$data = $this->loggers;
 		} else if ( $this->focus_hook ) {
 			$fields = array(
 				'callback',
 				'execution_time',
-				'query_time',
-				'query_count',
+				'queries',
+				'cache',
+				'requests',
 			);
-			$data = $this->hook_log;
 		} else {
 			$fields = array(
 				'scope',
@@ -118,10 +116,9 @@ class Command {
 				'hooks',
 				'requests',
 			);
-			$data = $this->loggers;
 		}
 		$formatter = new Formatter( $assoc_args, $fields );
-		$formatter->display_items( $data );
+		$formatter->display_items( $this->loggers );
 	}
 
 	/**
@@ -158,7 +155,7 @@ class Command {
 	 * Instrumented version of do_action()
 	 */
 	private function do_action( $tag, $arg = '' ) {
-		global $wp_actions, $merged_filters, $wp_current_filter, $wpdb;
+		global $wp_actions, $merged_filters, $wp_current_filter;
 		$wp_filter = array();
 		$wp_filter[ $tag ] = $this->current_filter_callbacks;
 
@@ -189,22 +186,12 @@ class Command {
 		do {
 			foreach ( (array) current($wp_filter[$tag]) as $i => $the_ )
 				if ( !is_null($the_['function']) ) {
-					if ( ! isset( $this->hook_log[ $i ] ) ) {
-						$this->hook_log[ $i ] = array(
-							'callback'        => self::get_name_from_callback( $the_['function'] ),
-							'execution_time'  => 0,
-							'query_count'     => 0,
-							'query_time'      => 0,
-						);
+					if ( ! isset( $this->loggers[ $i ] ) ) {
+						$this->loggers[ $i ] = new Logger( 'callback', self::get_name_from_callback( $the_['function'] ) );
+						$this->loggers[ $i ]->start();
 					}
-					$start_time = microtime( true );
-					$query_offset = count( $wpdb->queries );
 					call_user_func_array($the_['function'], array_slice($args, 0, (int) $the_['accepted_args']));
-					$this->hook_log[ $i ]['execution_time'] = microtime( true ) - $start_time;
-					for ( $j = $query_offset; $j < count( $wpdb->queries ); $j++ ) {
-						$this->hook_log[ $i ]['query_time'] += $wpdb->queries[ $i ][1];
-						$this->hook_log[ $i ]['query_count']++;
-					}
+					$this->loggers[ $i ]->stop();
 				}
 
 		} while ( next($wp_filter[$tag]) !== false );
@@ -278,7 +265,7 @@ class Command {
 		WP_CLI::get_runner()->load_wordpress();
 		if ( ! $this->focus_scope && ! $this->focus_hook ) {
 			$logger->stop();
-			$this->scope_log[] = $logger;
+			$this->loggers[] = $logger;
 		}
 
 		// Set up main_query main WordPress query.
@@ -297,7 +284,7 @@ class Command {
 		wp();
 		if ( ! $this->focus_scope && ! $this->focus_hook ) {
 			$logger->stop();
-			$this->scope_log[] = $logger;
+			$this->loggers[] = $logger;
 		}
 
 		define( 'WP_USE_THEMES', true );
@@ -317,7 +304,7 @@ class Command {
 		ob_get_clean();
 		if ( ! $this->focus_scope && ! $this->focus_hook ) {
 			$logger->stop();
-			$this->scope_log[] = $logger;
+			$this->loggers[] = $logger;
 		}
 	}
 
