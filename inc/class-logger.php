@@ -59,6 +59,7 @@ class Logger {
 	 * Start this logger's hook timer
 	 */
 	public function start_hook_timer() {
+		$this->hook_count++;
 		$this->hook_start_time = microtime( true );
 	}
 
