@@ -336,7 +336,8 @@ class Command {
 	private function set_scope_hooks( $hooks ) {
 		$this->scope_hooks = $hooks;
 		$pseudo_hook = "before {$hooks[0]}";
-		$this->loggers[ "before {$hooks[0]}" ] = new Logger( 'hook', '' );
+		$this->loggers[ $pseudo_hook ] = new Logger( 'hook', '' );
+		$this->loggers[ $pseudo_hook ]->start();
 	}
 
 }
