@@ -10,10 +10,9 @@ use WP_CLI\Utils;
  */
 class Command {
 
-	private $scope_log = array();
+	private $loggers = array();
 	private $focus_scope;
-	private $focus_start_time;
-	private $focus_log = array();
+	private $focus_hooks = array();
 	private $hook_scope;
 	private $hook_log = array();
 	private $current_filter_callbacks = array();
@@ -97,16 +96,11 @@ class Command {
 			$fields = array(
 				'hook',
 				'execution_time',
-				'query_time',
-				'query_count',
+				'queries',
+				'cache',
+				'requests',
 			);
-			foreach( $this->focus_log as $hook => $data ) {
-				// Drop hook labels with 'pre_' in the name
-				if ( 0 === strpos( $hook, 'pre_' ) ) {
-					$this->focus_log[ $hook ]['hook'] = '';
-				}
-			}
-			$data = $this->focus_log;
+			$data = $this->loggers;
 		} else if ( $this->focus_hook ) {
 			$fields = array(
 				'callback',
@@ -124,7 +118,7 @@ class Command {
 				'hooks',
 				'requests',
 			);
-			$data = $this->scope_log;
+			$data = $this->loggers;
 		}
 		$formatter = new Formatter( $assoc_args, $fields );
 		$formatter->display_items( $data );
@@ -140,17 +134,10 @@ class Command {
 			$logger->start_hook_timer();
 		}
 
-		$this->hook_start_time = microtime( true );
-
 		$current_filter = current_filter();
-		if ( array_key_exists( $current_filter, $this->focus_log ) ) {
-			$this->focus_log["pre_{$current_filter}"]['execution_time'] = microtime( true ) - $this->focus_start_time;
-			$this->focus_start_time = microtime( true );
-			for ( $i = $this->focus_query_offset; $i < count( $wpdb->queries ); $i++ ) {
-				$this->focus_log["pre_{$current_filter}"]['query_time'] += $wpdb->queries[ $i ][1];
-				$this->focus_log["pre_{$current_filter}"]['query_count']++;
-			}
-			$this->focus_query_offset = count( $wpdb->queries );
+		if ( in_array( $current_filter, $this->scope_hooks ) ) {
+			$this->loggers[ $current_filter ] = new Logger( 'hook', $current_filter );
+			$this->loggers[ $current_filter ]->start();
 		}
 
 		if ( $this->focus_hook && $current_filter === $this->focus_hook ) {
@@ -227,19 +214,13 @@ class Command {
 	public function wp_hook_end( $filter_value = null ) {
 		global $wpdb, $wp_filter;
 
-		$current_filter = current_filter();
-		if ( array_key_exists( $current_filter, $this->focus_log ) ) {
-			$this->focus_log[ $current_filter ]['execution_time'] = microtime( true ) - $this->focus_start_time;
-			$this->focus_start_time = microtime( true );
-			for ( $i = $this->focus_query_offset; $i < count( $wpdb->queries ); $i++ ) {
-				$this->focus_log[ $current_filter ]['query_time'] += $wpdb->queries[ $i ][1];
-				$this->focus_log[ $current_filter ]['query_count']++;
-			}
-			$this->focus_query_offset = count( $wpdb->queries );
-		}
-
 		foreach( Logger::$active_loggers as $logger ) {
 			$logger->stop_hook_timer();
+		}
+
+		$current_filter = current_filter();
+		if ( in_array( $current_filter, $this->scope_hooks ) ) {
+			$this->loggers[ $current_filter ]->stop();
 		}
 
 		return $filter_value;
@@ -272,27 +253,34 @@ class Command {
 		global $wp_query;
 
 		if ( 'bootstrap' === $this->focus_scope ) {
-			$this->fill_hooks( array(
+			$this->scope_hooks = array(
 				'muplugins_loaded',
 				'plugins_loaded',
 				'setup_theme',
 				'after_setup_theme',
 				'init',
 				'wp_loaded',
-			) );
+			);
+		} else {
+			$logger = new Logger( 'scope', 'bootstrap' );
+			$logger->start();
 		}
-		$logger = new Logger( 'scope', 'bootstrap' );
-		$logger->start();
 		WP_CLI::get_runner()->load_wordpress();
-		$logger->stop();
-		$this->scope_log[] = $logger;
+		if ( ! $this->focus_scope && ! $this->focus_hook ) {
+			$logger->stop();
+			$this->scope_log[] = $logger;
+		}
 
 		// Set up the main WordPress query.
-		$logger = new Logger( 'scope', 'main_query' );
-		$logger->start();
+		if ( ! $this->focus_scope && ! $this->focus_hook ) {
+			$logger = new Logger( 'scope', 'main_query' );
+			$logger->start();
+		}
 		wp();
-		$logger->stop();
-		$this->scope_log[] = $logger;
+		if ( ! $this->focus_scope && ! $this->focus_hook ) {
+			$logger->stop();
+			$this->scope_log[] = $logger;
+		}
 
 		define( 'WP_USE_THEMES', true );
 
@@ -302,30 +290,17 @@ class Command {
 		}
 
 		// Load the theme template.
-		$logger = new Logger( 'scope', 'template' );
-		$logger->start();
+		if ( ! $this->focus_scope && ! $this->focus_hook ) {
+			$logger = new Logger( 'scope', 'template' );
+			$logger->start();
+		}
 		ob_start();
 		require_once( ABSPATH . WPINC . '/template-loader.php' );
 		ob_get_clean();
-		$logger->stop();
-		$this->scope_log[] = $logger;
-	}
-
-	/**
-	 * Fill the hooks with start data
-	 */
-	private function fill_hooks( $hooks ) {
-		foreach( $hooks as $hook ) {
-			foreach( array( "pre_{$hook}", $hook ) as $k ) {
-				$this->focus_log[ $k ] = array(
-					'hook'             => $k,
-					'execution_time'   => 0,
-					'query_count'      => 0,
-					'query_time'       => 0,
-				);
-			}
+		if ( ! $this->focus_scope && ! $this->focus_hook ) {
+			$logger->stop();
+			$this->scope_log[] = $logger;
 		}
-		$this->focus_start_time = microtime( true );
 	}
 
 	/**
