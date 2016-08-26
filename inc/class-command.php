@@ -10,19 +10,14 @@ use WP_CLI\Utils;
  */
 class Command {
 
-	private $hook_start_time = 0;
-	private $hook_time = 0;
-	private $scope_log;
-	private $current_scope;
+	private $scope_log = array();
 	private $focus_scope;
 	private $focus_start_time;
 	private $focus_log = array();
 	private $hook_scope;
 	private $hook_log = array();
 	private $current_filter_callbacks = array();
-	private $query_offset = 0;
 	private $focus_query_offset = 0;
-	private $hook_offset = 0;
 
 	/**
 	 * Profile the performance of a WordPress request.
@@ -78,26 +73,6 @@ class Command {
 	public function __invoke( $args, $assoc_args ) {
 		global $wpdb;
 
-		$this->scope_log = array();
-		$scope_fields = array(
-			'scope',
-			'execution_time',
-			'query_count',
-			'query_time',
-			'hook_count',
-			'hook_time',
-		);
-		foreach( array( 'bootstrap', 'main_query', 'template' ) as $scope ) {
-			$this->scope_log[ $scope ] = array();
-			foreach( $scope_fields as $field ) {
-				if ( 'scope' === $field ) {
-					$this->scope_log[ $scope ][ $field ] = $scope;
-				} else {
-					$this->scope_log[ $scope ][ $field ] = 0;
-				}
-			}
-		}
-
 		$this->focus_scope = Utils\get_flag_value( $assoc_args, 'scope' );
 		$this->focus_hook = Utils\get_flag_value( $assoc_args, 'hook' );
 
@@ -139,7 +114,14 @@ class Command {
 			);
 			$data = $this->hook_log;
 		} else {
-			$fields = $scope_fields;
+			$fields = array(
+				'scope',
+				'execution_time',
+				'query_count',
+				'query_time',
+				'hook_count',
+				'hook_time',
+			);
 			$data = $this->scope_log;
 		}
 		$formatter = new Formatter( $assoc_args, $fields );
@@ -152,7 +134,10 @@ class Command {
 	public function wp_hook_begin() {
 		global $wpdb, $wp_filter;
 
-		$this->scope_log[ $this->current_scope ]['hook_count']++;
+		foreach( Logger::$active_loggers as $logger ) {
+			$logger->start_hook_timer();
+		}
+
 		$this->hook_start_time = microtime( true );
 
 		$current_filter = current_filter();
@@ -251,7 +236,10 @@ class Command {
 			$this->focus_query_offset = count( $wpdb->queries );
 		}
 
-		$this->hook_time += microtime( true ) - $this->hook_start_time;
+		foreach( Logger::$active_loggers as $logger ) {
+			$logger->stop_hook_timer();
+		}
+
 		return $filter_value;
 	}
 
@@ -261,7 +249,6 @@ class Command {
 	private function load_wordpress_with_template() {
 		global $wp_query;
 
-		$this->scope_track_begin( 'bootstrap' );
 		if ( 'bootstrap' === $this->focus_scope ) {
 			$this->fill_hooks( array(
 				'muplugins_loaded',
@@ -272,14 +259,18 @@ class Command {
 				'wp_loaded',
 			) );
 		}
+		$logger = new Logger( 'scope', 'bootstrap' );
+		$logger->start();
 		WP_CLI::get_runner()->load_wordpress();
-		$this->scope_track_end( 'bootstrap' );
+		$logger->stop();
+		$this->scope_log[] = $logger;
 
 		// Set up the main WordPress query.
-		$this->current_scope = 'main_query';
-		$this->scope_track_begin( 'main_query' );
+		$logger = new Logger( 'scope', 'main_query' );
+		$logger->start();
 		wp();
-		$this->scope_track_end( 'main_query' );
+		$logger->stop();
+		$this->scope_log[] = $logger;
 
 		define( 'WP_USE_THEMES', true );
 
@@ -289,36 +280,13 @@ class Command {
 		}
 
 		// Load the theme template.
-		$this->scope_track_begin( 'template' );
+		$logger = new Logger( 'scope', 'template' );
+		$logger->start();
 		ob_start();
 		require_once( ABSPATH . WPINC . '/template-loader.php' );
 		ob_get_clean();
-		$this->scope_track_end( 'template' );
-	}
-
-	/**
-	 * Start tracking the current scope
-	 */
-	private function scope_track_begin( $scope ) {
-		$this->current_scope = $scope;
-		$this->scope_log[ $scope ]['execution_time'] = microtime( true );
-		$this->hook_offset = $this->hook_time;
-	}
-
-	/**
-	 * End tracking the current scope
-	 */
-	private function scope_track_end( $scope ) {
-		global $wpdb;
-		$this->scope_log[ $scope ]['execution_time'] = microtime( true ) - $this->scope_log[ $scope ]['execution_time'];
-		$query_offset = $this->query_offset;
-		for ( $i = $query_offset; $i < count( $wpdb->queries ); $i++ ) {
-			$this->scope_log[ $scope ]['query_time'] += $wpdb->queries[ $i ][1];
-			$this->scope_log[ $scope ]['query_count']++;
-		}
-		$this->query_offset = count( $wpdb->queries );
-		$hook_time = $this->hook_time - $this->hook_offset;
-		$this->scope_log[ $scope ]['hook_time'] = $hook_time;
+		$logger->stop();
+		$this->scope_log[] = $logger;
 	}
 
 	/**
