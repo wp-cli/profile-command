@@ -5,12 +5,18 @@ namespace runcommand\Profile;
 class Logger {
 
 	public $execution_time = 0;
-	public $query_count = 0;
-	public $query_time = 0;
-	public $hook_count = 0;
-	public $hook_time = 0;
-	public $request_count = 0;
-	public $request_time = 0;
+	public $queries = array(
+		'count'   => 0,
+		'time'    => 0,
+	);
+	public $hooks = array(
+		'count'   => 0,
+		'time'    => 0,
+	);
+	public $requests = array(
+		'count'   => 0,
+		'time'    => 0,
+	);
 
 	private $start_time = null;
 	private $query_offset = null;
@@ -47,8 +53,8 @@ class Logger {
 		}
 		if ( ! is_null( $this->query_offset ) ) {
 			for ( $i = $this->query_offset; $i < count( $wpdb->queries ); $i++ ) {
-				$this->query_time += $wpdb->queries[ $i ][1];
-				$this->query_count++;
+				$this->queries['time'] += $wpdb->queries[ $i ][1];
+				$this->queries['count']++;
 			}
 		}
 
@@ -67,7 +73,7 @@ class Logger {
 		if ( ! is_null( $this->hook_start_time ) ) {
 			$this->hook_depth++;
 		} else {
-			$this->hook_count++;
+			$this->hooks['count']++;
 			$this->hook_start_time = microtime( true );
 		}
 	}
@@ -80,7 +86,7 @@ class Logger {
 			$this->hook_depth--;
 		} else {
 			if ( ! is_null( $this->hook_start_time ) ) {
-				$this->hook_time += microtime( true ) - $this->hook_start_time;
+				$this->hooks['time'] += microtime( true ) - $this->hook_start_time;
 			}
 			$this->hook_start_time = null;
 		}
@@ -90,7 +96,7 @@ class Logger {
 	 * Start this logger's request timer
 	 */
 	public function start_request_timer() {
-		$this->request_count++;
+		$this->requests['count']++;
 		$this->request_start_time = microtime( true );
 	}
 
@@ -99,7 +105,7 @@ class Logger {
 	 */
 	public function stop_request_timer() {
 		if ( ! is_null( $this->request_start_time ) ) {
-			$this->request_time += microtime( true ) - $this->request_start_time;
+			$this->requests['time'] += microtime( true ) - $this->request_start_time;
 		}
 		$this->request_start_time = null;
 	}
