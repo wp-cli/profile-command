@@ -136,6 +136,10 @@ class Command {
 
 		$current_filter = current_filter();
 		if ( in_array( $current_filter, $this->scope_hooks ) ) {
+			$pseudo_hook = "before {$current_filter}";
+			if ( isset( $this->loggers[ $pseudo_hook ] ) ) {
+				$this->loggers[ $pseudo_hook ]->stop();
+			}
 			$this->loggers[ $current_filter ] = new Logger( 'hook', $current_filter );
 			$this->loggers[ $current_filter ]->start();
 		}
@@ -221,6 +225,12 @@ class Command {
 		$current_filter = current_filter();
 		if ( in_array( $current_filter, $this->scope_hooks ) ) {
 			$this->loggers[ $current_filter ]->stop();
+			$key = array_search( $current_filter, $this->scope_hooks );
+			if ( false !== $key && isset( $this->scope_hooks[$key+1] ) ) {
+				$pseudo_hook = "before {$this->scope_hooks[$key+1]}";
+				$this->loggers[ $pseudo_hook ] = new Logger( 'hook', '' );
+				$this->loggers[ $pseudo_hook ]->start();
+			}
 		}
 
 		return $filter_value;
@@ -253,14 +263,14 @@ class Command {
 		global $wp_query;
 
 		if ( 'bootstrap' === $this->focus_scope ) {
-			$this->scope_hooks = array(
+			$this->set_scope_hooks( array(
 				'muplugins_loaded',
 				'plugins_loaded',
 				'setup_theme',
 				'after_setup_theme',
 				'init',
 				'wp_loaded',
-			);
+			) );
 		} else {
 			$logger = new Logger( 'scope', 'bootstrap' );
 			$logger->start();
@@ -318,6 +328,15 @@ class Command {
 			$name = $callback . '()';
 		}
 		return $name;
+	}
+
+	/**
+	 * Set the hooks for the current scope
+	 */
+	private function set_scope_hooks( $hooks ) {
+		$this->scope_hooks = $hooks;
+		$pseudo_hook = "before {$hooks[0]}";
+		$this->loggers[ "before {$hooks[0]}" ] = new Logger( 'hook', '' );
 	}
 
 }
