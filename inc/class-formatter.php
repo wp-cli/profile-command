@@ -83,16 +83,6 @@ class Formatter {
 			if ( stripos( $fields[ $i ], '_time' ) || 'time' === $fields[ $i ] ) {
 				$totals[ $i ] = round( $value, 4 ) . 's';
 			}
-			if ( is_array( $value ) ) {
-				$new_value = '';
-				foreach( $value as $k => $j ) {
-					if ( 'time' === $k ) {
-						$j = round( $j, 4 ) . 's';
-					}
-					$new_value .= "{$j} / ";
-				}
-				$totals[ $i ] = rtrim( $new_value, '/ ' );
-			}
 		}
 		$table->setFooters( $totals );
 
