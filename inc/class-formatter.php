@@ -70,30 +70,11 @@ class Formatter {
 					continue;
 				}
 				if ( ! isset( $totals[ $i ] ) ) {
-					if ( is_array( $value ) ) {
-						$totals[ $i ] = array();
-					} else {
-						$totals[ $i ] = 0;
-					}
+					$totals[ $i ] = 0;
 				}
-				if ( is_array( $value ) ) {
-					$new_value = '';
-					foreach( $value as $k => $j ) {
-						if ( ! isset( $totals[ $i ][ $k ] ) ) {
-							$totals[ $i ][ $k ] = 0;
-						}
-						$totals[ $i ][ $k ] += $j;
-						if ( 'time' === $k ) {
-							$j = round( $j, 4 ) . 's';
-						}
-						$new_value .= "{$j} / ";
-					}
-					$values[ $i ] = rtrim( $new_value, '/ ' );
-				} else {
-					$totals[ $i ] += $value;
-					if ( stripos( $fields[ $i ], '_time' ) || 'time' === $fields[ $i ] ) {
-						$values[ $i ] = round( $value, 4 ) . 's';
-					}
+				$totals[ $i ] += $value;
+				if ( stripos( $fields[ $i ], '_time' ) || 'time' === $fields[ $i ] ) {
+					$values[ $i ] = round( $value, 4 ) . 's';
 				}
 			}
 			$table->addRow( $values );

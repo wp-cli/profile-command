@@ -95,26 +95,39 @@ class Command {
 			$fields = array(
 				'hook',
 				'time',
-				'queries',
-				'cache',
-				'requests',
+				'query_time',
+				'query_count',
+				'cache_hits',
+				'cache_misses',
+				'cache_ratio',
+				'request_time',
+				'request_count',
 			);
 		} else if ( $this->focus_hook ) {
 			$fields = array(
 				'callback',
 				'time',
-				'queries',
-				'cache',
-				'requests',
+				'query_time',
+				'query_count',
+				'cache_hits',
+				'cache_misses',
+				'cache_ratio',
+				'request_time',
+				'request_count',
 			);
 		} else {
 			$fields = array(
 				'scope',
 				'time',
-				'queries',
-				'cache',
-				'hooks',
-				'requests',
+				'query_time',
+				'query_count',
+				'cache_hits',
+				'cache_misses',
+				'cache_ratio',
+				'hook_time',
+				'hook_count',
+				'request_time',
+				'request_count',
 			);
 		}
 		$formatter = new Formatter( $assoc_args, $fields );
