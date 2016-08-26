@@ -13,6 +13,7 @@ class Logger {
 	private $start_time = null;
 	private $query_offset = null;
 	private $hook_start_time = null;
+	private $hook_depth = 0;
 
 	public static $active_loggers = array();
 
@@ -59,18 +60,27 @@ class Logger {
 	 * Start this logger's hook timer
 	 */
 	public function start_hook_timer() {
-		$this->hook_count++;
-		$this->hook_start_time = microtime( true );
+		// Timer already running means a subhook has been called
+		if ( ! is_null( $this->hook_start_time ) ) {
+			$this->hook_depth++;
+		} else {
+			$this->hook_count++;
+			$this->hook_start_time = microtime( true );
+		}
 	}
 
 	/**
 	 * Stop this logger's hook timer
 	 */
 	public function stop_hook_timer() {
-		if ( ! is_null( $this->hook_start_time ) ) {
-			$this->hook_time += microtime( true ) - $this->hook_start_time;
+		if ( $this->hook_depth ) {
+			$this->hook_depth--;
+		} else {
+			if ( ! is_null( $this->hook_start_time ) ) {
+				$this->hook_time += microtime( true ) - $this->hook_start_time;
+			}
+			$this->hook_start_time = null;
 		}
-		$this->hook_start_time = null;
 	}
 
 }
