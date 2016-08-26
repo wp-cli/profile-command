@@ -117,7 +117,7 @@ class Command {
 		}
 
 		if ( $this->focus_scope ) {
-			$focus_fields = array(
+			$fields = array(
 				'hook',
 				'execution_time',
 				'query_time',
@@ -129,21 +129,21 @@ class Command {
 					$this->focus_log[ $hook ]['hook'] = '';
 				}
 			}
-			$formatter = new Formatter( $assoc_args, $focus_fields );
-			$formatter->display_items( $this->focus_log );
+			$data = $this->focus_log;
 		} else if ( $this->focus_hook ) {
-			$hook_fields = array(
+			$fields = array(
 				'callback',
 				'execution_time',
 				'query_time',
 				'query_count',
 			);
-			$formatter = new Formatter( $assoc_args, $hook_fields );
-			$formatter->display_items( $this->hook_log );
+			$data = $this->hook_log;
 		} else {
-			$formatter = new Formatter( $assoc_args, $scope_fields );
-			$formatter->display_items( $this->scope_log );
+			$fields = $scope_fields;
+			$data = $this->scope_log;
 		}
+		$formatter = new Formatter( $assoc_args, $fields );
+		$formatter->display_items( $data );
 	}
 
 	/**
