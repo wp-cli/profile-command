@@ -74,7 +74,8 @@ class Logger {
 			$this->cache['hits'] = $cache_hits - $this->cache_hit_offset;
 			$this->cache['misses'] = $cache_misses - $this->cache_miss_offset;
 			if ( $cache_total ) {
-				$this->cache['ratio'] = $cache_hits / $cache_total;
+				$ratio = ( $cache_hits / $cache_total ) * 100;
+				$this->cache['ratio'] = round( $ratio, 2 ) . '%';
 			}
 		}
 
