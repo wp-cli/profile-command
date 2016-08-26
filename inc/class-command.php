@@ -135,7 +135,6 @@ class Command {
 		global $wpdb, $wp_filter;
 
 		foreach( Logger::$active_loggers as $logger ) {
-			$logger->hook_count++;
 			$logger->start_hook_timer();
 		}
 
