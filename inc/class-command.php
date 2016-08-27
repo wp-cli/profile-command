@@ -11,8 +11,8 @@ use WP_CLI\Utils;
 class Command {
 
 	private $loggers = array();
-	private $focus_scope;
-	private $scope_hooks = array();
+	private $focus_stage;
+	private $stage_hooks = array();
 	private $focus_hook;
 	private $current_filter_callbacks = array();
 	private $focus_query_offset = 0;
@@ -26,7 +26,7 @@ class Command {
 	 * ```
 	 * $ wp profile
 	 * +------------+----------------+-------------+------------+------------+-----------+
-	 * | scope      | execution_time | query_count | query_time | hook_count | hook_time |
+	 * | stage      | execution_time | query_count | query_time | hook_count | hook_time |
 	 * +------------+----------------+-------------+------------+------------+-----------+
 	 * | total      | 2.6685s        | 196         | 0.0274s    | 10723      | 0.2173s   |
 	 * | bootstrap  | 2.2609s        | 15          | 0.0037s    | 2836       | 0.1166s   |
@@ -40,8 +40,8 @@ class Command {
 	 * [--url=<url>]
 	 * : Execute a request against a specified URL. Defaults to the home URL.
 	 *
-	 * [--scope=<scope>]
-	 * : Drill down into a specific scope.
+	 * [--stage=<stage>]
+	 * : Drill down into a specific stage.
 	 * ---
 	 * options:
 	 *   - bootstrap
@@ -71,7 +71,7 @@ class Command {
 	public function __invoke( $args, $assoc_args ) {
 		global $wpdb;
 
-		$this->focus_scope = Utils\get_flag_value( $assoc_args, 'scope' );
+		$this->focus_stage = Utils\get_flag_value( $assoc_args, 'stage' );
 		$this->focus_hook = Utils\get_flag_value( $assoc_args, 'hook' );
 
 		if ( ! isset( WP_CLI::get_runner()->config['url'] ) ) {
@@ -91,7 +91,7 @@ class Command {
 			// pass through
 		}
 
-		if ( $this->focus_scope ) {
+		if ( $this->focus_stage ) {
 			$fields = array(
 				'hook',
 				'time',
@@ -117,7 +117,7 @@ class Command {
 			);
 		} else {
 			$fields = array(
-				'scope',
+				'stage',
 				'time',
 				'query_time',
 				'query_count',
@@ -145,7 +145,7 @@ class Command {
 		}
 
 		$current_filter = current_filter();
-		if ( in_array( $current_filter, $this->scope_hooks ) ) {
+		if ( in_array( $current_filter, $this->stage_hooks ) ) {
 			$pseudo_hook = "before {$current_filter}";
 			if ( isset( $this->loggers[ $pseudo_hook ] ) ) {
 				$this->loggers[ $pseudo_hook ]->stop();
@@ -223,11 +223,11 @@ class Command {
 		}
 
 		$current_filter = current_filter();
-		if ( in_array( $current_filter, $this->scope_hooks ) ) {
+		if ( in_array( $current_filter, $this->stage_hooks ) ) {
 			$this->loggers[ $current_filter ]->stop();
-			$key = array_search( $current_filter, $this->scope_hooks );
-			if ( false !== $key && isset( $this->scope_hooks[$key+1] ) ) {
-				$pseudo_hook = "before {$this->scope_hooks[$key+1]}";
+			$key = array_search( $current_filter, $this->stage_hooks );
+			if ( false !== $key && isset( $this->stage_hooks[$key+1] ) ) {
+				$pseudo_hook = "before {$this->stage_hooks[$key+1]}";
 				$this->loggers[ $pseudo_hook ] = new Logger( 'hook', '' );
 				$this->loggers[ $pseudo_hook ]->start();
 			}
@@ -262,8 +262,8 @@ class Command {
 	private function load_wordpress_with_template() {
 		global $wp_query;
 
-		if ( 'bootstrap' === $this->focus_scope ) {
-			$this->set_scope_hooks( array(
+		if ( 'bootstrap' === $this->focus_stage ) {
+			$this->set_stage_hooks( array(
 				'muplugins_loaded',
 				'plugins_loaded',
 				'setup_theme',
@@ -271,51 +271,51 @@ class Command {
 				'init',
 				'wp_loaded',
 			) );
-		} else if ( ! $this->focus_scope && ! $this->focus_hook ) {
-			$logger = new Logger( 'scope', 'bootstrap' );
+		} else if ( ! $this->focus_stage && ! $this->focus_hook ) {
+			$logger = new Logger( 'stage', 'bootstrap' );
 			$logger->start();
 		}
 		WP_CLI::get_runner()->load_wordpress();
-		if ( ! $this->focus_scope && ! $this->focus_hook ) {
+		if ( ! $this->focus_stage && ! $this->focus_hook ) {
 			$logger->stop();
 			$this->loggers[] = $logger;
 		}
 
 		// Set up main_query main WordPress query.
-		if ( 'main_query' === $this->focus_scope ) {
-			$this->set_scope_hooks( array(
+		if ( 'main_query' === $this->focus_stage ) {
+			$this->set_stage_hooks( array(
 				'parse_request',
 				'send_headers',
 				'pre_get_posts',
 				'the_posts',
 				'wp',
 			) );
-		} else if ( ! $this->focus_scope && ! $this->focus_hook ) {
-			$logger = new Logger( 'scope', 'main_query' );
+		} else if ( ! $this->focus_stage && ! $this->focus_hook ) {
+			$logger = new Logger( 'stage', 'main_query' );
 			$logger->start();
 		}
 		wp();
-		if ( ! $this->focus_scope && ! $this->focus_hook ) {
+		if ( ! $this->focus_stage && ! $this->focus_hook ) {
 			$logger->stop();
 			$this->loggers[] = $logger;
 		}
 
 		define( 'WP_USE_THEMES', true );
 
-		// Template is normally loaded in global scope, so we need to replicate
+		// Template is normally loaded in global stage, so we need to replicate
 		foreach( $GLOBALS as $key => $value ) {
 			global $$key;
 		}
 
 		// Load the theme template.
-		if ( ! $this->focus_scope && ! $this->focus_hook ) {
-			$logger = new Logger( 'scope', 'template' );
+		if ( ! $this->focus_stage && ! $this->focus_hook ) {
+			$logger = new Logger( 'stage', 'template' );
 			$logger->start();
 		}
 		ob_start();
 		require_once( ABSPATH . WPINC . '/template-loader.php' );
 		ob_get_clean();
-		if ( ! $this->focus_scope && ! $this->focus_hook ) {
+		if ( ! $this->focus_stage && ! $this->focus_hook ) {
 			$logger->stop();
 			$this->loggers[] = $logger;
 		}
@@ -339,10 +339,10 @@ class Command {
 	}
 
 	/**
-	 * Set the hooks for the current scope
+	 * Set the hooks for the current stage
 	 */
-	private function set_scope_hooks( $hooks ) {
-		$this->scope_hooks = $hooks;
+	private function set_stage_hooks( $hooks ) {
+		$this->stage_hooks = $hooks;
 		$pseudo_hook = "before {$hooks[0]}";
 		$this->loggers[ $pseudo_hook ] = new Logger( 'hook', '' );
 		$this->loggers[ $pseudo_hook ]->start();
