@@ -5,9 +5,6 @@ namespace runcommand\Profile;
 use WP_CLI;
 use WP_CLI\Utils;
 
-/**
- * Profile the performance of a WordPress request.
- */
 class Command {
 
 	private $loggers = array();
@@ -18,10 +15,16 @@ class Command {
 	private $focus_query_offset = 0;
 
 	/**
-	 * Profile the performance of a WordPress request.
+	 * Quickly identify what's slow with WordPress.
 	 *
-	 * Monitors aspects of the WordPress execution process to display key
-	 * performance indicators for audit.
+	 * `wp profile` monitors key performance indicators of the WordPress
+	 * execution process to help you quickly identify where the slowness is
+	 * coming from. Because you can install and run it on any server that
+	 * supports WP-CLI, in 15 seconds or less, `wp profile` compliments Xdebug
+	 * and New Relic by pointing you in the right direction for further
+	 * debugging. And, because it's a WP-CLI command, using `wp profile` means
+	 * you don't have to install a plugin and deal with the painful dashboard
+	 * of a slow WordPress site.
 	 *
 	 * ```
 	 * $ wp profile
