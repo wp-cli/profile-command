@@ -17,27 +17,6 @@ class Command {
 	/**
 	 * Quickly identify what's slow with WordPress.
 	 *
-	 * `wp profile` monitors key performance indicators of the WordPress
-	 * execution process to help you quickly identify where the slowness is
-	 * coming from. Because you can install and run it on any server that
-	 * supports WP-CLI, in 15 seconds or less, `wp profile` compliments Xdebug
-	 * and New Relic by pointing you in the right direction for further
-	 * debugging. And, because it's a WP-CLI command, using `wp profile` means
-	 * you don't have to install a plugin and deal with the painful dashboard
-	 * of a slow WordPress site.
-	 *
-	 * ```
-	 * $ wp profile
-	 * +------------+----------------+-------------+------------+------------+-----------+
-	 * | stage      | execution_time | query_count | query_time | hook_count | hook_time |
-	 * +------------+----------------+-------------+------------+------------+-----------+
-	 * | total      | 2.6685s        | 196         | 0.0274s    | 10723      | 0.2173s   |
-	 * | bootstrap  | 2.2609s        | 15          | 0.0037s    | 2836       | 0.1166s   |
-	 * | main_query | 0.0126s        | 3           | 0.0004s    | 78         | 0.0014s   |
-	 * | template   | 0.3941s        | 178         | 0.0234s    | 7809       | 0.0993s   |
-	 * +------------+----------------+-------------+------------+------------+-----------+
-	 * ```
-	 *
 	 * ## OPTIONS
 	 *
 	 * [--url=<url>]
