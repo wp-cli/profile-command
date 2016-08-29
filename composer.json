@@ -17,6 +17,17 @@
     "extras": {
         "commands": [
             "profile"
-        ]
+        ],
+        "readme": {
+            "package_description": {
+                "post": "bin/readme/package-description-post.md"
+            },
+            "installing": {
+                "body": "bin/readme/installing-body.md"
+            },
+            "contributing": {
+                "body": "bin/readme/contributing-body.md"
+            }
+        }
     }
 }
