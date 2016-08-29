@@ -5,7 +5,7 @@ Quickly identify what's slow with WordPress.
 
 `wp profile` monitors key performance indicators of the WordPress execution process to help you quickly identify points of slowness.
 
-Save tens of minutes diagnosing slow WordPress sites with `wp profile`. Because you can easily run it on any server that supports WP-CLI, `wp profile` compliments Xdebug and New Relic by pointing you in the right direction for further debugging. And, because it's a WP-CLI command, using `wp profile` means you don't have to install a plugin and deal with the painful dashboard of a slow WordPress site.
+Save hours diagnosing slow WordPress sites with `wp profile`. Because you can easily run it on any server that supports WP-CLI, `wp profile` compliments Xdebug and New Relic by pointing you in the right direction for further debugging. And, because it's a WP-CLI command, using `wp profile` means you don't have to install a plugin and deal with the painful dashboard of a slow WordPress site.
 
 First, run `wp profile` to see metrics for each stage of the WordPress load process:
 
@@ -120,11 +120,21 @@ wp profile [--url=<url>] [--stage=<stage>] [--hook=<hook>] [--fields=<fields>] [
 
 [Get early access to `wp profile` for only $49 per year](https://runcommand.memberful.com/checkout?plan=15360). Purchasing an early access subscription locks you into this price for as long as you stay subscribed. Subscriptions include unlimited downloads of the command, plus support and updates for the length of your subscription.
 
-Once you've purchased a subscription, installing the `wp profile` command is a three-step process:
+Once you've purchased a subscription, you can use the `wp profile` command with:
 
-1. Download the package from the URL in the purchase email.
-2. Extract the package files.
-3. Run `wp --require=command.php profile` to execute the profiler.
+```
+wp --require=command.php profile
+```
+
+Alternatively, you can [require the command so that it's always available to WP-CLI](https://runcommand.io/to/require-file-wp-cli-yml/) when running as the current system user:
+
+1. Extract the package files to `~/.wp-cli/runcommand-profile`
+2. Edit (or create) `~/.wp-cli/config.yml` and include the following require statement:
+
+```
+require:
+  - runcommand-profile/command.php
+```
 
 ## Contributing
 
