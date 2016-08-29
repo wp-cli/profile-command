@@ -1,8 +1,3 @@
-runcommand/profile
-==================
-
-Quickly identify what's slow with WordPress.
-
 `wp profile` monitors key performance indicators of the WordPress execution process to help you quickly identify points of slowness.
 
 Save tens of minutes diagnosing slow WordPress sites. Because you can install and run `wp profile` on any server that supports WP-CLI, it compliments Xdebug and New Relic by pointing you in the right direction for further debugging. And, because it's a WP-CLI command, using `wp profile` means you don't have to install a plugin and deal with the painful dashboard of a slow WordPress site.
@@ -74,60 +69,3 @@ $ wp profile --hook=plugins_loaded
 ```
 
 Et voila! You've identified some of the sources of slowness.
-
-[![CircleCI](https://circleci.com/gh/runcommand/profile/tree/master.svg?style=svg)](https://circleci.com/gh/runcommand/profile/tree/master)
-
-Quick links: [Using](#using) | [Installing](#installing) | [Contributing](#contributing)
-
-## Using
-
-~~~
-wp profile [--url=<url>] [--stage=<stage>] [--hook=<hook>] [--fields=<fields>] [--format=<format>]
-~~~
-
-**OPTIONS**
-
-	[--url=<url>]
-		Execute a request against a specified URL. Defaults to the home URL.
-
-	[--stage=<stage>]
-		Drill down into a specific stage.
-		---
-		options:
-		  - bootstrap
-		  - main_query
-		  - template
-		---
-
-	[--hook=<hook>]
-		Drill down into a specific hook.
-
-	[--fields=<fields>]
-		Display one or more fields.
-
-	[--format=<format>]
-		Render output in a particular format.
-		---
-		default: table
-		options:
-		  - table
-		  - json
-		  - yaml
-		  - csv
-		---
-
-## Installing
-
-Installing the `wp profile` command is a three-step process:
-
-1. Download the package from the URL in the purchase email.
-2. Extract the package files.
-3. Run `wp --require=command.php profile` to execute the profiler.
-
-## Contributing
-
-Support (bug reports, feature requests, and general usage questions) is available to those with an active runcommand subscription.
-
-Send an email to [support@runcommand.io](mailto:support@runcommand.io).
-
-*This README.md is generated dynamically from the project's codebase using `wp scaffold package-readme` ([doc](https://github.com/wp-cli/scaffold-package-command#wp-scaffold-package-readme)). To suggest changes, please submit a pull request against the corresponding part of the codebase.*
