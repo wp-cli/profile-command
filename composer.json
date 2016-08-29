@@ -1,6 +1,6 @@
 {
     "name": "runcommand/profile",
-    "description": "Profile the performance of a WordPress request.",
+    "description": "Quickly identify what's slow with WordPress.",
     "homepage": "https://runcommand.io/wp/profile/",
     "license": "GPL-2.0",
     "authors": [],

@@ -1,7 +1,7 @@
 runcommand/profile
 ==================
 
-Profile the performance of a WordPress request.
+Quickly identify what's slow with WordPress.
 
 [![CircleCI](https://circleci.com/gh/runcommand/profile/tree/master.svg?style=svg&circle-token=d916e588bf7c8ac469a3bd01930cf9eed886debe)](https://circleci.com/gh/runcommand/profile/tree/master)
 
@@ -10,28 +10,47 @@ Quick links: [Using](#using) | [Installing](#installing) | [Contributing](#contr
 ## Using
 
 ~~~
-wp profile [--url=<url>] [--fields=<fields>] [--format=<format>]
+wp profile [--url=<url>] [--stage=<stage>] [--hook=<hook>] [--fields=<fields>] [--format=<format>]
 ~~~
 
-Monitors aspects of the WordPress execution process to display key
-performance indicators for audit.
+`wp profile` monitors key performance indicators of the WordPress
+execution process to help you quickly identify where the slowness is
+coming from. Because you can install and run it on any server that
+supports WP-CLI, in 15 seconds or less, `wp profile` compliments Xdebug
+and New Relic by pointing you in the right direction for further
+debugging. And, because it's a WP-CLI command, using `wp profile` means
+you don't have to install a plugin and deal with the painful dashboard
+of a slow WordPress site.
 
 ```
 $ wp profile
-+------------+----------------+-------------+------------+------------+-----------+
-| scope      | execution_time | query_count | query_time | hook_count | hook_time |
-+------------+----------------+-------------+------------+------------+-----------+
-| total      | 2.6685s        | 196         | 0.0274s    | 10723      | 0.2173s   |
-| bootstrap  | 2.2609s        | 15          | 0.0037s    | 2836       | 0.1166s   |
-| main_query | 0.0126s        | 3           | 0.0004s    | 78         | 0.0014s   |
-| template   | 0.3941s        | 178         | 0.0234s    | 7809       | 0.0993s   |
-+------------+----------------+-------------+------------+------------+-----------+
++------------+---------+------------+-------------+-------------+------------+--------------+-----------+------------+--------------+---------------+
+| stage      | time    | query_time | query_count | cache_ratio | cache_hits | cache_misses | hook_time | hook_count | request_time | request_count |
++------------+---------+------------+-------------+-------------+------------+--------------+-----------+------------+--------------+---------------+
+| bootstrap  | 2.0408s | 0.0365s    | 15          | 93.21%      | 412        | 30           | 0.9299s   | 3097       | 0s           | 0             |
+| main_query | 0.0123s | 0.0004s    | 3           | 94.29%      | 33         | 2            | 0.0098s   | 79         | 0s           | 0             |
+| template   | 0.305s  | 0.0175s    | 179         | 91.02%      | 2636       | 260          | 0.1125s   | 7777       | 0s           | 0             |
++------------+---------+------------+-------------+-------------+------------+--------------+-----------+------------+--------------+---------------+
+| total      | 2.3582s | 0.0544s    | 197         | 92.84%      | 3081       | 292          | 1.0522s   | 10953      | 0s           | 0             |
++------------+---------+------------+-------------+-------------+------------+--------------+-----------+------------+--------------+---------------+
 ```
 
 **OPTIONS**
 
 	[--url=<url>]
 		Execute a request against a specified URL. Defaults to the home URL.
+
+	[--stage=<stage>]
+		Drill down into a specific stage.
+		---
+		options:
+		  - bootstrap
+		  - main_query
+		  - template
+		---
+
+	[--hook=<hook>]
+		Drill down into a specific hook.
 
 	[--fields=<fields>]
 		Display one or more fields.
