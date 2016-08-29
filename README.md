@@ -118,7 +118,7 @@ wp profile [--url=<url>] [--stage=<stage>] [--hook=<hook>] [--fields=<fields>] [
 
 ## Installing
 
-To use `wp profile`, you'll need to [purchase an early access subscription](https://runcommand.memberful.com/checkout?plan=15360).
+[Get early access to `wp profile` for only $49 per year](https://runcommand.memberful.com/checkout?plan=15360). Purchasing an early access subscription locks you into this price for as long as you stay subscribed. Subscriptions include unlimited downloads of the command, plus support and updates for the length of your subscription.
 
 Once you've purchased a subscription, installing the `wp profile` command is a three-step process:
 
