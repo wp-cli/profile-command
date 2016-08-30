@@ -3,7 +3,7 @@ runcommand/profile
 
 Quickly identify what's slow with WordPress.
 
-[![CircleCI](https://circleci.com/gh/runcommand/profile/tree/master.svg?style=svg&circle-token=d916e588bf7c8ac469a3bd01930cf9eed886debe)](https://circleci.com/gh/runcommand/profile/tree/master)
+[![Buy Now](https://img.shields.io/badge/Buy%20Now-%2449%20(early%20access)-%23fd0a00.svg)](https://runcommand.memberful.com/checkout?plan=15360) [![CircleCI](https://circleci.com/gh/runcommand/profile/tree/master.svg?style=svg&circle-token=d916e588bf7c8ac469a3bd01930cf9eed886debe)](https://circleci.com/gh/runcommand/profile/tree/master)
 
 Quick links: [Overview](#overview) | [Using](#using) | [Installing](#installing) | [Support](#support)
 
