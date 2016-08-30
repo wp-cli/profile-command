@@ -61,9 +61,14 @@ class Command {
 				WP_CLI::set_url( home_url( '/' ) );
 			});
 		}
-		if ( ! defined( 'SAVEQUERIES' ) ) {
-			define( 'SAVEQUERIES', true );
-		}
+		WP_CLI::add_hook( 'after_wp_config_load', function() {
+			if ( defined( 'SAVEQUERIES' ) && ! SAVEQUERIES ) {
+				WP_CLI::error( "'SAVEQUERIES' is defined as false, and must be true. Please check your wp-config.php" );
+			}
+			if ( ! defined( 'SAVEQUERIES' ) ) {
+				define( 'SAVEQUERIES', true );
+			}
+		});
 		WP_CLI::add_wp_hook( 'all', array( $this, 'wp_hook_begin' ) );
 		WP_CLI::add_wp_hook( 'pre_http_request', array( $this, 'wp_request_begin' ) );
 		WP_CLI::add_wp_hook( 'http_api_debug', array( $this, 'wp_request_end' ) );
