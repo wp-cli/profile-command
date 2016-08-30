@@ -84,14 +84,14 @@ class Formatter {
 					$totals[ $i ] += $value;
 				}
 				if ( stripos( $fields[ $i ], '_time' ) || 'time' === $fields[ $i ] ) {
-					$values[ $i ] = round( $value, 4 ) . 's';
+					$values[ $i ] = self::format_milliseconds( $value );
 				}
 			}
 			$table->addRow( $values );
 		}
 		foreach( $totals as $i => $value ) {
 			if ( stripos( $fields[ $i ], '_time' ) || 'time' === $fields[ $i ] ) {
-				$totals[ $i ] = round( $value, 4 ) . 's';
+				$totals[ $i ] = self::format_milliseconds( $value );
 			}
 			if ( is_array( $value ) ) {
 				if ( ! empty( $value ) ) {
@@ -110,5 +110,12 @@ class Formatter {
 		if ( $enabled ) {
 			\cli\Colors::enable( true );
 		}
+	}
+
+	/**
+	 * Format a time as milliseconds
+	 */
+	private static function format_milliseconds( $time ) {
+		return round( ( $time * 1000 ), 2 ) . 'ms';
 	}
 }
