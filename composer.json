@@ -22,14 +22,20 @@
             "shields": [
                 "[![CircleCI](https://circleci.com/gh/runcommand/profile/tree/master.svg?style=svg&circle-token=d916e588bf7c8ac469a3bd01930cf9eed886debe)](https://circleci.com/gh/runcommand/profile/tree/master)"
             ],
-            "package_description": {
-                "post": "bin/readme/package-description-post.md"
+            "sections": [
+                "Overview",
+                "Using",
+                "Installing",
+                "Support"
+            ],
+            "overview": {
+                "post": "bin/readme/overview-body.md"
             },
             "installing": {
                 "body": "bin/readme/installing-body.md"
             },
-            "contributing": {
-                "body": "bin/readme/contributing-body.md"
+            "support": {
+                "body": "bin/readme/support-body.md"
             }
         }
     }
