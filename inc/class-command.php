@@ -295,7 +295,16 @@ class Command {
 		}
 
 		// Load the theme template.
-		if ( ! $this->focus_stage && ! $this->focus_hook ) {
+		if ( 'template' === $this->focus_stage ) {
+			$this->set_stage_hooks( array(
+				'template_redirect',
+				'template_include',
+				'wp_head',
+				'loop_start',
+				'loop_end',
+				'wp_footer',
+			) );
+		} else if ( ! $this->focus_stage && ! $this->focus_hook ) {
 			$logger = new Logger( 'stage', 'template' );
 			$logger->start();
 		}
