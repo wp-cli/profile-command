@@ -3,6 +3,12 @@ runcommand/profile
 
 Quickly identify what's slow with WordPress.
 
+[![CircleCI](https://circleci.com/gh/runcommand/profile/tree/master.svg?style=svg&circle-token=d916e588bf7c8ac469a3bd01930cf9eed886debe)](https://circleci.com/gh/runcommand/profile/tree/master)
+
+Quick links: [Overview](#overview) | [Using](#using) | [Installing](#installing) | [Support](#support)
+
+## Overview
+
 `wp profile` monitors key performance indicators of the WordPress execution process to help you quickly identify points of slowness.
 
 Save hours diagnosing slow WordPress sites with `wp profile`. Because you can easily run it on any server that supports WP-CLI, `wp profile` compliments Xdebug and New Relic by pointing you in the right direction for further debugging. And, because it's a WP-CLI command, using `wp profile` means you don't have to install a plugin and deal with the painful dashboard of a slow WordPress site.
@@ -75,10 +81,6 @@ $ wp profile --hook=plugins_loaded
 
 Et voila! You've identified some of the sources of slowness.
 
-[![CircleCI](https://circleci.com/gh/runcommand/profile/tree/master.svg?style=svg&circle-token=d916e588bf7c8ac469a3bd01930cf9eed886debe)](https://circleci.com/gh/runcommand/profile/tree/master)
-
-Quick links: [Using](#using) | [Installing](#installing) | [Contributing](#contributing)
-
 ## Using
 
 ~~~
@@ -136,10 +138,11 @@ require:
   - runcommand-profile/command.php
 ```
 
-## Contributing
+## Support
 
 Support (bug reports, feature requests, and general usage questions) is available to those with an active runcommand subscription.
 
 Send an email to [support@runcommand.io](mailto:support@runcommand.io).
+
 
 *This README.md is generated dynamically from the project's codebase using `wp scaffold package-readme` ([doc](https://github.com/wp-cli/scaffold-package-command#wp-scaffold-package-readme)). To suggest changes, please submit a pull request against the corresponding part of the codebase.*
