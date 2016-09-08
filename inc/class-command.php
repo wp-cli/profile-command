@@ -164,6 +164,10 @@ class Command {
 		else
 			++$wp_actions[$tag];
 
+		if ( empty( $wp_filter[ $tag ] ) ) {
+			return;
+		}
+
 		if ( !isset($wp_filter['all']) )
 			$wp_current_filter[] = $tag;
 
