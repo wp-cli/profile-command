@@ -72,11 +72,7 @@ class Command {
 		WP_CLI::add_wp_hook( 'all', array( $this, 'wp_hook_begin' ) );
 		WP_CLI::add_wp_hook( 'pre_http_request', array( $this, 'wp_request_begin' ) );
 		WP_CLI::add_wp_hook( 'http_api_debug', array( $this, 'wp_request_end' ) );
-		try {
-			$this->load_wordpress_with_template();
-		} catch( \Exception $e ) {
-			// pass through
-		}
+		$this->load_wordpress_with_template();
 
 		if ( $this->focus_stage ) {
 			$fields = array(
@@ -266,7 +262,11 @@ class Command {
 			$logger = new Logger( 'stage', 'bootstrap' );
 			$logger->start();
 		}
-		WP_CLI::get_runner()->load_wordpress();
+		try {
+			WP_CLI::get_runner()->load_wordpress();
+		} catch( \Exception $e ) {
+			// pass through
+		}
 		if ( ! $this->focus_stage && ! $this->focus_hook ) {
 			$logger->stop();
 			$this->loggers[] = $logger;
@@ -285,7 +285,11 @@ class Command {
 			$logger = new Logger( 'stage', 'main_query' );
 			$logger->start();
 		}
-		wp();
+		try {
+			wp();
+		} catch( \Exception $e ) {
+			// pass through
+		}
 		if ( ! $this->focus_stage && ! $this->focus_hook ) {
 			$logger->stop();
 			$this->loggers[] = $logger;
@@ -313,12 +317,17 @@ class Command {
 			$logger->start();
 		}
 		ob_start();
-		require_once( ABSPATH . WPINC . '/template-loader.php' );
+		try {
+			require_once( ABSPATH . WPINC . '/template-loader.php' );
+		} catch( \Exception $e ) {
+			// pass through
+		}
 		ob_get_clean();
 		if ( ! $this->focus_stage && ! $this->focus_hook ) {
 			$logger->stop();
 			$this->loggers[] = $logger;
 		}
+
 	}
 
 	/**
