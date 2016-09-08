@@ -8,3 +8,14 @@ Feature: Profile a specific hook
       | callback          |
       | total             |
     And STDERR should be empty
+
+  Scenario: Profile a hook that has actions with output
+    Given a WP install
+
+    When I run `wp profile --hook=wp_head --fields=callback`
+    Then STDOUT should be a table containing rows:
+      | callback          |
+    And STDOUT should not contain:
+      """
+      <meta name="generator"
+      """
