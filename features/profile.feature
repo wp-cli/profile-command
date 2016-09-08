@@ -28,3 +28,12 @@ Feature: Basic profile usage
       """
       Error: 'SAVEQUERIES' is defined as false, and must be true. Please check your wp-config.php
       """
+
+  Scenario: Profile a hook without any callbacks
+    Given a WP install
+
+    When I run `wp profile --hook=setup_theme --fields=callback,time`
+    Then STDOUT should be a table containing rows:
+      | callback          | time   |
+      | total             |        |
+    And STDERR should be empty

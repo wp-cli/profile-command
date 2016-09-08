@@ -60,16 +60,15 @@ class Formatter {
 
 		$table->setHeaders( $fields );
 
-		$totals = array(
-			'total',
-		);
+		$totals = array_fill( 0, count( $fields ), null );
+		$totals[0] = 'total';
 		foreach ( $items as $item ) {
 			$values = array_values( \WP_CLI\Utils\pick_fields( $item, $fields ) );
 			foreach( $values as $i => $value ) {
 				if ( 0 === $i ) {
 					continue;
 				}
-				if ( ! isset( $totals[ $i ] ) ) {
+				if ( null === $totals[ $i ] ) {
 					if ( stripos( $fields[ $i ], '_ratio' ) ) {
 						$totals[ $i ] = array();
 					} else {
@@ -90,6 +89,9 @@ class Formatter {
 			$table->addRow( $values );
 		}
 		foreach( $totals as $i => $value ) {
+			if ( null === $value ) {
+				continue;
+			}
 			if ( stripos( $fields[ $i ], '_time' ) || 'time' === $fields[ $i ] ) {
 				$totals[ $i ] = round( $value, 4 ) . 's';
 			}
