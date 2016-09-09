@@ -44,6 +44,13 @@ class Logger {
 	}
 
 	/**
+	 * Whether or not the logger is running
+	 */
+	public function running() {
+		return ! is_null( $this->start_time );
+	}
+
+	/**
 	 * Stop this logger
 	 */
 	public function stop() {
