@@ -18,4 +18,5 @@ Feature: Profile the template render stage
       | loop_end          |
       |                   |
       | wp_footer         |
+      |                   |
       | total             |
