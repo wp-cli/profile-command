@@ -217,6 +217,10 @@ class Command {
 				$pseudo_hook = "before {$this->stage_hooks[$key+1]}";
 				$this->loggers[ $pseudo_hook ] = new Logger( 'hook', '' );
 				$this->loggers[ $pseudo_hook ]->start();
+			} else {
+				$pseudo_hook = 'wp_profile_last_hook';
+				$this->loggers[ $pseudo_hook ] = new Logger( 'hook', '' );
+				$this->loggers[ $pseudo_hook ]->start();
 			}
 		}
 
@@ -267,6 +271,9 @@ class Command {
 		} catch( \Exception $e ) {
 			// pass through
 		}
+		if ( isset( $this->loggers['wp_profile_last_hook'] ) && $this->loggers['wp_profile_last_hook']->running() ) {
+			$this->loggers['wp_profile_last_hook']->stop();
+		}
 		if ( ! $this->focus_stage && ! $this->focus_hook ) {
 			$logger->stop();
 			$this->loggers[] = $logger;
@@ -289,6 +296,9 @@ class Command {
 			wp();
 		} catch( \Exception $e ) {
 			// pass through
+		}
+		if ( isset( $this->loggers['wp_profile_last_hook'] ) && $this->loggers['wp_profile_last_hook']->running() ) {
+			$this->loggers['wp_profile_last_hook']->stop();
 		}
 		if ( ! $this->focus_stage && ! $this->focus_hook ) {
 			$logger->stop();
@@ -321,6 +331,9 @@ class Command {
 			require_once( ABSPATH . WPINC . '/template-loader.php' );
 		} catch( \Exception $e ) {
 			// pass through
+		}
+		if ( isset( $this->loggers['wp_profile_last_hook'] ) && $this->loggers['wp_profile_last_hook']->running() ) {
+			$this->loggers['wp_profile_last_hook']->stop();
 		}
 		ob_get_clean();
 		if ( ! $this->focus_stage && ! $this->focus_hook ) {
