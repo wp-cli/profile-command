@@ -14,6 +14,8 @@ class Command {
 	private $current_filter_callbacks = array();
 	private $focus_query_offset = 0;
 
+	private static $exception_message = "Need to bail, because can't restore the hooks";
+
 	/**
 	 * Quickly identify what's slow with WordPress.
 	 *
@@ -141,7 +143,7 @@ class Command {
 			$this->current_filter_callbacks = $wp_filter[ $current_filter ];
 			unset( $wp_filter[ $current_filter ] );
 			call_user_func_array( array( $this, 'do_action' ), func_get_args() );
-			throw new \Exception( "Need to bail, because can't restore the hooks" );
+			throw new \Exception( self::$exception_message );
 		}
 
 		WP_CLI::add_wp_hook( $current_filter, array( $this, 'wp_hook_end' ), 999 );
@@ -269,7 +271,11 @@ class Command {
 		try {
 			WP_CLI::get_runner()->load_wordpress();
 		} catch( \Exception $e ) {
-			// pass through
+			// If this was thrown by our do_action implementation, then we need to bail
+			if ( self::$exception_message === $e->getMessage() ) {
+				return;
+			}
+			// Otherwise, pass through.
 		}
 		if ( isset( $this->loggers['wp_profile_last_hook'] ) && $this->loggers['wp_profile_last_hook']->running() ) {
 			$this->loggers['wp_profile_last_hook']->stop();
@@ -295,7 +301,11 @@ class Command {
 		try {
 			wp();
 		} catch( \Exception $e ) {
-			// pass through
+			// If this was thrown by our do_action implementation, then we need to bail
+			if ( self::$exception_message === $e->getMessage() ) {
+				return;
+			}
+			// Otherwise, pass through.
 		}
 		if ( isset( $this->loggers['wp_profile_last_hook'] ) && $this->loggers['wp_profile_last_hook']->running() ) {
 			$this->loggers['wp_profile_last_hook']->stop();
@@ -330,7 +340,12 @@ class Command {
 		try {
 			require_once( ABSPATH . WPINC . '/template-loader.php' );
 		} catch( \Exception $e ) {
-			// pass through
+			// If this was thrown by our do_action implementation, then we need to bail
+			if ( self::$exception_message === $e->getMessage() ) {
+				ob_get_clean();
+				return;
+			}
+			// Otherwise, pass through.
 		}
 		if ( isset( $this->loggers['wp_profile_last_hook'] ) && $this->loggers['wp_profile_last_hook']->running() ) {
 			$this->loggers['wp_profile_last_hook']->stop();
