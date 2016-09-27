@@ -140,40 +140,55 @@ class Command {
 		}
 
 		if ( $this->focus_hook && $current_filter === $this->focus_hook ) {
-			if ( is_a( $wp_filter[ $current_filter ], 'WP_Hook' ) ) {
-				$callbacks = $this->current_filter_callbacks = $wp_filter[ $current_filter ]->callbacks;
-			} else {
-				$callbacks = $this->current_filter_callbacks = $wp_filter[ $current_filter ];
-			}
-
-			if ( is_array( $callbacks ) ) {
-				foreach( $callbacks as $priority => $priority_callbacks ) {
-					foreach( $priority_callbacks as $i => $the_ ) {
-						$callbacks[ $priority ][ $i ] = array(
-							'function'       => function() use( $the_, $i ) {
-								if ( ! isset( $this->loggers[ $i ] ) ) {
-									$this->loggers[ $i ] = new Logger( 'callback', self::get_name_from_callback( $the_['function'] ) );
-								}
-								$this->loggers[ $i ]->start();
-								$value = call_user_func_array( $the_['function'], func_get_args() );
-								$this->loggers[ $i ]->stop();
-								return $value;
-							},
-							'accepted_args'  => $_the['accepted_args'],
-						);
-					}
-				}
-			}
-
-			if ( is_a( $wp_filter[ $current_filter ], 'WP_Hook' ) ) {
-				$wp_filter[ $current_filter ]->callbacks = $callbacks;
-			} else {
-				$wp_filter[ $current_filter ] = $callbacks;
-			}
-
+			$this->wrap_current_filter_callbacks( $current_filter );
 		}
 
 		WP_CLI::add_wp_hook( $current_filter, array( $this, 'wp_hook_end' ), 999 );
+	}
+	
+	/**
+	 * Wrap current filter callbacks with a timer
+	 */
+	private function wrap_current_filter_callbacks( $current_filter ) {
+		global $wp_filter;
+		$this->current_filter_callbacks = null;
+
+		if ( ! isset( $wp_filter[ $current_filter ] ) ) {
+			return;
+		}
+
+		if ( is_a( $wp_filter[ $current_filter ], 'WP_Hook' ) ) {
+			$callbacks = $this->current_filter_callbacks = $wp_filter[ $current_filter ]->callbacks;
+		} else {
+			$callbacks = $this->current_filter_callbacks = $wp_filter[ $current_filter ];
+		}
+
+		if ( ! is_array( $callbacks ) ) {
+			return;
+		}
+
+		foreach( $callbacks as $priority => $priority_callbacks ) {
+			foreach( $priority_callbacks as $i => $the_ ) {
+				$callbacks[ $priority ][ $i ] = array(
+					'function'       => function() use( $the_, $i ) {
+						if ( ! isset( $this->loggers[ $i ] ) ) {
+							$this->loggers[ $i ] = new Logger( 'callback', self::get_name_from_callback( $the_['function'] ) );
+						}
+						$this->loggers[ $i ]->start();
+						$value = call_user_func_array( $the_['function'], func_get_args() );
+						$this->loggers[ $i ]->stop();
+						return $value;
+					},
+					'accepted_args'  => $_the['accepted_args'],
+				);
+			}
+		}
+
+		if ( is_a( $wp_filter[ $current_filter ], 'WP_Hook' ) ) {
+			$wp_filter[ $current_filter ]->callbacks = $callbacks;
+		} else {
+			$wp_filter[ $current_filter ] = $callbacks;
+		}
 	}
 
 	/**
@@ -201,7 +216,7 @@ class Command {
 			}
 		}
 
-		if ( $this->focus_hook && $current_filter === $this->focus_hook ) {
+		if ( $this->focus_hook && $current_filter === $this->focus_hook && ! is_null( $this->current_filter_callbacks ) ) {
 			if ( is_a( $wp_filter[ $current_filter ], 'WP_Hook' ) ) {
 				$wp_filter[ $current_filter ]->callbacks = $this->current_filter_callbacks;
 			} else {
