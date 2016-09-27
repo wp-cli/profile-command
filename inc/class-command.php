@@ -177,58 +177,6 @@ class Command {
 	}
 
 	/**
-	 * Instrumented version of do_action()
-	 */
-	private function do_action( $tag, $arg = '' ) {
-		global $wp_actions, $merged_filters, $wp_current_filter;
-		$wp_filter = array();
-		$wp_filter[ $tag ] = $this->current_filter_callbacks;
-
-		if ( ! isset($wp_actions[$tag]) )
-			$wp_actions[$tag] = 1;
-		else
-			++$wp_actions[$tag];
-
-		if ( empty( $wp_filter[ $tag ] ) ) {
-			return;
-		}
-
-		if ( !isset($wp_filter['all']) )
-			$wp_current_filter[] = $tag;
-
-		$args = array();
-		if ( is_array($arg) && 1 == count($arg) && isset($arg[0]) && is_object($arg[0]) ) // array(&$this)
-			$args[] =& $arg[0];
-		else
-			$args[] = $arg;
-		for ( $a = 2, $num = func_num_args(); $a < $num; $a++ )
-			$args[] = func_get_arg($a);
-
-		// Sort
-		if ( !isset( $merged_filters[ $tag ] ) ) {
-			ksort($wp_filter[$tag]);
-			$merged_filters[ $tag ] = true;
-		}
-
-		reset( $wp_filter[ $tag ] );
-
-		do {
-			foreach ( (array) current($wp_filter[$tag]) as $i => $the_ )
-				if ( !is_null($the_['function']) ) {
-					if ( ! isset( $this->loggers[ $i ] ) ) {
-						$this->loggers[ $i ] = new Logger( 'callback', self::get_name_from_callback( $the_['function'] ) );
-						$this->loggers[ $i ]->start();
-					}
-					call_user_func_array($the_['function'], array_slice($args, 0, (int) $the_['accepted_args']));
-					$this->loggers[ $i ]->stop();
-				}
-
-		} while ( next($wp_filter[$tag]) !== false );
-
-		array_pop($wp_current_filter);
-	}
-
-	/**
 	 * Profiling verbosity at the end of every action and filter
 	 */
 	public function wp_hook_end( $filter_value = null ) {
