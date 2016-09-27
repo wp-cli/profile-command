@@ -12,4 +12,7 @@ test:
   pre:
     - bash bin/install-package-tests.sh
   override:
+    - wp core download --force --path='/tmp/wp-cli-test core-download-cache'
+    - ./vendor/bin/behat --strict
+    - wp core download --version=trunk --force --path='/tmp/wp-cli-test core-download-cache'
     - ./vendor/bin/behat --strict
