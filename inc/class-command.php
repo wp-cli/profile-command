@@ -140,65 +140,55 @@ class Command {
 		}
 
 		if ( $this->focus_hook && $current_filter === $this->focus_hook ) {
-			$this->current_filter_callbacks = $wp_filter[ $current_filter ];
-			unset( $wp_filter[ $current_filter ] );
-			call_user_func_array( array( $this, 'do_action' ), func_get_args() );
-			throw new \Exception( self::$exception_message );
+			$this->wrap_current_filter_callbacks( $current_filter );
 		}
 
 		WP_CLI::add_wp_hook( $current_filter, array( $this, 'wp_hook_end' ), 999 );
 	}
-
+	
 	/**
-	 * Instrumented version of do_action()
+	 * Wrap current filter callbacks with a timer
 	 */
-	private function do_action( $tag, $arg = '' ) {
-		global $wp_actions, $merged_filters, $wp_current_filter;
-		$wp_filter = array();
-		$wp_filter[ $tag ] = $this->current_filter_callbacks;
+	private function wrap_current_filter_callbacks( $current_filter ) {
+		global $wp_filter;
+		$this->current_filter_callbacks = null;
 
-		if ( ! isset($wp_actions[$tag]) )
-			$wp_actions[$tag] = 1;
-		else
-			++$wp_actions[$tag];
-
-		if ( empty( $wp_filter[ $tag ] ) ) {
+		if ( ! isset( $wp_filter[ $current_filter ] ) ) {
 			return;
 		}
 
-		if ( !isset($wp_filter['all']) )
-			$wp_current_filter[] = $tag;
-
-		$args = array();
-		if ( is_array($arg) && 1 == count($arg) && isset($arg[0]) && is_object($arg[0]) ) // array(&$this)
-			$args[] =& $arg[0];
-		else
-			$args[] = $arg;
-		for ( $a = 2, $num = func_num_args(); $a < $num; $a++ )
-			$args[] = func_get_arg($a);
-
-		// Sort
-		if ( !isset( $merged_filters[ $tag ] ) ) {
-			ksort($wp_filter[$tag]);
-			$merged_filters[ $tag ] = true;
+		if ( is_a( $wp_filter[ $current_filter ], 'WP_Hook' ) ) {
+			$callbacks = $this->current_filter_callbacks = $wp_filter[ $current_filter ]->callbacks;
+		} else {
+			$callbacks = $this->current_filter_callbacks = $wp_filter[ $current_filter ];
 		}
 
-		reset( $wp_filter[ $tag ] );
+		if ( ! is_array( $callbacks ) ) {
+			return;
+		}
 
-		do {
-			foreach ( (array) current($wp_filter[$tag]) as $i => $the_ )
-				if ( !is_null($the_['function']) ) {
-					if ( ! isset( $this->loggers[ $i ] ) ) {
-						$this->loggers[ $i ] = new Logger( 'callback', self::get_name_from_callback( $the_['function'] ) );
+		foreach( $callbacks as $priority => $priority_callbacks ) {
+			foreach( $priority_callbacks as $i => $the_ ) {
+				$callbacks[ $priority ][ $i ] = array(
+					'function'       => function() use( $the_, $i ) {
+						if ( ! isset( $this->loggers[ $i ] ) ) {
+							$this->loggers[ $i ] = new Logger( 'callback', self::get_name_from_callback( $the_['function'] ) );
+						}
 						$this->loggers[ $i ]->start();
-					}
-					call_user_func_array($the_['function'], array_slice($args, 0, (int) $the_['accepted_args']));
-					$this->loggers[ $i ]->stop();
-				}
+						$value = call_user_func_array( $the_['function'], func_get_args() );
+						$this->loggers[ $i ]->stop();
+						return $value;
+					},
+					'accepted_args'  => $_the['accepted_args'],
+				);
+			}
+		}
 
-		} while ( next($wp_filter[$tag]) !== false );
-
-		array_pop($wp_current_filter);
+		if ( is_a( $wp_filter[ $current_filter ], 'WP_Hook' ) ) {
+			$wp_filter[ $current_filter ]->callbacks = $callbacks;
+		} else {
+			$wp_filter[ $current_filter ] = $callbacks;
+		}
 	}
 
 	/**
@@ -223,6 +213,14 @@ class Command {
 				$pseudo_hook = 'wp_profile_last_hook';
 				$this->loggers[ $pseudo_hook ] = new Logger( 'hook', '' );
 				$this->loggers[ $pseudo_hook ]->start();
+			}
+		}
+
+		if ( $this->focus_hook && $current_filter === $this->focus_hook && ! is_null( $this->current_filter_callbacks ) ) {
+			if ( is_a( $wp_filter[ $current_filter ], 'WP_Hook' ) ) {
+				$wp_filter[ $current_filter ]->callbacks = $this->current_filter_callbacks;
+			} else {
+				$wp_filter[ $current_filter ] = $this->current_filter_callbacks;
 			}
 		}
 
@@ -268,15 +266,7 @@ class Command {
 			$logger = new Logger( 'stage', 'bootstrap' );
 			$logger->start();
 		}
-		try {
-			WP_CLI::get_runner()->load_wordpress();
-		} catch( \Exception $e ) {
-			// If this was thrown by our do_action implementation, then we need to bail
-			if ( self::$exception_message === $e->getMessage() ) {
-				return;
-			}
-			// Otherwise, pass through.
-		}
+		WP_CLI::get_runner()->load_wordpress();
 		if ( isset( $this->loggers['wp_profile_last_hook'] ) && $this->loggers['wp_profile_last_hook']->running() ) {
 			$this->loggers['wp_profile_last_hook']->stop();
 		}
@@ -298,15 +288,7 @@ class Command {
 			$logger = new Logger( 'stage', 'main_query' );
 			$logger->start();
 		}
-		try {
-			wp();
-		} catch( \Exception $e ) {
-			// If this was thrown by our do_action implementation, then we need to bail
-			if ( self::$exception_message === $e->getMessage() ) {
-				return;
-			}
-			// Otherwise, pass through.
-		}
+		wp();
 		if ( isset( $this->loggers['wp_profile_last_hook'] ) && $this->loggers['wp_profile_last_hook']->running() ) {
 			$this->loggers['wp_profile_last_hook']->stop();
 		}
@@ -337,20 +319,11 @@ class Command {
 			$logger->start();
 		}
 		ob_start();
-		try {
-			require_once( ABSPATH . WPINC . '/template-loader.php' );
-		} catch( \Exception $e ) {
-			// If this was thrown by our do_action implementation, then we need to bail
-			if ( self::$exception_message === $e->getMessage() ) {
-				ob_get_clean();
-				return;
-			}
-			// Otherwise, pass through.
-		}
+		require_once( ABSPATH . WPINC . '/template-loader.php' );
+		ob_get_clean();
 		if ( isset( $this->loggers['wp_profile_last_hook'] ) && $this->loggers['wp_profile_last_hook']->running() ) {
 			$this->loggers['wp_profile_last_hook']->stop();
 		}
-		ob_get_clean();
 		if ( ! $this->focus_stage && ! $this->focus_hook ) {
 			$logger->stop();
 			$this->loggers[] = $logger;

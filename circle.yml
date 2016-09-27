@@ -12,4 +12,6 @@ test:
   pre:
     - bash bin/install-package-tests.sh
   override:
-    - ./vendor/bin/behat --strict
+    - WP_VERSION=latest ./vendor/bin/behat --strict
+    - rm -rf '/tmp/wp-cli-test core-download-cache'
+    - WP_VERSION=trunk ./vendor/bin/behat --strict
