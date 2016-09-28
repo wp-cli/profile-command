@@ -143,7 +143,7 @@ class Command {
 			$this->wrap_current_filter_callbacks( $current_filter );
 		}
 
-		WP_CLI::add_wp_hook( $current_filter, array( $this, 'wp_hook_end' ), 999 );
+		WP_CLI::add_wp_hook( $current_filter, array( $this, 'wp_hook_end' ), 9999 );
 	}
 	
 	/**
