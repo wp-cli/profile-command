@@ -179,7 +179,7 @@ class Command {
 						$this->loggers[ $i ]->stop();
 						return $value;
 					},
-					'accepted_args'  => $_the['accepted_args'],
+					'accepted_args'  => $the_['accepted_args'],
 				);
 			}
 		}
