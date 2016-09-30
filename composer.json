@@ -15,13 +15,13 @@
     "require-dev": {
         "behat/behat": "~2.5"
     },
-    "extras": {
+    "extra": {
         "commands": [
             "profile"
         ],
         "readme": {
             "shields": [
-                "[![Buy Now](https://runcommand.io/wp-content/themes/runcommand-theme/bin/shields/buy-now-49-early-access.svg)](https://runcommand.memberful.com/checkout?plan=15360)",
+                "[![Buy Now](https://runcommand.io/wp-content/themes/runcommand-theme/bin/shields/buy-now-129.svg)](https://runcommand.memberful.com/checkout?plan=16079)",
                 "[![CircleCI](https://circleci.com/gh/runcommand/profile/tree/master.svg?style=svg&circle-token=d916e588bf7c8ac469a3bd01930cf9eed886debe)](https://circleci.com/gh/runcommand/profile/tree/master)"
             ],
             "sections": [
@@ -37,7 +37,7 @@
                 "body": "bin/readme/installing-body.md"
             },
             "support": {
-                "body": "bin/readme/support-body.md"
+                "body": "https://raw.githubusercontent.com/runcommand/runcommand-theme/master/bin/readme-partials/support-premium.md"
             }
         }
     }
