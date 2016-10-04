@@ -148,6 +148,35 @@ wp profile hook <hook> [--url=<url>] [--fields=<fields>] [--format=<format>]
 		  - csv
 		---
 
+
+
+### wp profile eval
+
+Profile arbitrary code execution.
+
+~~~
+wp profile eval <php-code> [--fields=<fields>] [--format=<format>]
+~~~
+
+**OPTIONS**
+
+	<php-code>
+		The code to execute, as a string.
+
+	[--fields=<fields>]
+		Display one or more fields.
+
+	[--format=<format>]
+		Render output in a particular format.
+		---
+		default: table
+		options:
+		  - table
+		  - json
+		  - yaml
+		  - csv
+		---
+
 ## Installing
 
 [Get access to `wp profile` for only $129 per year](https://runcommand.memberful.com/checkout?plan=16079). Purchasing an annual subscription locks you into this price for as long as you stay subscribed. Subscriptions include unlimited downloads of the command, plus support and updates for the length of your subscription.

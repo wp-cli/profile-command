@@ -136,6 +136,54 @@ class Command {
 	}
 
 	/**
+	 * Profile arbitrary code execution.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <php-code>
+	 * : The code to execute, as a string.
+	 *
+	 * [--fields=<fields>]
+	 * : Display one or more fields.
+	 *
+	 * [--format=<format>]
+	 * : Render output in a particular format.
+	 * ---
+	 * default: table
+	 * options:
+	 *   - table
+	 *   - json
+	 *   - yaml
+	 *   - csv
+	 * ---
+	 *
+	 * @when before_wp_load
+	 * @subcommand eval
+	 */
+	public function eval_( $args, $assoc_args ) {
+
+		$this->run_profiler();
+
+		$logger = new Logger( 'eval', 'eval' );
+		$logger->start();
+		eval( $args[0] );
+		$logger->stop();
+
+		$fields = array(
+			'time',
+			'query_time',
+			'query_count',
+			'cache_ratio',
+			'cache_hits',
+			'cache_misses',
+			'request_time',
+			'request_count',
+		);
+		$formatter = new Formatter( $assoc_args, $fields );
+		$formatter->display_items( array( $logger ) );
+	}
+
+	/**
 	 * Profiling verbosity at the beginning of every action and filter
 	 */
 	public function wp_hook_begin() {

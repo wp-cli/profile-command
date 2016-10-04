@@ -18,7 +18,8 @@
     "extra": {
         "commands": [
             "profile stage",
-            "profile hook"
+            "profile hook",
+            "profile eval"
         ],
         "readme": {
             "shields": [
