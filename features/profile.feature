@@ -31,7 +31,7 @@ Feature: Basic profile usage
   Scenario: Trailingslash provided URL to avoid canonical redirect
     Given a WP install
 
-    When I run `wp profile hook setup_theme --url=example.com`
+    When I run `wp profile hook setup_theme --url=example.com --fields=callback,time`
     Then STDERR should be empty
     And STDOUT should be a table containing rows:
       | callback          | time   |
