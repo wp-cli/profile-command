@@ -84,26 +84,55 @@ Et voila! You've identified some of the sources of slowness.
 
 ## Using
 
+This package implements the following commands:
+
+### wp profile stage
+
+Profile each stage of the WordPress load process (bootstrap, main_query, template).
+
 ~~~
-wp profile [--url=<url>] [--stage=<stage>] [--hook=<hook>] [--fields=<fields>] [--format=<format>]
+wp profile stage [<stage>] [--url=<url>] [--fields=<fields>] [--format=<format>]
 ~~~
 
 **OPTIONS**
 
+	[<stage>]
+		Drill down into a specific stage.
+
 	[--url=<url>]
 		Execute a request against a specified URL. Defaults to the home URL.
 
-	[--stage=<stage>]
-		Drill down into a specific stage.
+	[--fields=<fields>]
+		Display one or more fields.
+
+	[--format=<format>]
+		Render output in a particular format.
 		---
+		default: table
 		options:
-		  - bootstrap
-		  - main_query
-		  - template
+		  - table
+		  - json
+		  - yaml
+		  - csv
 		---
 
-	[--hook=<hook>]
-		Drill down into a specific hook.
+
+
+### wp profile hook
+
+Profile key metrics for a WordPress hook (action or filter).
+
+~~~
+wp profile hook <hook> [--url=<url>] [--fields=<fields>] [--format=<format>]
+~~~
+
+**OPTIONS**
+
+	<hook>
+		WordPress hook (action or filter) to profile.
+
+	[--url=<url>]
+		Execute a request against a specified URL. Defaults to the home URL.
 
 	[--fields=<fields>]
 		Display one or more fields.
