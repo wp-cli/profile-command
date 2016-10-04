@@ -145,6 +145,10 @@ class Command {
 	/**
 	 * Profile arbitrary code execution.
 	 *
+	 * Code execution happens after WordPress has loaded entirely, which means
+	 * you can use any utilities defined in WordPress, active plugins, or the
+	 * current theme.
+	 *
 	 * ## OPTIONS
 	 *
 	 * <php-code>
@@ -174,6 +178,63 @@ class Command {
 		$logger = new Logger( 'eval', 'eval' );
 		$logger->start();
 		eval( $args[0] );
+		$logger->stop();
+
+		$fields = array(
+			'time',
+			'query_time',
+			'query_count',
+			'cache_ratio',
+			'cache_hits',
+			'cache_misses',
+			'request_time',
+			'request_count',
+		);
+		$formatter = new Formatter( $assoc_args, $fields );
+		$formatter->display_items( array( $logger ) );
+	}
+
+	/**
+	 * Profile execution of an arbitrary file.
+	 *
+	 * File execution happens after WordPress has loaded entirely, which means
+	 * you can use any utilities defined in WordPress, active plugins, or the
+	 * current theme.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <file>
+	 * : The path to the PHP file to execute and profile.
+	 *
+	 * [--fields=<fields>]
+	 * : Display one or more fields.
+	 *
+	 * [--format=<format>]
+	 * : Render output in a particular format.
+	 * ---
+	 * default: table
+	 * options:
+	 *   - table
+	 *   - json
+	 *   - yaml
+	 *   - csv
+	 * ---
+	 *
+	 * @when before_wp_load
+	 * @subcommand eval-file
+	 */
+	public function eval_file( $args, $assoc_args ) {
+
+		$file = $args[0];
+		if ( ! file_exists( $file ) ) {
+			WP_CLI::error( "'$file' does not exist." );
+		}
+
+		$this->run_profiler();
+
+		$logger = new Logger( 'eval', 'eval' );
+		$logger->start();
+		self::include_file( $file );
 		$logger->stop();
 
 		$fields = array(
@@ -452,6 +513,15 @@ class Command {
 		$pseudo_hook = "before {$hooks[0]}";
 		$this->loggers[ $pseudo_hook ] = new Logger( 'hook', '' );
 		$this->loggers[ $pseudo_hook ]->start();
+	}
+
+	/**
+	 * Include a file without exposing it to current scope
+	 *
+	 * @param string $file
+	 */
+	private static function include_file( $file ) {
+		include( $file );
 	}
 
 }

@@ -158,10 +158,47 @@ Profile arbitrary code execution.
 wp profile eval <php-code> [--fields=<fields>] [--format=<format>]
 ~~~
 
+Code execution happens after WordPress has loaded entirely, which means
+you can use any utilities defined in WordPress, active plugins, or the
+current theme.
+
 **OPTIONS**
 
 	<php-code>
 		The code to execute, as a string.
+
+	[--fields=<fields>]
+		Display one or more fields.
+
+	[--format=<format>]
+		Render output in a particular format.
+		---
+		default: table
+		options:
+		  - table
+		  - json
+		  - yaml
+		  - csv
+		---
+
+
+
+### wp profile eval-file
+
+Profile execution of an arbitrary file.
+
+~~~
+wp profile eval-file <file> [--fields=<fields>] [--format=<format>]
+~~~
+
+File execution happens after WordPress has loaded entirely, which means
+you can use any utilities defined in WordPress, active plugins, or the
+current theme.
+
+**OPTIONS**
+
+	<file>
+		The path to the PHP file to execute and profile.
 
 	[--fields=<fields>]
 		Display one or more fields.

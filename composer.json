@@ -19,7 +19,8 @@
         "commands": [
             "profile stage",
             "profile hook",
-            "profile eval"
+            "profile eval",
+            "profile eval-file"
         ],
         "readme": {
             "shields": [
