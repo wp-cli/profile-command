@@ -267,11 +267,13 @@ class Command {
 	 * Run the profiler against WordPress
 	 */
 	private function run_profiler() {
-		if ( ! isset( WP_CLI::get_runner()->config['url'] ) ) {
-			WP_CLI::add_wp_hook( 'muplugins_loaded', function(){
+		WP_CLI::add_wp_hook( 'muplugins_loaded', function(){
+			if ( $url = WP_CLI::get_runner()->config['url'] ) {
+				WP_CLI::set_url( trailingslashit( $url ) );
+			} else {
 				WP_CLI::set_url( home_url( '/' ) );
-			});
-		}
+			}
+		});
 		WP_CLI::add_hook( 'after_wp_config_load', function() {
 			if ( defined( 'SAVEQUERIES' ) && ! SAVEQUERIES ) {
 				WP_CLI::error( "'SAVEQUERIES' is defined as false, and must be true. Please check your wp-config.php" );
