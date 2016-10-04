@@ -120,6 +120,13 @@ class Command {
 		$this->focus_hook = $args[0];
 		$this->run_profiler();
 
+		// 'shutdown' won't actually fire until script completion
+		// but we can mock it
+		if ( 'shutdown' === $this->focus_hook ) {
+			do_action( 'shutdown' );
+			remove_all_actions( 'shutdown' );
+		}
+
 		$fields = array(
 			'callback',
 			'time',
