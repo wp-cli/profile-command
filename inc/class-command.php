@@ -8,33 +8,24 @@ use WP_CLI\Utils;
 class Command {
 
 	private $loggers = array();
-	private $focus_stage;
+	private $focus_stage = null;
 	private $stage_hooks = array();
-	private $focus_hook;
+	private $focus_hook = null;
 	private $current_filter_callbacks = array();
 	private $focus_query_offset = 0;
 
 	private static $exception_message = "Need to bail, because can't restore the hooks";
 
 	/**
-	 * Quickly identify what's slow with WordPress.
+	 * Profile each stage of the WordPress load process.
 	 *
 	 * ## OPTIONS
 	 *
+	 * [<stage>]
+	 * : Drill down into a specific stage.
+	 *
 	 * [--url=<url>]
 	 * : Execute a request against a specified URL. Defaults to the home URL.
-	 *
-	 * [--stage=<stage>]
-	 * : Drill down into a specific stage.
-	 * ---
-	 * options:
-	 *   - bootstrap
-	 *   - main_query
-	 *   - template
-	 * ---
-	 *
-	 * [--hook=<hook>]
-	 * : Drill down into a specific hook.
 	 *
 	 * [--fields=<fields>]
 	 * : Display one or more fields.
@@ -52,45 +43,23 @@ class Command {
 	 *
 	 * @when before_wp_load
 	 */
-	public function __invoke( $args, $assoc_args ) {
+	public function stage( $args, $assoc_args ) {
 		global $wpdb;
 
-		$this->focus_stage = Utils\get_flag_value( $assoc_args, 'stage' );
-		$this->focus_hook = Utils\get_flag_value( $assoc_args, 'hook' );
-
-		if ( ! isset( WP_CLI::get_runner()->config['url'] ) ) {
-			WP_CLI::add_wp_hook( 'muplugins_loaded', function(){
-				WP_CLI::set_url( home_url( '/' ) );
-			});
+		if ( isset( $args[0] ) ) {
+			$this->focus_stage = $args[0];
 		}
-		WP_CLI::add_hook( 'after_wp_config_load', function() {
-			if ( defined( 'SAVEQUERIES' ) && ! SAVEQUERIES ) {
-				WP_CLI::error( "'SAVEQUERIES' is defined as false, and must be true. Please check your wp-config.php" );
-			}
-			if ( ! defined( 'SAVEQUERIES' ) ) {
-				define( 'SAVEQUERIES', true );
-			}
-		});
-		WP_CLI::add_wp_hook( 'all', array( $this, 'wp_hook_begin' ) );
-		WP_CLI::add_wp_hook( 'pre_http_request', array( $this, 'wp_request_begin' ) );
-		WP_CLI::add_wp_hook( 'http_api_debug', array( $this, 'wp_request_end' ) );
-		$this->load_wordpress_with_template();
+
+		$valid_stages = array( 'bootstrap', 'main_query', 'template' );
+		if ( $this->focus_stage && ! in_array( $this->focus_stage, $valid_stages, true ) ) {
+			WP_CLI::error( 'Invalid stage. Must be one of: ' . implode( ', ', $valid_stages ) );
+		}
+
+		$this->run_profiler();
 
 		if ( $this->focus_stage ) {
 			$fields = array(
 				'hook',
-				'time',
-				'query_time',
-				'query_count',
-				'cache_ratio',
-				'cache_hits',
-				'cache_misses',
-				'request_time',
-				'request_count',
-			);
-		} else if ( $this->focus_hook ) {
-			$fields = array(
-				'callback',
 				'time',
 				'query_time',
 				'query_count',
@@ -115,6 +84,53 @@ class Command {
 				'request_count',
 			);
 		}
+		$formatter = new Formatter( $assoc_args, $fields );
+		$formatter->display_items( $this->loggers );
+	}
+
+	/**
+	 * Profile key metrics for a WordPress hook (action or filter).
+	 *
+	 * ## OPTIONS
+	 *
+	 * <hook>
+	 * : WordPress hook (action or filter) to profile.
+	 *
+	 * [--url=<url>]
+	 * : Execute a request against a specified URL. Defaults to the home URL.
+	 *
+	 * [--fields=<fields>]
+	 * : Display one or more fields.
+	 *
+	 * [--format=<format>]
+	 * : Render output in a particular format.
+	 * ---
+	 * default: table
+	 * options:
+	 *   - table
+	 *   - json
+	 *   - yaml
+	 *   - csv
+	 * ---
+	 *
+	 * @when before_wp_load
+	 */
+	public function hook( $args, $assoc_args ) {
+
+		$this->focus_hook = $args[0];
+		$this->run_profiler();
+
+		$fields = array(
+			'callback',
+			'time',
+			'query_time',
+			'query_count',
+			'cache_ratio',
+			'cache_hits',
+			'cache_misses',
+			'request_time',
+			'request_count',
+		);
 		$formatter = new Formatter( $assoc_args, $fields );
 		$formatter->display_items( $this->loggers );
 	}
@@ -145,7 +161,7 @@ class Command {
 
 		WP_CLI::add_wp_hook( $current_filter, array( $this, 'wp_hook_end' ), 9999 );
 	}
-	
+
 	/**
 	 * Wrap current filter callbacks with a timer
 	 */
@@ -245,6 +261,29 @@ class Command {
 			$logger->stop_request_timer();
 		}
 		return $filter_value;
+	}
+
+	/**
+	 * Run the profiler against WordPress
+	 */
+	private function run_profiler() {
+		if ( ! isset( WP_CLI::get_runner()->config['url'] ) ) {
+			WP_CLI::add_wp_hook( 'muplugins_loaded', function(){
+				WP_CLI::set_url( home_url( '/' ) );
+			});
+		}
+		WP_CLI::add_hook( 'after_wp_config_load', function() {
+			if ( defined( 'SAVEQUERIES' ) && ! SAVEQUERIES ) {
+				WP_CLI::error( "'SAVEQUERIES' is defined as false, and must be true. Please check your wp-config.php" );
+			}
+			if ( ! defined( 'SAVEQUERIES' ) ) {
+				define( 'SAVEQUERIES', true );
+			}
+		});
+		WP_CLI::add_wp_hook( 'all', array( $this, 'wp_hook_begin' ) );
+		WP_CLI::add_wp_hook( 'pre_http_request', array( $this, 'wp_request_begin' ) );
+		WP_CLI::add_wp_hook( 'http_api_debug', array( $this, 'wp_request_end' ) );
+		$this->load_wordpress_with_template();
 	}
 
 	/**
