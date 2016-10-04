@@ -17,7 +17,7 @@ class Command {
 	private static $exception_message = "Need to bail, because can't restore the hooks";
 
 	/**
-	 * Profile each stage of the WordPress load process.
+	 * Profile each stage of the WordPress load process (bootstrap, main_query, template).
 	 *
 	 * ## OPTIONS
 	 *
