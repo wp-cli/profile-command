@@ -1,5 +1,19 @@
 Feature: Basic profile usage
 
+  Scenario: Assert available commands
+    Given a WP install
+
+    When I run `wp profile`
+    Then STDOUT should be:
+      """
+      usage: wp profile eval <php-code> [--fields=<fields>] [--format=<format>]
+         or: wp profile eval-file <file> [--fields=<fields>] [--format=<format>]
+         or: wp profile hook <hook> [--url=<url>] [--fields=<fields>] [--format=<format>]
+         or: wp profile stage [<stage>] [--all] [--url=<url>] [--fields=<fields>] [--format=<format>]
+
+      See 'wp help profile <command>' for more information on a specific command.
+      """
+
   Scenario: Error when SAVEQUERIES is defined to false
     Given an empty directory
     And WP files
