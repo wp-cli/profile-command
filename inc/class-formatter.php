@@ -8,6 +8,8 @@ class Formatter {
 
 	private $args;
 
+	private $total_cell_index;
+
 	public function __construct( &$assoc_args, $fields = null, $prefix = false ) {
 		$format_args = array(
 			'format' => 'table',
@@ -25,6 +27,8 @@ class Formatter {
 			$format_args['fields'] = explode( ',', $format_args['fields'] );
 		}
 
+		$this->total_cell_index = array_search( $fields[0], $format_args['fields'] );
+
 		$format_args['fields'] = array_map( 'trim', $format_args['fields'] );
 
 		$this->args = $format_args;
@@ -38,7 +42,7 @@ class Formatter {
 	 */
 	public function display_items( $items ) {
 		if ( 'table' === $this->args['format'] && empty( $this->args['field'] ) ) {
-			self::show_table( $items, $this->args['fields'] );
+			$this->show_table( $items, $this->args['fields'] );
 		} else {
 			$this->formatter->display_items( $items );
 		}
@@ -50,7 +54,7 @@ class Formatter {
 	 * @param array $items
 	 * @param array $fields
 	 */
-	private static function show_table( $items, $fields ) {
+	private function show_table( $items, $fields ) {
 		$table = new \cli\Table();
 
 		$enabled = \cli\Colors::shouldColorize();
@@ -61,11 +65,13 @@ class Formatter {
 		$table->setHeaders( $fields );
 
 		$totals = array_fill( 0, count( $fields ), null );
-		$totals[0] = 'total';
+		if ( ! is_null( $this->total_cell_index ) ) {
+			$totals[ $this->total_cell_index ] = 'total';
+		}
 		foreach ( $items as $item ) {
 			$values = array_values( \WP_CLI\Utils\pick_fields( $item, $fields ) );
 			foreach( $values as $i => $value ) {
-				if ( 0 === $i ) {
+				if ( ! is_null( $this->total_cell_index ) && $this->total_cell_index === $i ) {
 					continue;
 				}
 				if ( null === $totals[ $i ] ) {
