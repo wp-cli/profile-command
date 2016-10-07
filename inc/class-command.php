@@ -63,6 +63,7 @@ class Command {
 		if ( $this->focus_stage ) {
 			$fields = array(
 				'hook',
+				'callback_count',
 				'time',
 				'query_time',
 				'query_count',
@@ -271,7 +272,21 @@ class Command {
 			if ( isset( $this->loggers[ $pseudo_hook ] ) ) {
 				$this->loggers[ $pseudo_hook ]->stop();
 			}
-			$this->loggers[ $current_filter ] = new Logger( array( 'hook' => $current_filter ) );
+			$callback_count = 0;
+			if ( isset( $wp_filter[ $current_filter ] ) && is_a( $wp_filter[ $current_filter ], 'WP_Hook' ) ) {
+				if ( is_array( $wp_filter[ $current_filter ]->callbacks ) ) {
+					foreach( $wp_filter[ $current_filter ]->callbacks as $priority => $callbacks ) {
+						$callback_count += count( $callbacks );
+					}
+				}
+			} else {
+				if ( isset( $wp_filter[ $current_filter ] ) && is_array( $wp_filter[ $current_filter ] ) ) {
+					foreach( $wp_filter[ $current_filter ] as $priority => $callbacks ) {
+						$callback_count += count( $callbacks );
+					}
+				}
+			}
+			$this->loggers[ $current_filter ] = new Logger( array( 'hook' => $current_filter, 'callback_count' => $callback_count ) );
 			$this->loggers[ $current_filter ]->start();
 		}
 
@@ -352,11 +367,11 @@ class Command {
 			$logger->stop_hook_timer();
 		}
 
+		$current_filter = current_filter();
 		if ( $this->focus_hook && $current_filter === $this->focus_hook ) {
 			$this->filter_depth = 0;
 		}
 
-		$current_filter = current_filter();
 		if ( in_array( $current_filter, $this->stage_hooks ) ) {
 			$this->loggers[ $current_filter ]->stop();
 			$key = array_search( $current_filter, $this->stage_hooks );
