@@ -11,7 +11,8 @@ class Command {
 	private $focus_stage = null;
 	private $stage_hooks = array();
 	private $focus_hook = null;
-	private $current_filter_callbacks = array();
+	private $previous_filter = null;
+	private $previous_filter_callbacks = null;
 	private $focus_query_offset = 0;
 
 	private static $exception_message = "Need to bail, because can't restore the hooks";
@@ -272,6 +273,15 @@ class Command {
 			$this->loggers[ $current_filter ]->start();
 		}
 
+		if ( ! is_null( $this->previous_filter_callbacks ) ) {
+			if ( is_a( $wp_filter[ $this->previous_filter ], 'WP_Hook' ) ) {
+				$wp_filter[ $this->previous_filter ]->callbacks = $this->previous_filter_callbacks;
+			} else {
+				$wp_filter[ $this->previous_filter ] = $this->previous_filter_callbacks;
+			}
+			$this->previous_filter_callbacks = null;
+		}
+
 		if ( $this->focus_hook && $current_filter === $this->focus_hook ) {
 			$this->wrap_current_filter_callbacks( $current_filter );
 		}
@@ -284,16 +294,17 @@ class Command {
 	 */
 	private function wrap_current_filter_callbacks( $current_filter ) {
 		global $wp_filter;
-		$this->current_filter_callbacks = null;
+		$this->previous_filter_callbacks = null;
 
 		if ( ! isset( $wp_filter[ $current_filter ] ) ) {
 			return;
 		}
 
+		$this->previous_filter = $current_filter;
 		if ( is_a( $wp_filter[ $current_filter ], 'WP_Hook' ) ) {
-			$callbacks = $this->current_filter_callbacks = $wp_filter[ $current_filter ]->callbacks;
+			$callbacks = $this->previous_filter_callbacks = $wp_filter[ $current_filter ]->callbacks;
 		} else {
-			$callbacks = $this->current_filter_callbacks = $wp_filter[ $current_filter ];
+			$callbacks = $this->previous_filter_callbacks = $wp_filter[ $current_filter ];
 		}
 
 		if ( ! is_array( $callbacks ) ) {
@@ -351,14 +362,6 @@ class Command {
 				$pseudo_hook = 'wp_profile_last_hook';
 				$this->loggers[ $pseudo_hook ] = new Logger( array( 'hook' => '' ) );
 				$this->loggers[ $pseudo_hook ]->start();
-			}
-		}
-
-		if ( $this->focus_hook && $current_filter === $this->focus_hook && ! is_null( $this->current_filter_callbacks ) ) {
-			if ( is_a( $wp_filter[ $current_filter ], 'WP_Hook' ) ) {
-				$wp_filter[ $current_filter ]->callbacks = $this->current_filter_callbacks;
-			} else {
-				$wp_filter[ $current_filter ] = $this->current_filter_callbacks;
 			}
 		}
 
