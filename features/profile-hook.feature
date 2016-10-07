@@ -63,3 +63,24 @@ Feature: Profile a specific hook
       | callback                        | location                                  | cache_hits | cache_misses |
       | runcommand_custom_action_hook() | mu-plugins/custom-action.php:2            | 0          | 1            |
       | total                           |                                           | 0          | 1            |
+
+  Scenario: Hooks should only be called once
+    Given a WP install
+    And a wp-content/mu-plugins/action-test.php file:
+      """
+      <?php
+      add_action( 'init', function(){
+        static $i;
+        if ( ! isset( $i ) ) {
+          $i = 0;
+        }
+        $i++;
+        WP_CLI::warning( 'Called ' . $i );
+      });
+      """
+
+    When I run `wp profile hook init`
+    Then STDERR should be:
+      """
+      Warning: Called 1
+      """
