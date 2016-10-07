@@ -26,6 +26,9 @@ class Command {
 	 * [<stage>]
 	 * : Drill down into a specific stage.
 	 *
+	 * [--all]
+	 * : Expand upon all stages.
+	 *
 	 * [--url=<url>]
 	 * : Execute a request against a specified URL. Defaults to the home URL.
 	 *
@@ -48,13 +51,11 @@ class Command {
 	public function stage( $args, $assoc_args ) {
 		global $wpdb;
 
-		if ( isset( $args[0] ) ) {
-			$this->focus_stage = $args[0];
-		}
+		$this->focus_stage = Utils\get_flag_value( $assoc_args, 'all', isset( $args[0] ) ? $args[0] : null );
 
 		$valid_stages = array( 'bootstrap', 'main_query', 'template' );
-		if ( $this->focus_stage && ! in_array( $this->focus_stage, $valid_stages, true ) ) {
-			WP_CLI::error( 'Invalid stage. Must be one of: ' . implode( ', ', $valid_stages ) );
+		if ( $this->focus_stage && ( true !== $this->focus_stage && ! in_array( $this->focus_stage, $valid_stages, true ) ) ) {
+			WP_CLI::error( 'Invalid stage. Must be one of ' . implode( ', ', $valid_stages ) . ', or use --all.' );
 		}
 
 		$this->run_profiler();
@@ -424,15 +425,41 @@ class Command {
 	private function load_wordpress_with_template() {
 		global $wp_query;
 
-		if ( 'bootstrap' === $this->focus_stage ) {
-			$this->set_stage_hooks( array(
+		$stage_hooks = array(
+			'bootstrap'    => array(
 				'muplugins_loaded',
 				'plugins_loaded',
 				'setup_theme',
 				'after_setup_theme',
 				'init',
 				'wp_loaded',
-			) );
+			),
+			'main_query'   => array(
+				'parse_request',
+				'send_headers',
+				'pre_get_posts',
+				'the_posts',
+				'wp',
+			),
+			'template'     => array(
+				'template_redirect',
+				'template_include',
+				'wp_head',
+				'loop_start',
+				'loop_end',
+				'wp_footer',
+			),
+		);
+		if ( true === $this->focus_stage ) {
+			$hooks = array();
+			foreach( $stage_hooks as $stage_hook ) {
+				$hooks = array_merge( $hooks, $stage_hook );
+			}
+			$this->set_stage_hooks( $hooks );
+		}
+
+		if ( 'bootstrap' === $this->focus_stage ) {
+			$this->set_stage_hooks( $stage_hooks['bootstrap'] );
 		} else if ( ! $this->focus_stage && ! $this->focus_hook ) {
 			$logger = new Logger( array( 'stage' => 'bootstrap' ) );
 			$logger->start();
@@ -448,13 +475,7 @@ class Command {
 
 		// Set up main_query main WordPress query.
 		if ( 'main_query' === $this->focus_stage ) {
-			$this->set_stage_hooks( array(
-				'parse_request',
-				'send_headers',
-				'pre_get_posts',
-				'the_posts',
-				'wp',
-			) );
+			$this->set_stage_hooks( $stage_hooks['main_query'] );
 		} else if ( ! $this->focus_stage && ! $this->focus_hook ) {
 			$logger = new Logger( array( 'stage' => 'main_query' ) );
 			$logger->start();
@@ -477,14 +498,7 @@ class Command {
 
 		// Load the theme template.
 		if ( 'template' === $this->focus_stage ) {
-			$this->set_stage_hooks( array(
-				'template_redirect',
-				'template_include',
-				'wp_head',
-				'loop_start',
-				'loop_end',
-				'wp_footer',
-			) );
+			$this->set_stage_hooks( $stage_hooks['template'] );
 		} else if ( ! $this->focus_stage && ! $this->focus_hook ) {
 			$logger = new Logger( array( 'stage' => 'template' ) );
 			$logger->start();
