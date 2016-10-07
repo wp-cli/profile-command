@@ -36,3 +36,15 @@ Feature: Basic profile usage
     And STDOUT should be a table containing rows:
       | callback          | time   |
       | total             |        |
+
+  Scenario: Don't include 'total' cell when the name column is omitted
+    Given a WP install
+
+    When I run `wp profile eval 'wp_cache_get( "foo" );' --fields=cache_hits,cache_misses`
+    Then STDOUT should be a table containing rows:
+      | cache_hits    | cache_misses |
+      | 0             | 1            |
+    And STDOUT should not contain:
+      """
+      total
+      """
