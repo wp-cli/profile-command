@@ -45,6 +45,7 @@ Feature: Profile a specific hook
       | runcommand_shutdown_hook() | 0              | 1                |
       | wp_ob_end_flush_all()      | 0              | 0                |
       | total                      | 0              | 1                |
+    And STDERR should be empty
 
   Scenario: Indicate where a callback is defined with profiling a hook
     Given a WP install
@@ -63,6 +64,7 @@ Feature: Profile a specific hook
       | callback                        | location                                  | cache_hits | cache_misses |
       | runcommand_custom_action_hook() | mu-plugins/custom-action.php:2            | 0          | 1            |
       | total                           |                                           | 0          | 1            |
+    And STDERR should be empty
 
   Scenario: Hooks should only be called once
     Given a WP install

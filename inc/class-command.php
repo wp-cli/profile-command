@@ -13,6 +13,7 @@ class Command {
 	private $focus_hook = null;
 	private $previous_filter = null;
 	private $previous_filter_callbacks = null;
+	private $filter_depth = 0;
 	private $focus_query_offset = 0;
 
 	private static $exception_message = "Need to bail, because can't restore the hooks";
@@ -273,7 +274,7 @@ class Command {
 			$this->loggers[ $current_filter ]->start();
 		}
 
-		if ( ! is_null( $this->previous_filter_callbacks ) ) {
+		if ( ! is_null( $this->previous_filter_callbacks ) && 0 === $this->filter_depth ) {
 			if ( is_a( $wp_filter[ $this->previous_filter ], 'WP_Hook' ) ) {
 				$wp_filter[ $this->previous_filter ]->callbacks = $this->previous_filter_callbacks;
 			} else {
@@ -282,8 +283,9 @@ class Command {
 			$this->previous_filter_callbacks = null;
 		}
 
-		if ( $this->focus_hook && $current_filter === $this->focus_hook ) {
+		if ( $this->focus_hook && $current_filter === $this->focus_hook && 0 === $this->filter_depth ) {
 			$this->wrap_current_filter_callbacks( $current_filter );
+			$this->filter_depth = 1;
 		}
 
 		WP_CLI::add_wp_hook( $current_filter, array( $this, 'wp_hook_end' ), 9999 );
@@ -294,7 +296,6 @@ class Command {
 	 */
 	private function wrap_current_filter_callbacks( $current_filter ) {
 		global $wp_filter;
-		$this->previous_filter_callbacks = null;
 
 		if ( ! isset( $wp_filter[ $current_filter ] ) ) {
 			return;
@@ -348,6 +349,10 @@ class Command {
 
 		foreach( Logger::$active_loggers as $logger ) {
 			$logger->stop_hook_timer();
+		}
+
+		if ( $this->focus_hook && $current_filter === $this->focus_hook ) {
+			$this->filter_depth = 0;
 		}
 
 		$current_filter = current_filter();
