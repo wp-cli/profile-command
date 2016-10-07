@@ -13,6 +13,40 @@ Feature: Profile the template render stage
   Scenario: Profiler loads a table with the correct hooks
     Given a WP install
 
+    When I run `wp profile stage bootstrap --fields=hook`
+    Then STDOUT should be a table containing rows:
+      | hook              |
+      |                   |
+      | muplugins_loaded  |
+      |                   |
+      | plugins_loaded    |
+      |                   |
+      | setup_theme       |
+      |                   |
+      | after_setup_theme |
+      |                   |
+      | init              |
+      |                   |
+      | wp_loaded         |
+      |                   |
+      | total             |
+
+    When I run `wp profile stage main_query --fields=hook`
+    Then STDOUT should be a table containing rows:
+      | hook              |
+      |                   |
+      | parse_request     |
+      |                   |
+      | send_headers      |
+      |                   |
+      | pre_get_posts     |
+      |                   |
+      | the_posts         |
+      |                   |
+      | wp                |
+      |                   |
+      | total             |
+
     When I run `wp profile stage template --fields=hook`
     Then STDOUT should be a table containing rows:
       | hook              |
