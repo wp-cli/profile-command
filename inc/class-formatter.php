@@ -68,12 +68,19 @@ class Formatter {
 		if ( ! is_null( $this->total_cell_index ) ) {
 			$totals[ $this->total_cell_index ] = 'total';
 		}
+		$location_index = array_search( 'location', $fields );
 		foreach ( $items as $item ) {
 			$values = array_values( \WP_CLI\Utils\pick_fields( $item, $fields ) );
 			foreach( $values as $i => $value ) {
 				if ( ! is_null( $this->total_cell_index ) && $this->total_cell_index === $i ) {
 					continue;
 				}
+
+				// Ignore 'location' for hook profiling
+				if ( false !== $location_index && $location_index === $i ) {
+					continue;
+				}
+
 				if ( null === $totals[ $i ] ) {
 					if ( stripos( $fields[ $i ], '_ratio' ) ) {
 						$totals[ $i ] = array();
