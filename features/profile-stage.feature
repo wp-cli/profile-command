@@ -116,3 +116,11 @@ Feature: Profile the template render stage
       """
       Error: Invalid stage. Must be one of bootstrap, main_query, template, or use --all.
       """
+
+  Scenario: Identify callback_count for each hook
+    Given a WP install
+
+    When I run `wp profile stage bootstrap --fields=hook,callback_count`
+    Then STDOUT should be a table containing rows:
+      | hook              | callback_count   |
+      | plugins_loaded    | 3                |
