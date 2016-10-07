@@ -25,8 +25,10 @@ class Logger {
 
 	public static $active_loggers = array();
 
-	public function __construct( $type, $name ) {
-		$this->$type = $name;
+	public function __construct( $definition = array() ) {
+		foreach( $definition as $k => $v ) {
+			$this->$k = $v;
+		}
 	}
 
 	/**

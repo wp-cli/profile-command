@@ -45,3 +45,21 @@ Feature: Profile a specific hook
       | runcommand_shutdown_hook() | 0              | 1                |
       | wp_ob_end_flush_all()      | 0              | 0                |
       | total                      | 0              | 1                |
+
+  Scenario: Indicate where a callback is defined with profiling a hook
+    Given a WP install
+    And a wp-content/mu-plugins/custom-action.php file:
+      """
+      <?php
+      function runcommand_custom_action_hook() {
+        wp_cache_get( 'foo' );
+      }
+      add_action( 'runcommand_custom_action', 'runcommand_custom_action_hook' );
+      do_action( 'runcommand_custom_action' );
+      """
+
+    When I run `wp profile hook runcommand_custom_action --fields=callback,location,cache_hits,cache_misses`
+    Then STDOUT should be a table containing rows:
+      | callback                        | location                                  | cache_hits | cache_misses |
+      | runcommand_custom_action_hook() | mu-plugins/custom-action.php:2            | 0          | 1            |
+      | total                           |                                           | 0          | 1            |
