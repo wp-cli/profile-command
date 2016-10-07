@@ -129,6 +129,7 @@ class Command {
 
 		$fields = array(
 			'callback',
+			'location',
 			'time',
 			'query_time',
 			'query_count',
@@ -175,7 +176,7 @@ class Command {
 
 		$this->run_profiler();
 
-		$logger = new Logger( 'eval', 'eval' );
+		$logger = new Logger();
 		$logger->start();
 		eval( $args[0] );
 		$logger->stop();
@@ -232,7 +233,7 @@ class Command {
 
 		$this->run_profiler();
 
-		$logger = new Logger( 'eval', 'eval' );
+		$logger = new Logger();
 		$logger->start();
 		self::include_file( $file );
 		$logger->stop();
@@ -267,7 +268,7 @@ class Command {
 			if ( isset( $this->loggers[ $pseudo_hook ] ) ) {
 				$this->loggers[ $pseudo_hook ]->stop();
 			}
-			$this->loggers[ $current_filter ] = new Logger( 'hook', $current_filter );
+			$this->loggers[ $current_filter ] = new Logger( array( 'hook' => $current_filter ) );
 			$this->loggers[ $current_filter ]->start();
 		}
 
@@ -304,7 +305,12 @@ class Command {
 				$callbacks[ $priority ][ $i ] = array(
 					'function'       => function() use( $the_, $i ) {
 						if ( ! isset( $this->loggers[ $i ] ) ) {
-							$this->loggers[ $i ] = new Logger( 'callback', self::get_name_from_callback( $the_['function'] ) );
+							list( $callback, $location ) = self::get_name_location_from_callback( $the_['function'] );
+							$definition = array(
+								'callback'     => $callback,
+								'location'     => $location,
+							);
+							$this->loggers[ $i ] = new Logger( $definition );
 						}
 						$this->loggers[ $i ]->start();
 						$value = call_user_func_array( $the_['function'], func_get_args() );
@@ -339,11 +345,11 @@ class Command {
 			$key = array_search( $current_filter, $this->stage_hooks );
 			if ( false !== $key && isset( $this->stage_hooks[$key+1] ) ) {
 				$pseudo_hook = "before {$this->stage_hooks[$key+1]}";
-				$this->loggers[ $pseudo_hook ] = new Logger( 'hook', '' );
+				$this->loggers[ $pseudo_hook ] = new Logger( array( 'hook' => '' ) );
 				$this->loggers[ $pseudo_hook ]->start();
 			} else {
 				$pseudo_hook = 'wp_profile_last_hook';
-				$this->loggers[ $pseudo_hook ] = new Logger( 'hook', '' );
+				$this->loggers[ $pseudo_hook ] = new Logger( array( 'hook' => '' ) );
 				$this->loggers[ $pseudo_hook ]->start();
 			}
 		}
@@ -420,7 +426,7 @@ class Command {
 				'wp_loaded',
 			) );
 		} else if ( ! $this->focus_stage && ! $this->focus_hook ) {
-			$logger = new Logger( 'stage', 'bootstrap' );
+			$logger = new Logger( array( 'stage' => 'bootstrap' ) );
 			$logger->start();
 		}
 		WP_CLI::get_runner()->load_wordpress();
@@ -442,7 +448,7 @@ class Command {
 				'wp',
 			) );
 		} else if ( ! $this->focus_stage && ! $this->focus_hook ) {
-			$logger = new Logger( 'stage', 'main_query' );
+			$logger = new Logger( array( 'stage' => 'main_query' ) );
 			$logger->start();
 		}
 		wp();
@@ -472,7 +478,7 @@ class Command {
 				'wp_footer',
 			) );
 		} else if ( ! $this->focus_stage && ! $this->focus_hook ) {
-			$logger = new Logger( 'stage', 'template' );
+			$logger = new Logger( array( 'stage' => 'template' ) );
 			$logger->start();
 		}
 		ob_start();
@@ -491,18 +497,37 @@ class Command {
 	/**
 	 * Get a human-readable name from a callback
 	 */
-	private static function get_name_from_callback( $callback ) {
-		$name = '';
+	private static function get_name_location_from_callback( $callback ) {
+		$name = $location = '';
+		$reflection = false;
 		if ( is_array( $callback ) && is_object( $callback[0] ) ) {
+			$reflection = new \ReflectionMethod( $callback[0], $callback[1] );
 			$name = get_class( $callback[0] ) . '->' . $callback[1] . '()';
 		} elseif ( is_array( $callback ) && method_exists( $callback[0], $callback[1] ) ) {
+			$reflection = new \ReflectionMethod( $callback[0], $callback[1] );
 			$name = $callback[0] . '::' . $callback[1] . '()';
 		} elseif ( is_object( $callback ) && is_a( $callback, 'Closure' ) ) {
+			$reflection = new \ReflectionFunction( $callback );
 			$name = 'function(){}';
 		} else if ( is_string( $callback ) ) {
+			$reflection = new \ReflectionFunction( $callback );
 			$name = $callback . '()';
 		}
-		return $name;
+		if ( $reflection ) {
+			$location = $reflection->getFileName() . ':' . $reflection->getStartLine();
+			if ( 0 === stripos( $location, WP_PLUGIN_DIR ) ) {
+				$location = str_replace( trailingslashit( WP_PLUGIN_DIR ), '', $location );
+			} else if ( 0 === stripos( $location, WPMU_PLUGIN_DIR ) ) {
+				$location = str_replace( trailingslashit( dirname( WPMU_PLUGIN_DIR ) ), '', $location );
+			} else if ( 0 === stripos( $location, get_theme_root() ) ) {
+				$location = str_replace( trailingslashit( get_theme_root() ), '', $location );
+			} else if ( 0 === stripos( $location, ABSPATH . 'wp-admin/' ) ) {
+				$location = str_replace( ABSPATH, '', $location );
+			} else if ( 0 === stripos( $location, ABSPATH . 'wp-includes/' ) ) {
+				$location = str_replace( ABSPATH, '', $location );
+			}
+		}
+		return array( $name, $location );
 	}
 
 	/**
@@ -511,7 +536,7 @@ class Command {
 	private function set_stage_hooks( $hooks ) {
 		$this->stage_hooks = $hooks;
 		$pseudo_hook = "before {$hooks[0]}";
-		$this->loggers[ $pseudo_hook ] = new Logger( 'hook', '' );
+		$this->loggers[ $pseudo_hook ] = new Logger( array( 'hook' => '' ) );
 		$this->loggers[ $pseudo_hook ]->start();
 	}
 
