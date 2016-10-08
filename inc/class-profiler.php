@@ -107,7 +107,7 @@ class Profiler {
 		}
 
 		if ( 'hook' === $this->type
-			&& $current_filter === $this->focus
+			&& ( $current_filter === $this->focus || true === $this->focus )
 			&& 0 === $this->filter_depth ) {
 			$this->wrap_current_filter_callbacks( $current_filter );
 		}
@@ -303,11 +303,11 @@ class Profiler {
 		if ( $reflection ) {
 			$location = $reflection->getFileName() . ':' . $reflection->getStartLine();
 			$abspath = rtrim( realpath( ABSPATH ), '/' ) . '/';
-			if ( 0 === stripos( $location, WP_PLUGIN_DIR ) ) {
+			if ( defined( 'WP_PLUGIN_DIR' ) && 0 === stripos( $location, WP_PLUGIN_DIR ) ) {
 				$location = str_replace( trailingslashit( WP_PLUGIN_DIR ), '', $location );
-			} else if ( 0 === stripos( $location, WPMU_PLUGIN_DIR ) ) {
+			} else if ( defined( 'WPMU_PLUGIN_DIR' ) && 0 === stripos( $location, WPMU_PLUGIN_DIR ) ) {
 				$location = str_replace( trailingslashit( dirname( WPMU_PLUGIN_DIR ) ), '', $location );
-			} else if ( 0 === stripos( $location, get_theme_root() ) ) {
+			} else if ( function_exists( 'get_theme_root' ) && 0 === stripos( $location, get_theme_root() ) ) {
 				$location = str_replace( trailingslashit( get_theme_root() ), '', $location );
 			} else if ( 0 === stripos( $location, $abspath . 'wp-admin/' ) ) {
 				$location = str_replace( $abspath, '', $location );
