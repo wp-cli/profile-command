@@ -7,7 +7,19 @@ Feature: Profile a specific hook
     Then STDOUT should be a table containing rows:
       | hook              | callback_count   |
       | plugins_loaded    | 3                |
+      | init              | 11               |
+      | template_redirect | 6                |
     And STDERR should be empty
+
+  Scenario: Profile all callbacks when --all flag is used
+    Given a WP install
+
+    When I run `wp profile hook --all --fields=callback,cache_hits,cache_misses`
+    Then STDOUT should be a table containing rows:
+      | callback                   | cache_hits    | cache_misses  |
+      | sanitize_comment_cookies() | 0             | 0             |
+      | smilies_init()             | 2             | 0             |
+      | feed_links()               | 8             | 0             |
 
   Scenario: Profile a hook before the template is loaded
     Given a WP install
