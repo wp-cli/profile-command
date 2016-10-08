@@ -83,7 +83,8 @@ class Profiler {
 		}
 
 		$current_filter = current_filter();
-		if ( 'stage' === $this->type && in_array( $current_filter, $this->current_stage_hooks ) ) {
+		if ( ( 'stage' === $this->type && in_array( $current_filter, $this->current_stage_hooks ) )
+			|| ( 'hook' === $this->type && ! $this->focus ) ) {
 			$pseudo_hook = "before {$current_filter}";
 			if ( isset( $this->loggers[ $pseudo_hook ] ) ) {
 				$this->loggers[ $pseudo_hook ]->stop();
@@ -164,17 +165,20 @@ class Profiler {
 			$this->filter_depth = 0;
 		}
 
-		if ( 'stage' === $this->type && in_array( $current_filter, $this->current_stage_hooks ) ) {
+		if ( ( 'stage' === $this->type && in_array( $current_filter, $this->current_stage_hooks ) )
+			|| ( 'hook' === $this->type && ! $this->focus ) ) {
 			$this->loggers[ $current_filter ]->stop();
-			$key = array_search( $current_filter, $this->current_stage_hooks );
-			if ( false !== $key && isset( $this->current_stage_hooks[ $key + 1 ] ) ) {
-				$pseudo_hook = "before {$this->current_stage_hooks[$key+1]}";
-				$this->loggers[ $pseudo_hook ] = new Logger( array( 'hook' => '' ) );
-				$this->loggers[ $pseudo_hook ]->start();
-			} else {
-				$pseudo_hook = 'wp_profile_last_hook';
-				$this->loggers[ $pseudo_hook ] = new Logger( array( 'hook' => '' ) );
-				$this->loggers[ $pseudo_hook ]->start();
+			if ( 'stage' === $this->type ) {
+				$key = array_search( $current_filter, $this->current_stage_hooks );
+				if ( false !== $key && isset( $this->current_stage_hooks[ $key + 1 ] ) ) {
+					$pseudo_hook = "before {$this->current_stage_hooks[$key+1]}";
+					$this->loggers[ $pseudo_hook ] = new Logger( array( 'hook' => '' ) );
+					$this->loggers[ $pseudo_hook ]->start();
+				} else {
+					$pseudo_hook = 'wp_profile_last_hook';
+					$this->loggers[ $pseudo_hook ] = new Logger( array( 'hook' => '' ) );
+					$this->loggers[ $pseudo_hook ]->start();
+				}
 			}
 		}
 

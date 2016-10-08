@@ -40,17 +40,17 @@ class Command {
 	public function stage( $args, $assoc_args ) {
 		global $wpdb;
 
-		$focus_stage = Utils\get_flag_value( $assoc_args, 'all', isset( $args[0] ) ? $args[0] : null );
+		$focus = Utils\get_flag_value( $assoc_args, 'all', isset( $args[0] ) ? $args[0] : null );
 
 		$valid_stages = array( 'bootstrap', 'main_query', 'template' );
-		if ( $focus_stage && ( true !== $focus_stage && ! in_array( $focus_stage, $valid_stages, true ) ) ) {
+		if ( $focus && ( true !== $focus && ! in_array( $focus, $valid_stages, true ) ) ) {
 			WP_CLI::error( 'Invalid stage. Must be one of ' . implode( ', ', $valid_stages ) . ', or use --all.' );
 		}
 
-		$profiler = new Profiler( 'stage', $focus_stage );
+		$profiler = new Profiler( 'stage', $focus );
 		$profiler->run();
 
-		if ( $focus_stage ) {
+		if ( $focus ) {
 			$fields = array(
 				'hook',
 				'callback_count',
@@ -83,12 +83,12 @@ class Command {
 	}
 
 	/**
-	 * Profile key metrics for a WordPress hook (action or filter).
+	 * Profile key metrics for WordPress hooks (actions and filters).
 	 *
 	 * ## OPTIONS
 	 *
-	 * <hook>
-	 * : WordPress hook (action or filter) to profile.
+	 * [<hook>]
+	 * : Drill into key metrics for a specific WordPress hook (action or filter).
 	 *
 	 * [--url=<url>]
 	 * : Execute a request against a specified URL. Defaults to the home URL.
@@ -111,7 +111,7 @@ class Command {
 	 */
 	public function hook( $args, $assoc_args ) {
 
-		$focus = $args[0];
+		$focus = isset( $args[0] ) ? $args[0] : null;
 
 		$profiler = new Profiler( 'hook', $focus );
 		$profiler->run();
@@ -123,9 +123,12 @@ class Command {
 			remove_all_actions( 'shutdown' );
 		}
 
-		$fields = array(
-			'callback',
-			'location',
+		if ( $focus ) {
+			$base = array( 'callback', 'location' );
+		} else {
+			$base = array( 'hook', 'callback_count' );
+		}
+		$metrics = array(
 			'time',
 			'query_time',
 			'query_count',
@@ -135,6 +138,7 @@ class Command {
 			'request_time',
 			'request_count',
 		);
+		$fields = array_merge( $base, $metrics );
 		$formatter = new Formatter( $assoc_args, $fields );
 		$formatter->display_items( $profiler->get_loggers() );
 	}
