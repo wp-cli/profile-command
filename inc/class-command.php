@@ -304,7 +304,9 @@ class Command {
 			$this->filter_depth = 1;
 		}
 
-		WP_CLI::add_wp_hook( $current_filter, array( $this, 'wp_hook_end' ), 9999 );
+		if ( 'shutdown' !== $this->focus_hook ) {
+			WP_CLI::add_wp_hook( $current_filter, array( $this, 'wp_hook_end' ), 9999 );
+		}
 	}
 
 	/**
