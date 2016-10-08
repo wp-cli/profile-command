@@ -1,5 +1,14 @@
 Feature: Profile a specific hook
 
+  Scenario: Profile all hooks when a specific hook isn't specified
+    Given a WP install
+
+    When I run `wp profile hook --fields=hook,callback_count`
+    Then STDOUT should be a table containing rows:
+      | hook              | callback_count   |
+      | plugins_loaded    | 3                |
+    And STDERR should be empty
+
   Scenario: Profile a hook before the template is loaded
     Given a WP install
 
