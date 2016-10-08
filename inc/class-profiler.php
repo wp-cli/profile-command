@@ -299,16 +299,17 @@ class Profiler {
 		}
 		if ( $reflection ) {
 			$location = $reflection->getFileName() . ':' . $reflection->getStartLine();
+			$abspath = rtrim( realpath( ABSPATH ), '/' ) . '/';
 			if ( 0 === stripos( $location, WP_PLUGIN_DIR ) ) {
 				$location = str_replace( trailingslashit( WP_PLUGIN_DIR ), '', $location );
 			} else if ( 0 === stripos( $location, WPMU_PLUGIN_DIR ) ) {
 				$location = str_replace( trailingslashit( dirname( WPMU_PLUGIN_DIR ) ), '', $location );
 			} else if ( 0 === stripos( $location, get_theme_root() ) ) {
 				$location = str_replace( trailingslashit( get_theme_root() ), '', $location );
-			} else if ( 0 === stripos( $location, ABSPATH . 'wp-admin/' ) ) {
-				$location = str_replace( ABSPATH, '', $location );
-			} else if ( 0 === stripos( $location, ABSPATH . 'wp-includes/' ) ) {
-				$location = str_replace( ABSPATH, '', $location );
+			} else if ( 0 === stripos( $location, $abspath . 'wp-admin/' ) ) {
+				$location = str_replace( $abspath, '', $location );
+			} else if ( 0 === stripos( $location, $abspath . 'wp-includes/' ) ) {
+				$location = str_replace( $abspath, '', $location );
 			}
 		}
 		return array( $name, $location );
