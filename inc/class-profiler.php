@@ -100,19 +100,20 @@ class Profiler {
 			$this->loggers[ $current_filter ]->start();
 		}
 
-		if ( ! is_null( $this->previous_filter_callbacks ) && 0 === $this->filter_depth ) {
+		if ( 0 === $this->filter_depth
+			&& ! is_null( $this->previous_filter_callbacks ) ) {
 			self::set_filter_callbacks( $this->previous_filter, $this->previous_filter_callbacks );
 			$this->previous_filter_callbacks = null;
 		}
 
-		if ( 'hook' === $this->type && $current_filter === $this->focus && 0 === $this->filter_depth ) {
+		if ( 'hook' === $this->type
+			&& $current_filter === $this->focus
+			&& 0 === $this->filter_depth ) {
 			$this->wrap_current_filter_callbacks( $current_filter );
-			$this->filter_depth = 1;
 		}
+		$this->filter_depth++;
 
-		if ( ! ( 'hook' === $this->type && 'shutdown' === $this->focus ) ) {
-			WP_CLI::add_wp_hook( $current_filter, array( $this, 'wp_hook_end' ), 9999 );
-		}
+		WP_CLI::add_wp_hook( $current_filter, array( $this, 'wp_hook_end' ), 9999 );
 	}
 
 	/**
@@ -161,10 +162,6 @@ class Profiler {
 		}
 
 		$current_filter = current_filter();
-		if ( 'hook' === $this->type && $current_filter === $this->focus ) {
-			$this->filter_depth = 0;
-		}
-
 		if ( ( 'stage' === $this->type && in_array( $current_filter, $this->current_stage_hooks ) )
 			|| ( 'hook' === $this->type && ! $this->focus ) ) {
 			$this->loggers[ $current_filter ]->stop();
@@ -181,6 +178,8 @@ class Profiler {
 				}
 			}
 		}
+
+		$this->filter_depth--;
 
 		return $filter_value;
 	}
