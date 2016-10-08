@@ -77,7 +77,6 @@ class Profiler {
 	 * Profiling verbosity at the beginning of every action and filter
 	 */
 	public function wp_hook_begin() {
-		global $wpdb, $wp_filter;
 
 		foreach( Logger::$active_loggers as $logger ) {
 			$logger->start_hook_timer();
@@ -90,17 +89,10 @@ class Profiler {
 				$this->loggers[ $pseudo_hook ]->stop();
 			}
 			$callback_count = 0;
-			if ( isset( $wp_filter[ $current_filter ] ) && is_a( $wp_filter[ $current_filter ], 'WP_Hook' ) ) {
-				if ( is_array( $wp_filter[ $current_filter ]->callbacks ) ) {
-					foreach( $wp_filter[ $current_filter ]->callbacks as $priority => $callbacks ) {
-						$callback_count += count( $callbacks );
-					}
-				}
-			} else {
-				if ( isset( $wp_filter[ $current_filter ] ) && is_array( $wp_filter[ $current_filter ] ) ) {
-					foreach( $wp_filter[ $current_filter ] as $priority => $callbacks ) {
-						$callback_count += count( $callbacks );
-					}
+			$callbacks = self::get_filter_callbacks( $current_filter );
+			if ( false !== $callbacks ) {
+				foreach( $callbacks as $priority => $cbs ) {
+					$callback_count += count( $cbs );
 				}
 			}
 			$this->loggers[ $current_filter ] = new Logger( array( 'hook' => $current_filter, 'callback_count' => $callback_count ) );
@@ -108,11 +100,7 @@ class Profiler {
 		}
 
 		if ( ! is_null( $this->previous_filter_callbacks ) && 0 === $this->filter_depth ) {
-			if ( is_a( $wp_filter[ $this->previous_filter ], 'WP_Hook' ) ) {
-				$wp_filter[ $this->previous_filter ]->callbacks = $this->previous_filter_callbacks;
-			} else {
-				$wp_filter[ $this->previous_filter ] = $this->previous_filter_callbacks;
-			}
+			self::set_filter_callbacks( $this->previous_filter, $this->previous_filter_callbacks );
 			$this->previous_filter_callbacks = null;
 		}
 
@@ -130,22 +118,13 @@ class Profiler {
 	 * Wrap current filter callbacks with a timer
 	 */
 	private function wrap_current_filter_callbacks( $current_filter ) {
-		global $wp_filter;
 
-		if ( ! isset( $wp_filter[ $current_filter ] ) ) {
+		$callbacks = self::get_filter_callbacks( $current_filter );
+		if ( false === $callbacks ) {
 			return;
 		}
-
 		$this->previous_filter = $current_filter;
-		if ( is_a( $wp_filter[ $current_filter ], 'WP_Hook' ) ) {
-			$callbacks = $this->previous_filter_callbacks = $wp_filter[ $current_filter ]->callbacks;
-		} else {
-			$callbacks = $this->previous_filter_callbacks = $wp_filter[ $current_filter ];
-		}
-
-		if ( ! is_array( $callbacks ) ) {
-			return;
-		}
+		$this->previous_filter_callbacks = $callbacks;
 
 		foreach( $callbacks as $priority => $priority_callbacks ) {
 			foreach( $priority_callbacks as $i => $the_ ) {
@@ -168,19 +147,13 @@ class Profiler {
 				);
 			}
 		}
-
-		if ( is_a( $wp_filter[ $current_filter ], 'WP_Hook' ) ) {
-			$wp_filter[ $current_filter ]->callbacks = $callbacks;
-		} else {
-			$wp_filter[ $current_filter ] = $callbacks;
-		}
+		self::set_filter_callbacks( $current_filter, $callbacks );
 	}
 
 	/**
 	 * Profiling verbosity at the end of every action and filter
 	 */
 	public function wp_hook_end( $filter_value = null ) {
-		global $wpdb, $wp_filter;
 
 		foreach( Logger::$active_loggers as $logger ) {
 			$logger->stop_hook_timer();
@@ -349,6 +322,50 @@ class Profiler {
 		$pseudo_hook = "before {$hooks[0]}";
 		$this->loggers[ $pseudo_hook ] = new Logger( array( 'hook' => '' ) );
 		$this->loggers[ $pseudo_hook ]->start();
+	}
+
+	/**
+	 * Get the callbacks for a given filter
+	 *
+	 * @param string
+	 * @return array|false
+	 */
+	private static function get_filter_callbacks( $filter ) {
+		global $wp_filter;
+
+		if ( ! isset( $wp_filter[ $filter ] ) ) {
+			return false;
+		}
+
+		if ( is_a( $wp_filter[ $filter ], 'WP_Hook' ) ) {
+			$callbacks = $wp_filter[ $filter ]->callbacks;
+		} else {
+			$callbacks = $wp_filter[ $filter ];
+		}
+		if ( is_array( $callbacks ) ) {
+			return $callbacks;
+		}
+		return false;
+	}
+
+	/**
+	 * Set the callbacks for a given filter
+	 *
+	 * @param string $filter
+	 * @param mixed $callbacks
+	 */
+	private static function set_filter_callbacks( $filter, $callbacks ) {
+		global $wp_filter;
+
+		if ( ! isset( $wp_filter[ $filter ] ) && class_exists( 'WP_Hook' ) ) {
+			$wp_filter[ $filter ] = new \WP_Hook;
+		}
+
+		if ( is_a( $wp_filter[ $filter ], 'WP_Hook' ) ) {
+			$wp_filter[ $filter ]->callbacks = $callbacks;
+		} else {
+			$wp_filter[ $filter ] = $callbacks;
+		}
 	}
 	
 }
