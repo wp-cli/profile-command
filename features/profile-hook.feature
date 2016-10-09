@@ -29,6 +29,10 @@ Feature: Profile a specific hook
       | callback                  | cache_hits     | cache_misses  |
       | locate_template()         | 0              | 0             |
       | load_template()           | 0              | 0             |
+    And STDOUT should not contain:
+      """
+      runcommand\Profile\Profiler->wp_tick_profile_begin()
+      """
 
   Scenario: Profile a hook before the template is loaded
     Given a WP install

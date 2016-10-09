@@ -41,6 +41,7 @@ class Profiler {
 	private $filter_depth = 0;
 
 	private $tick_callback = null;
+	private $tick_location = null;
 	private $tick_start_time = null;
 	private $tick_query_offset = null;
 	private $tick_cache_hit_offset = null;
@@ -52,6 +53,21 @@ class Profiler {
 	}
 
 	public function get_loggers() {
+		foreach( $this->loggers as $i => $logger ) {
+			if ( is_array( $logger ) ) {
+				$this->loggers[ $i ] = $logger = new Logger( $logger );
+			}
+			if ( ! isset( $logger->callback ) ) {
+				continue;
+			}
+			if ( ! isset( $logger->location ) ) {
+				list( $name, $location ) = self::get_name_location_from_callback( $logger->callback );
+				$logger->callback = $name;
+				$logger->location = $location;
+			}
+			$logger->location = self::get_short_location( $logger->location );
+			$this->loggers[ $i ] = $logger;
+		}
 		return $this->loggers;
 	}
 
@@ -91,15 +107,6 @@ class Profiler {
 		WP_CLI::add_wp_hook( 'pre_http_request', array( $this, 'wp_request_begin' ) );
 		WP_CLI::add_wp_hook( 'http_api_debug', array( $this, 'wp_request_end' ) );
 		$this->load_wordpress_with_template();
-		if ( 'hook' === $this->type
-			&& ':before' === substr( $this->focus, -7, 7 ) ) {
-			foreach( $this->loggers as $hash => $logger ) {
-				list( $name, $location ) = self::get_name_location_from_callback( $logger['callback'] );
-				$logger['callback'] = $name;
-				$logger['location'] = $location;
-				$this->loggers[ $hash ] = new Logger( $logger );
-			}
-		}
 	}
 
 	/**
@@ -181,12 +188,9 @@ class Profiler {
 				$callbacks[ $priority ][ $i ] = array(
 					'function'       => function() use( $the_, $i ) {
 						if ( ! isset( $this->loggers[ $i ] ) ) {
-							list( $callback, $location ) = self::get_name_location_from_callback( $the_['function'] );
-							$definition = array(
-								'callback'     => $callback,
-								'location'     => $location,
-							);
-							$this->loggers[ $i ] = new Logger( $definition );
+							$this->loggers[ $i ] = new Logger( array(
+								'callback'     => $the_['function'],
+							) );
 						}
 						$this->loggers[ $i ]->start();
 						$value = call_user_func_array( $the_['function'], func_get_args() );
@@ -240,10 +244,11 @@ class Profiler {
 		if ( ! is_null( $this->tick_callback ) ) {
 			$time = microtime( true ) - $this->tick_start_time;
 
-			$callback_hash = md5( serialize( $this->tick_callback ) );
+			$callback_hash = md5( serialize( $this->tick_callback . $this->tick_location ) );
 			if ( ! isset( $this->loggers[ $callback_hash ] ) ) {
 				$this->loggers[ $callback_hash ] = array(
 					'callback'          => $this->tick_callback,
+					'location'          => $this->tick_location,
 					'time'              => 0,
 					'query_time'        => 0,
 					'query_count'       => 0,
@@ -281,18 +286,32 @@ class Profiler {
 			$frame = $bt[1];
 		}
 
-		$callback = '';
+		$callback = $location = '';
 		if ( in_array( strtolower( $frame['function'] ), array( 'include', 'require', 'include_once', 'require_once' ) ) ) {
-			$callback = $frame['args'][0];
+			$callback = $frame['function'] . " '" . $frame['args'][0] . "'";
 		} else if ( isset( $frame['object'] ) && method_exists( $frame['object'], $frame['function'] ) ) {
-			$callback = array( $frame['object'], $frame['function'] );
+			$callback = get_class( $frame['object'] ) . '->' . $frame['function'] . '()';
 		} else if ( isset( $frame['class'] ) && method_exists( $frame['class'], $frame['function'] ) ) {
-			$callback = array( $frame['class'], $frame['function'] );
-		} elseif ( ! empty( $frame['function'] ) && function_exists( $frame['function'] ) ) {
-			$callback = $frame['function'];
+			$callback = $frame['class'] . '::' . $frame['function'] . '()';
+		} else if ( ! empty( $frame['function'] ) && function_exists( $frame['function'] ) ) {
+			$callback = $frame['function'] . '()';
+		} elseif ( '__lambda_func' == $frame['function'] || '{closure}' == $frame['function'] ) {
+			$callback = 'function(){}';
+		}
+
+		if ( 'runcommand\Profile\Profiler->wp_tick_profile_begin()' === $callback ) {
+			return;
+		}
+
+		if ( isset( $frame['file'] ) ) {
+			$location = $frame['file'];
+			if ( isset( $frame['line'] ) ) {
+				$location .= ':' . $frame['line'];
+			}
 		}
 
 		$this->tick_callback = $callback;
+		$this->tick_location = $location;
 		$this->tick_start_time = microtime( true );
 		$this->tick_query_offset = ! empty( $wpdb->queries ) ? count( $wpdb->queries ) : 0;
 		$this->tick_cache_hit_offset = ! empty( $wp_object_cache->cache_hits ) ? $wp_object_cache->cache_hits : 0;
@@ -420,20 +439,30 @@ class Profiler {
 		}
 		if ( $reflection ) {
 			$location = $reflection->getFileName() . ':' . $reflection->getStartLine();
-			$abspath = rtrim( realpath( ABSPATH ), '/' ) . '/';
-			if ( defined( 'WP_PLUGIN_DIR' ) && 0 === stripos( $location, WP_PLUGIN_DIR ) ) {
-				$location = str_replace( trailingslashit( WP_PLUGIN_DIR ), '', $location );
-			} else if ( defined( 'WPMU_PLUGIN_DIR' ) && 0 === stripos( $location, WPMU_PLUGIN_DIR ) ) {
-				$location = str_replace( trailingslashit( dirname( WPMU_PLUGIN_DIR ) ), '', $location );
-			} else if ( function_exists( 'get_theme_root' ) && 0 === stripos( $location, get_theme_root() ) ) {
-				$location = str_replace( trailingslashit( get_theme_root() ), '', $location );
-			} else if ( 0 === stripos( $location, $abspath . 'wp-admin/' ) ) {
-				$location = str_replace( $abspath, '', $location );
-			} else if ( 0 === stripos( $location, $abspath . 'wp-includes/' ) ) {
-				$location = str_replace( $abspath, '', $location );
-			}
 		}
 		return array( $name, $location );
+	}
+
+	/**
+	 * Get the short location from the full location
+	 *
+	 * @param string $location
+	 * @return string
+	 */
+	private static function get_short_location( $location ) {
+		$abspath = rtrim( realpath( ABSPATH ), '/' ) . '/';
+		if ( defined( 'WP_PLUGIN_DIR' ) && 0 === stripos( $location, WP_PLUGIN_DIR ) ) {
+			$location = str_replace( trailingslashit( WP_PLUGIN_DIR ), '', $location );
+		} else if ( defined( 'WPMU_PLUGIN_DIR' ) && 0 === stripos( $location, WPMU_PLUGIN_DIR ) ) {
+			$location = str_replace( trailingslashit( dirname( WPMU_PLUGIN_DIR ) ), '', $location );
+		} else if ( function_exists( 'get_theme_root' ) && 0 === stripos( $location, get_theme_root() ) ) {
+			$location = str_replace( trailingslashit( get_theme_root() ), '', $location );
+		} else if ( 0 === stripos( $location, $abspath . 'wp-admin/' ) ) {
+			$location = str_replace( $abspath, '', $location );
+		} else if ( 0 === stripos( $location, $abspath . 'wp-includes/' ) ) {
+			$location = str_replace( $abspath, '', $location );
+		}
+		return $location;
 	}
 
 	/**
