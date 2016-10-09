@@ -40,6 +40,12 @@ class Profiler {
 	private $previous_filter_callbacks = null;
 	private $filter_depth = 0;
 
+	private $tick_callback = null;
+	private $tick_start_time = null;
+	private $tick_query_offset = null;
+	private $tick_cache_hit_offset = null;
+	private $tick_cache_miss_offset = null;
+
 	public function __construct( $type, $focus ) {
 		$this->type = $type;
 		$this->focus = $focus;
@@ -107,11 +113,20 @@ class Profiler {
 			$this->previous_filter_callbacks = null;
 		}
 
-		if ( 'hook' === $this->type
-			&& ( $current_filter === $this->focus || true === $this->focus )
-			&& 0 === $this->filter_depth ) {
-			$this->wrap_current_filter_callbacks( $current_filter );
+		if ( 'hook' === $this->type && 0 === $this->filter_depth ) {
+			if ( $current_filter === $this->focus || true === $this->focus ) {
+				$this->wrap_current_filter_callbacks( $current_filter );
+			} else if ( ':before' === substr( $this->focus, -7, 7 ) && $current_filter === substr( $this->focus, 0, -7 ) ) {
+				unregister_tick_function( array( $this, 'handle_function_tick' ) );
+				foreach( $this->loggers as $hash => $logger ) {
+					list( $name, $location ) = self::get_name_location_from_callback( $logger['callback'] );
+					$logger['callback'] = $name;
+					$logger['location'] = $location;
+					$this->loggers[ $hash ] = new Logger( $logger );
+				}
+			}
 		}
+
 		$this->filter_depth++;
 
 		WP_CLI::add_wp_hook( $current_filter, array( $this, 'wp_hook_end' ), 9999 );
@@ -181,7 +196,91 @@ class Profiler {
 
 		$this->filter_depth--;
 
+		$stage_hooks = array();
+		foreach( $this->stage_hooks as $hooks ) {
+			$stage_hooks = array_merge( $stage_hooks, $hooks );
+		}
+		if ( 'hook' === $this->type
+			&& 0 === $this->filter_depth
+			&& ':before' === substr( $this->focus, -7, 7 ) ) {
+			$key = array_search( $current_filter, $stage_hooks );
+			if ( false !== $key
+				&& isset( $stage_hooks[ $key + 1 ] )
+				&& $stage_hooks[ $key + 1 ] === substr( $this->focus, 0, -7 ) ) {
+				register_tick_function( array( $this, 'handle_function_tick' ) );
+				declare( ticks = 1 );
+			}
+		}
+
 		return $filter_value;
+	}
+
+	/**
+	 * Handle the tick of a function
+	 */
+	public function handle_function_tick() {
+		global $wpdb, $wp_object_cache;
+
+		if ( ! is_null( $this->tick_start_time ) ) {
+			$time = microtime( true ) - $this->tick_start_time;
+
+			$callback_hash = md5( serialize( $this->tick_callback ) );
+			if ( ! isset( $this->loggers[ $callback_hash ] ) ) {
+				$this->loggers[ $callback_hash ] = array(
+					'callback'          => $this->tick_callback,
+					'time'              => 0,
+					'query_time'        => 0,
+					'query_count'       => 0,
+					'cache_hits'        => 0,
+					'cache_misses'      => 0,
+					'cache_ratio'       => null,
+				);
+			}
+
+			$this->loggers[ $callback_hash ]['time'] += $time;
+
+			if ( isset( $wpdb ) ) {
+				for ( $i = $this->tick_query_offset; $i < count( $wpdb->queries ); $i++ ) {
+					$this->loggers[ $callback_hash ]['query_time'] += $wpdb->queries[ $i ][1];
+					$this->loggers[ $callback_hash ]['query_count']++;
+				}
+			}
+
+			if ( isset( $wp_object_cache ) ) {
+				$hits = ! empty( $wp_object_cache->cache_hits ) ? $wp_object_cache->cache_hits : 0;
+				$misses = ! empty( $wp_object_cache->cache_misses ) ? $wp_object_cache->cache_misses : 0;
+				$this->loggers[ $callback_hash ]['cache_hits'] = ( $hits - $this->tick_cache_hit_offset ) + $this->loggers[ $callback_hash ]['cache_hits'];
+				$this->loggers[ $callback_hash ]['cache_misses'] = ( $misses - $this->tick_cache_miss_offset ) + $this->loggers[ $callback_hash ]['cache_misses'];
+				$total = $this->loggers[ $callback_hash ]['cache_hits'] + $this->loggers[ $callback_hash ]['cache_misses'];
+				if ( $total ) {
+					$ratio = ( $this->loggers[ $callback_hash ]['cache_hits'] / $total ) * 100;
+					$this->loggers[ $callback_hash ]['cache_ratio'] = round( $ratio, 2 ) . '%';
+				}
+			}
+		}
+
+		$bt = debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS | DEBUG_BACKTRACE_PROVIDE_OBJECT, 2 );
+		$frame = $bt[0];
+		if ( isset( $bt[1] ) ) {
+			$frame = $bt[1];
+		}
+
+		$callback = '';
+		if ( in_array( strtolower( $frame['function'] ), array( 'include', 'require', 'include_once', 'require_once' ) ) ) {
+			$callback = $frame['args'][0];
+		} else if ( isset( $frame['object'] ) && method_exists( $frame['object'], $frame['function'] ) ) {
+			$callback = array( $frame['object'], $frame['function'] );
+		} else if ( isset( $frame['class'] ) && method_exists( $frame['class'], $frame['function'] ) ) {
+			$callback = array( $frame['class'], $frame['function'] );
+		} elseif ( ! empty( $frame['function'] ) && function_exists( $frame['function'] ) ) {
+			$callback = $frame['function'];
+		}
+
+		$this->tick_callback = $callback;
+		$this->tick_start_time = microtime( true );
+		$this->tick_query_offset = ! empty( $wpdb->queries ) ? count( $wpdb->queries ) : 0;
+		$this->tick_cache_hit_offset = ! empty( $wp_object_cache->cache_hits ) ? $wp_object_cache->cache_hits : 0;
+		$this->tick_cache_miss_offset = ! empty( $wp_object_cache->cache_misses ) ? $wp_object_cache->cache_misses : 0;
 	}
 
 	/**
@@ -299,7 +398,7 @@ class Profiler {
 		} elseif ( is_object( $callback ) && is_a( $callback, 'Closure' ) ) {
 			$reflection = new \ReflectionFunction( $callback );
 			$name = 'function(){}';
-		} else if ( is_string( $callback ) ) {
+		} else if ( is_string( $callback ) && function_exists( $callback ) ) {
 			$reflection = new \ReflectionFunction( $callback );
 			$name = $callback . '()';
 		}
