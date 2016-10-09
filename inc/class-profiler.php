@@ -35,6 +35,7 @@ class Profiler {
 		),
 	);
 	private $current_stage_hooks = array();
+	private $running_hook = null;
 	private $previous_filter = null;
 	private $previous_filter_callbacks = null;
 	private $filter_depth = 0;
@@ -85,7 +86,7 @@ class Profiler {
 		$current_filter = current_filter();
 		if ( ( 'stage' === $this->type && in_array( $current_filter, $this->current_stage_hooks ) )
 			|| ( 'hook' === $this->type && ! $this->focus ) ) {
-			$pseudo_hook = "before {$current_filter}";
+			$pseudo_hook = "{$current_filter}:before";
 			if ( isset( $this->loggers[ $pseudo_hook ] ) ) {
 				$this->loggers[ $pseudo_hook ]->stop();
 			}
@@ -168,14 +169,13 @@ class Profiler {
 			if ( 'stage' === $this->type ) {
 				$key = array_search( $current_filter, $this->current_stage_hooks );
 				if ( false !== $key && isset( $this->current_stage_hooks[ $key + 1 ] ) ) {
-					$pseudo_hook = "before {$this->current_stage_hooks[$key+1]}";
-					$this->loggers[ $pseudo_hook ] = new Logger( array( 'hook' => '' ) );
-					$this->loggers[ $pseudo_hook ]->start();
+					$pseudo_hook = "{$this->current_stage_hooks[$key+1]}:before";
 				} else {
-					$pseudo_hook = 'wp_profile_last_hook';
-					$this->loggers[ $pseudo_hook ] = new Logger( array( 'hook' => '' ) );
-					$this->loggers[ $pseudo_hook ]->start();
+					$pseudo_hook = "{$this->current_stage_hooks[$key]}:after";;
+					$this->running_hook = $pseudo_hook;
 				}
+				$this->loggers[ $pseudo_hook ] = new Logger( array( 'hook' => $pseudo_hook ) );
+				$this->loggers[ $pseudo_hook ]->start();
 			}
 		}
 
@@ -226,8 +226,9 @@ class Profiler {
 			}
 		}
 		WP_CLI::get_runner()->load_wordpress();
-		if ( isset( $this->loggers['wp_profile_last_hook'] ) && $this->loggers['wp_profile_last_hook']->running() ) {
-			$this->loggers['wp_profile_last_hook']->stop();
+		if ( $this->running_hook ) {
+			$this->loggers[ $this->running_hook ]->stop();
+			$this->running_hook = null;
 		}
 		if ( 'stage' === $this->type && ! $this->focus ) {
 			$logger->stop();
@@ -244,8 +245,9 @@ class Profiler {
 			}
 		}
 		wp();
-		if ( isset( $this->loggers['wp_profile_last_hook'] ) && $this->loggers['wp_profile_last_hook']->running() ) {
-			$this->loggers['wp_profile_last_hook']->stop();
+		if ( $this->running_hook ) {
+			$this->loggers[ $this->running_hook ]->stop();
+			$this->running_hook = null;
 		}
 		if ( 'stage' === $this->type && ! $this->focus ) {
 			$logger->stop();
@@ -271,8 +273,9 @@ class Profiler {
 		ob_start();
 		require_once( ABSPATH . WPINC . '/template-loader.php' );
 		ob_get_clean();
-		if ( isset( $this->loggers['wp_profile_last_hook'] ) && $this->loggers['wp_profile_last_hook']->running() ) {
-			$this->loggers['wp_profile_last_hook']->stop();
+		if ( $this->running_hook ) {
+			$this->loggers[ $this->running_hook ]->stop();
+			$this->running_hook = null;
 		}
 		if ( 'stage' === $this->type && ! $this->focus ) {
 			$logger->stop();
@@ -323,8 +326,8 @@ class Profiler {
 	 */
 	private function set_stage_hooks( $hooks ) {
 		$this->current_stage_hooks = $hooks;
-		$pseudo_hook = "before {$hooks[0]}";
-		$this->loggers[ $pseudo_hook ] = new Logger( array( 'hook' => '' ) );
+		$pseudo_hook = "{$hooks[0]}:before";
+		$this->loggers[ $pseudo_hook ] = new Logger( array( 'hook' => $pseudo_hook ) );
 		$this->loggers[ $pseudo_hook ]->start();
 	}
 
