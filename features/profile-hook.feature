@@ -21,6 +21,19 @@ Feature: Profile a specific hook
       | smilies_init()             | 2             | 0             |
       | feed_links()               | 8             | 0             |
 
+  Scenario: Profile an intermediate stage hook
+    Given a WP install
+
+    When I run `wp profile hook wp_head:before --fields=callback,cache_hits,cache_misses`
+    Then STDOUT should be a table containing rows:
+      | callback                  | cache_hits     | cache_misses  |
+      | locate_template()         | 0              | 0             |
+      | load_template()           | 0              | 0             |
+    And STDOUT should not contain:
+      """
+      runcommand\Profile\Profiler->wp_tick_profile_begin()
+      """
+
   Scenario: Profile a hook before the template is loaded
     Given a WP install
 
