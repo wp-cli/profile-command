@@ -61,14 +61,14 @@ class Logger {
 		if ( ! is_null( $this->start_time ) ) {
 			$this->time += microtime( true ) - $this->start_time;
 		}
-		if ( ! is_null( $this->query_offset ) ) {
+		if ( ! is_null( $this->query_offset ) && isset( $wpdb ) ) {
 			for ( $i = $this->query_offset; $i < count( $wpdb->queries ); $i++ ) {
 				$this->query_time += $wpdb->queries[ $i ][1];
 				$this->query_count++;
 			}
 		}
 
-		if ( ! is_null( $this->cache_hit_offset ) && ! is_null( $this->cache_miss_offset ) ) {
+		if ( ! is_null( $this->cache_hit_offset ) && ! is_null( $this->cache_miss_offset ) && isset( $wp_object_cache ) ) {
 			$cache_hits = ! empty( $wp_object_cache->cache_hits ) ? $wp_object_cache->cache_hits : 0;
 			$cache_misses = ! empty( $wp_object_cache->cache_misses ) ? $wp_object_cache->cache_misses : 0;
 			$this->cache_hits = $cache_hits - $this->cache_hit_offset;

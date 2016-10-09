@@ -88,7 +88,10 @@ class Command {
 	 * ## OPTIONS
 	 *
 	 * [<hook>]
-	 * : Drill into key metrics for a specific WordPress hook (action or filter).
+	 * : Drill into key metrics of callbacks on a specific WordPress hook.
+	 *
+	 * [--all]
+	 * : Profile callbacks for all WordPress hooks.
 	 *
 	 * [--url=<url>]
 	 * : Execute a request against a specified URL. Defaults to the home URL.
@@ -111,7 +114,7 @@ class Command {
 	 */
 	public function hook( $args, $assoc_args ) {
 
-		$focus = isset( $args[0] ) ? $args[0] : null;
+		$focus = Utils\get_flag_value( $assoc_args, 'all', isset( $args[0] ) ? $args[0] : null );
 
 		$profiler = new Profiler( 'hook', $focus );
 		$profiler->run();
