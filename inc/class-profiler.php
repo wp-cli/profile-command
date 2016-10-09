@@ -118,6 +118,7 @@ class Profiler {
 				$this->wrap_current_filter_callbacks( $current_filter );
 			} else if ( ':before' === substr( $this->focus, -7, 7 ) && $current_filter === substr( $this->focus, 0, -7 ) ) {
 				unregister_tick_function( array( $this, 'handle_function_tick' ) );
+				$this->tick_callback = null;
 				foreach( $this->loggers as $hash => $logger ) {
 					list( $name, $location ) = self::get_name_location_from_callback( $logger['callback'] );
 					$logger['callback'] = $name;
@@ -221,7 +222,7 @@ class Profiler {
 	public function handle_function_tick() {
 		global $wpdb, $wp_object_cache;
 
-		if ( ! is_null( $this->tick_start_time ) ) {
+		if ( ! is_null( $this->tick_callback ) ) {
 			$time = microtime( true ) - $this->tick_start_time;
 
 			$callback_hash = md5( serialize( $this->tick_callback ) );
