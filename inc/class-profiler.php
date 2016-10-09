@@ -74,10 +74,50 @@ class Profiler {
 				define( 'SAVEQUERIES', true );
 			}
 		});
-		WP_CLI::add_wp_hook( 'all', array( $this, 'wp_hook_begin' ) );
+		if ( 'hook' === $this->type
+			&& ':before' === substr( $this->focus, -7, 7 ) ) {
+			$stage_hooks = array();
+			foreach( $this->stage_hooks as $hooks ) {
+				$stage_hooks = array_merge( $stage_hooks, $hooks );
+			}
+			$end_hook = substr( $this->focus, 0, -7 );
+			$key = array_search( $end_hook, $stage_hooks );
+			$start_hook = $stage_hooks[ $key - 1 ];
+			WP_CLI::add_wp_hook( $start_hook, array( $this, 'wp_tick_profile_begin' ), 9999 );
+			WP_CLI::add_wp_hook( $end_hook, array( $this, 'wp_tick_profile_end' ), -9999 );
+		} else {
+			WP_CLI::add_wp_hook( 'all', array( $this, 'wp_hook_begin' ) );
+		}
 		WP_CLI::add_wp_hook( 'pre_http_request', array( $this, 'wp_request_begin' ) );
 		WP_CLI::add_wp_hook( 'http_api_debug', array( $this, 'wp_request_end' ) );
 		$this->load_wordpress_with_template();
+		if ( 'hook' === $this->type
+			&& ':before' === substr( $this->focus, -7, 7 ) ) {
+			foreach( $this->loggers as $hash => $logger ) {
+				list( $name, $location ) = self::get_name_location_from_callback( $logger['callback'] );
+				$logger['callback'] = $name;
+				$logger['location'] = $location;
+				$this->loggers[ $hash ] = new Logger( $logger );
+			}
+		}
+	}
+
+	/**
+	 * Start profiling function calls on the end of this filter
+	 */
+	public function wp_tick_profile_begin( $value = null ) {
+		register_tick_function( array( $this, 'handle_function_tick' ) );
+		declare( ticks = 1 );
+		return $value;
+	}
+
+	/**
+	 * Stop profiling function calls at the beginning of this filter
+	 */
+	public function wp_tick_profile_end( $value = null ) {
+		unregister_tick_function( array( $this, 'handle_function_tick' ) );
+		$this->tick_callback = null;
+		return $value;
 	}
 
 	/**
@@ -113,19 +153,10 @@ class Profiler {
 			$this->previous_filter_callbacks = null;
 		}
 
-		if ( 'hook' === $this->type && 0 === $this->filter_depth ) {
-			if ( $current_filter === $this->focus || true === $this->focus ) {
-				$this->wrap_current_filter_callbacks( $current_filter );
-			} else if ( ':before' === substr( $this->focus, -7, 7 ) && $current_filter === substr( $this->focus, 0, -7 ) ) {
-				unregister_tick_function( array( $this, 'handle_function_tick' ) );
-				$this->tick_callback = null;
-				foreach( $this->loggers as $hash => $logger ) {
-					list( $name, $location ) = self::get_name_location_from_callback( $logger['callback'] );
-					$logger['callback'] = $name;
-					$logger['location'] = $location;
-					$this->loggers[ $hash ] = new Logger( $logger );
-				}
-			}
+		if ( 'hook' === $this->type
+			&& 0 === $this->filter_depth
+			&& ( $current_filter === $this->focus || true === $this->focus ) ) {
+			$this->wrap_current_filter_callbacks( $current_filter );
 		}
 
 		$this->filter_depth++;
@@ -196,22 +227,6 @@ class Profiler {
 		}
 
 		$this->filter_depth--;
-
-		$stage_hooks = array();
-		foreach( $this->stage_hooks as $hooks ) {
-			$stage_hooks = array_merge( $stage_hooks, $hooks );
-		}
-		if ( 'hook' === $this->type
-			&& 0 === $this->filter_depth
-			&& ':before' === substr( $this->focus, -7, 7 ) ) {
-			$key = array_search( $current_filter, $stage_hooks );
-			if ( false !== $key
-				&& isset( $stage_hooks[ $key + 1 ] )
-				&& $stage_hooks[ $key + 1 ] === substr( $this->focus, 0, -7 ) ) {
-				register_tick_function( array( $this, 'handle_function_tick' ) );
-				declare( ticks = 1 );
-			}
-		}
 
 		return $filter_value;
 	}
