@@ -91,13 +91,16 @@ This package implements the following commands:
 Profile each stage of the WordPress load process (bootstrap, main_query, template).
 
 ~~~
-wp profile stage [<stage>] [--url=<url>] [--fields=<fields>] [--format=<format>]
+wp profile stage [<stage>] [--all] [--url=<url>] [--fields=<fields>] [--format=<format>]
 ~~~
 
 **OPTIONS**
 
 	[<stage>]
 		Drill down into a specific stage.
+
+	[--all]
+		Expand upon all stages.
 
 	[--url=<url>]
 		Execute a request against a specified URL. Defaults to the home URL.
@@ -120,16 +123,19 @@ wp profile stage [<stage>] [--url=<url>] [--fields=<fields>] [--format=<format>]
 
 ### wp profile hook
 
-Profile key metrics for a WordPress hook (action or filter).
+Profile key metrics for WordPress hooks (actions and filters).
 
 ~~~
-wp profile hook <hook> [--url=<url>] [--fields=<fields>] [--format=<format>]
+wp profile hook [<hook>] [--all] [--url=<url>] [--fields=<fields>] [--format=<format>]
 ~~~
 
 **OPTIONS**
 
-	<hook>
-		WordPress hook (action or filter) to profile.
+	[<hook>]
+		Drill into key metrics of callbacks on a specific WordPress hook.
+
+	[--all]
+		Profile callbacks for all WordPress hooks.
 
 	[--url=<url>]
 		Execute a request against a specified URL. Defaults to the home URL.
