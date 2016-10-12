@@ -129,6 +129,9 @@ Profile key metrics for WordPress hooks (actions and filters).
 wp profile hook [<hook>] [--all] [--url=<url>] [--fields=<fields>] [--format=<format>]
 ~~~
 
+In order to profile callbacks on a specific hook, the action or filter
+will need to execute during the course of the request.
+
 **OPTIONS**
 
 	[<hook>]
