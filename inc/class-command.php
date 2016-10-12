@@ -85,6 +85,9 @@ class Command {
 	/**
 	 * Profile key metrics for WordPress hooks (actions and filters).
 	 *
+	 * In order to profile callbacks on a specific hook, the action or filter
+	 * will need to execute during the course of the request.
+	 *
 	 * ## OPTIONS
 	 *
 	 * [<hook>]
