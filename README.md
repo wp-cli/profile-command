@@ -106,7 +106,7 @@ wp profile stage [<stage>] [--all] [--url=<url>] [--fields=<fields>] [--format=<
 		Execute a request against a specified URL. Defaults to the home URL.
 
 	[--fields=<fields>]
-		Display one or more fields.
+		Limit the output to specific fields. Default is all fields.
 
 	[--format=<format>]
 		Render output in a particular format.
