@@ -98,8 +98,12 @@ class Profiler {
 			}
 			$end_hook = substr( $this->focus, 0, -7 );
 			$key = array_search( $end_hook, $stage_hooks );
-			$start_hook = $stage_hooks[ $key - 1 ];
-			WP_CLI::add_wp_hook( $start_hook, array( $this, 'wp_tick_profile_begin' ), 9999 );
+			if ( isset( $stage_hooks[ $key - 1 ] ) ) {
+				$start_hook = $stage_hooks[ $key - 1 ];
+				WP_CLI::add_wp_hook( $start_hook, array( $this, 'wp_tick_profile_begin' ), 9999 );
+			} else {
+				WP_CLI::add_hook( 'after_wp_config_load', array( $this, 'wp_tick_profile_begin' ) );
+			}
 			WP_CLI::add_wp_hook( $end_hook, array( $this, 'wp_tick_profile_end' ), -9999 );
 		} else {
 			WP_CLI::add_wp_hook( 'all', array( $this, 'wp_hook_begin' ) );
