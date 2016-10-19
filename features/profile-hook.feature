@@ -120,3 +120,20 @@ Feature: Profile a specific hook
       """
       Warning: Called 1
       """
+
+  Scenario: Profile the mu_plugins:before hook
+    Given a WP install
+    And a wp-content/mu-plugins/awesome-file.php file:
+      """
+      <?php
+      function awesome_func() {
+        // does nothing
+      }
+      awesome_func();
+      """
+
+    When I run `wp profile hook muplugins_loaded:before --fields=callback`
+    Then STDOUT should contain:
+      """
+      wp-content/mu-plugins/awesome-file.php
+      """
