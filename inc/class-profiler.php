@@ -117,6 +117,24 @@ class Profiler {
 	 * Start profiling function calls on the end of this filter
 	 */
 	public function wp_tick_profile_begin( $value = null ) {
+
+		// Disable opcode optimizers.  These "optimize" calls out of the stack
+		// and hide calls from the tick handler and backtraces.
+		// Copied from P3 Profiler
+		if ( extension_loaded( 'xcache' ) ) {
+			@ini_set( 'xcache.optimizer', false );
+		} elseif ( extension_loaded( 'apc' ) ) {
+			@ini_set( 'apc.optimization', 0 );
+			apc_clear_cache();
+		} elseif ( extension_loaded( 'eaccelerator' ) ) {
+			@ini_set( 'eaccelerator.optimizer', 0 );
+			if ( function_exists( 'eaccelerator_optimizer' ) ) {
+				@eaccelerator_optimizer( false );
+			}
+		} elseif ( extension_loaded( 'Zend Optimizer+' ) ) {
+			@ini_set( 'zend_optimizerplus.optimization_level', 0 );
+		}
+
 		register_tick_function( array( $this, 'handle_function_tick' ) );
 		declare( ticks = 1 );
 		return $value;
