@@ -322,6 +322,7 @@ class Profiler {
 		}
 
 		if ( 'runcommand\Profile\Profiler->wp_tick_profile_begin()' === $callback ) {
+			$this->tick_callback = null;
 			return;
 		}
 
