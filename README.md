@@ -91,7 +91,7 @@ This package implements the following commands:
 Profile each stage of the WordPress load process (bootstrap, main_query, template).
 
 ~~~
-wp profile stage [<stage>] [--all] [--url=<url>] [--fields=<fields>] [--format=<format>]
+wp profile stage [<stage>] [--all] [--spotlight] [--url=<url>] [--fields=<fields>] [--format=<format>]
 ~~~
 
 **OPTIONS**
@@ -101,6 +101,9 @@ wp profile stage [<stage>] [--all] [--url=<url>] [--fields=<fields>] [--format=<
 
 	[--all]
 		Expand upon all stages.
+
+	[--spotlight]
+		Filter out logs with zero-ish values from the set.
 
 	[--url=<url>]
 		Execute a request against a specified URL. Defaults to the home URL.
@@ -126,7 +129,7 @@ wp profile stage [<stage>] [--all] [--url=<url>] [--fields=<fields>] [--format=<
 Profile key metrics for WordPress hooks (actions and filters).
 
 ~~~
-wp profile hook [<hook>] [--all] [--url=<url>] [--fields=<fields>] [--format=<format>]
+wp profile hook [<hook>] [--all] [--spotlight] [--url=<url>] [--fields=<fields>] [--format=<format>]
 ~~~
 
 In order to profile callbacks on a specific hook, the action or filter
@@ -139,6 +142,9 @@ will need to execute during the course of the request.
 
 	[--all]
 		Profile callbacks for all WordPress hooks.
+
+	[--spotlight]
+		Filter out logs with zero-ish values from the set.
 
 	[--url=<url>]
 		Execute a request against a specified URL. Defaults to the home URL.

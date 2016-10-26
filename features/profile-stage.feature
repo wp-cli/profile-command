@@ -124,3 +124,20 @@ Feature: Profile the template render stage
     Then STDOUT should be a table containing rows:
       | hook              | callback_count   |
       | plugins_loaded    | 3                |
+
+  Scenario: Use spotlight mode to filter out the zero-ish values
+    Given a WP install
+
+    When I run `wp profile stage bootstrap --fields=hook`
+    Then STDOUT should be a table containing rows:
+      | hook              |
+      | init              |
+      | wp_loaded:before  |
+      | wp_loaded         |
+      | wp_loaded:after   |
+
+    When I run `wp profile stage bootstrap --fields=hook --spotlight`
+    Then STDOUT should be a table containing rows:
+      | hook              |
+      | init              |
+      | wp_loaded:after   |
