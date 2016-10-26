@@ -11,10 +11,10 @@ Feature: Profile arbitary file execution
       runcommand_do_nothing();
       """
 
-    When I run `wp profile eval-file lame-function.php`
+    When I run `wp profile eval-file lame-function.php --fields=query_time,query_count,cache_ratio,cache_hits,cache_misses,request_time,request_count`
     Then STDOUT should be a table containing rows:
-      | time | query_time | query_count | cache_ratio | cache_hits | cache_misses | request_time | request_count |
-      | 0s   | 0s         | 0           |             | 0          | 0            | 0s           | 0             |
+      | query_time | query_count | cache_ratio | cache_hits | cache_misses | request_time | request_count |
+      | 0s         | 0           |             | 0          | 0            | 0s           | 0             |
 
   Scenario: Profile a function that makes one HTTP request
     Given a WP install
