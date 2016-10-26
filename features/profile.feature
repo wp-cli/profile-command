@@ -8,8 +8,8 @@ Feature: Basic profile usage
       """
       usage: wp profile eval <php-code> [--fields=<fields>] [--format=<format>]
          or: wp profile eval-file <file> [--fields=<fields>] [--format=<format>]
-         or: wp profile hook [<hook>] [--all] [--url=<url>] [--fields=<fields>] [--format=<format>]
-         or: wp profile stage [<stage>] [--all] [--url=<url>] [--fields=<fields>] [--format=<format>]
+         or: wp profile hook [<hook>] [--all] [--spotlight] [--url=<url>] [--fields=<fields>] [--format=<format>]
+         or: wp profile stage [<stage>] [--all] [--spotlight] [--url=<url>] [--fields=<fields>] [--format=<format>]
 
       See 'wp help profile <command>' for more information on a specific command.
       """
