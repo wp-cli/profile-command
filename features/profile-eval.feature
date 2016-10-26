@@ -26,12 +26,12 @@ Feature: Profile arbitary code execution
   Scenario: Profile calls to the object cache
     Given a WP install
 
-    When I run `wp profile eval 'wp_cache_get( "foo" );' --fields=cache_hits,cache_misses`
+    When I run `wp profile eval 'wp_cache_get( "foo" );' --fields=time,cache_hits,cache_misses`
     Then STDOUT should be a table containing rows:
-      | cache_hits    | cache_misses |
-      | 0             | 1            |
+      | time     | cache_hits    | cache_misses |
+      | 0s       | 0             | 1            |
 
-    When I run `wp profile eval 'wp_cache_set( "foo", "bar" ); wp_cache_get( "foo" ); wp_cache_get( "foo" );' --fields=cache_hits,cache_misses`
+    When I run `wp profile eval 'wp_cache_set( "foo", "bar" ); wp_cache_get( "foo" ); wp_cache_get( "foo" );' --fields=time,cache_hits,cache_misses`
     Then STDOUT should be a table containing rows:
-      | cache_hits    | cache_misses |
-      | 2             | 0            |
+      | time     | cache_hits    | cache_misses |
+      | 0s       | 2             | 0            |
