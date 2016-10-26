@@ -18,6 +18,9 @@ class Command {
 	 * [--all]
 	 * : Expand upon all stages.
 	 *
+	 * [--spotlight]
+	 * : Filter out logs with zero-ish values from the set.
+	 *
 	 * [--url=<url>]
 	 * : Execute a request against a specified URL. Defaults to the home URL.
 	 *
@@ -51,9 +54,11 @@ class Command {
 		$profiler->run();
 
 		if ( $focus ) {
-			$fields = array(
+			$base = array(
 				'hook',
 				'callback_count',
+			);
+			$metrics = array(
 				'time',
 				'query_time',
 				'query_count',
@@ -64,8 +69,10 @@ class Command {
 				'request_count',
 			);
 		} else {
-			$fields = array(
+			$base = array(
 				'stage',
+			);
+			$metrics = array(
 				'time',
 				'query_time',
 				'query_count',
@@ -78,8 +85,13 @@ class Command {
 				'request_count',
 			);
 		}
+		$fields = array_merge( $base, $metrics );
 		$formatter = new Formatter( $assoc_args, $fields );
-		$formatter->display_items( $profiler->get_loggers() );
+		$loggers = $profiler->get_loggers();
+		if ( Utils\get_flag_value( $assoc_args, 'spotlight' ) ) {
+			$loggers = self::shine_spotlight( $loggers, $metrics );
+		}
+		$formatter->display_items( $loggers );
 	}
 
 	/**
@@ -95,6 +107,9 @@ class Command {
 	 *
 	 * [--all]
 	 * : Profile callbacks for all WordPress hooks.
+	 *
+	 * [--spotlight]
+	 * : Filter out logs with zero-ish values from the set.
 	 *
 	 * [--url=<url>]
 	 * : Execute a request against a specified URL. Defaults to the home URL.
@@ -146,7 +161,11 @@ class Command {
 		);
 		$fields = array_merge( $base, $metrics );
 		$formatter = new Formatter( $assoc_args, $fields );
-		$formatter->display_items( $profiler->get_loggers() );
+		$loggers = $profiler->get_loggers();
+		if ( Utils\get_flag_value( $assoc_args, 'spotlight' ) ) {
+			$loggers = self::shine_spotlight( $loggers, $metrics );
+		}
+		$formatter->display_items( $loggers );
 	}
 
 	/**
@@ -267,6 +286,48 @@ class Command {
 	 */
 	private static function include_file( $file ) {
 		include( $file );
+	}
+
+	/**
+	 * Filter loggers with zero-ish values.
+	 *
+	 * @param array $loggers
+	 * @param array $metrics
+	 * @return array
+	 */
+	private static function shine_spotlight( $loggers, $metrics ) {
+
+		foreach( $loggers as $k => $logger ) {
+			$non_zero = false;
+			foreach( $metrics as $metric ) {
+				switch ( $metric ) {
+					// 100% cache ratio is fine by us
+					case 'cache_ratio':
+					case 'cache_hits':
+					case 'cache_misses':
+						if ( $logger->cache_ratio && '100%' !== $logger->cache_ratio ) {
+							$non_zero = true;
+						}
+						break;
+					case 'time':
+					case 'query_time':
+						if ( $logger->$metric > 0.01 ) {
+							$non_zero = true;
+						}
+						break;
+					default:
+						if ( $logger->$metric ) {
+							$non_zero = true;
+						}
+						break;
+				}
+			}
+			if ( ! $non_zero ) {
+				unset( $loggers[ $k ] );
+			}
+		}
+
+		return $loggers;
 	}
 
 }
