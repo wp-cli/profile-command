@@ -27,7 +27,9 @@ class Formatter {
 			$format_args['fields'] = explode( ',', $format_args['fields'] );
 		}
 
-		$this->total_cell_index = array_search( $fields[0], $format_args['fields'] );
+		if ( 'time' !== $fields[0] ) {
+			$this->total_cell_index = array_search( $fields[0], $format_args['fields'] );
+		}
 
 		$format_args['fields'] = array_map( 'trim', $format_args['fields'] );
 
@@ -40,9 +42,9 @@ class Formatter {
 	 *
 	 * @param array $items
 	 */
-	public function display_items( $items ) {
+	public function display_items( $items, $include_total = true ) {
 		if ( 'table' === $this->args['format'] && empty( $this->args['field'] ) ) {
-			$this->show_table( $items, $this->args['fields'] );
+			$this->show_table( $items, $this->args['fields'], $include_total );
 		} else {
 			$this->formatter->display_items( $items );
 		}
@@ -54,7 +56,7 @@ class Formatter {
 	 * @param array $items
 	 * @param array $fields
 	 */
-	private function show_table( $items, $fields ) {
+	private function show_table( $items, $fields, $include_total ) {
 		$table = new \cli\Table();
 
 		$enabled = \cli\Colors::shouldColorize();
@@ -66,7 +68,7 @@ class Formatter {
 
 		$totals = array_fill( 0, count( $fields ), null );
 		if ( ! is_null( $this->total_cell_index ) ) {
-			$totals[ $this->total_cell_index ] = 'total';
+			$totals[ $this->total_cell_index ] = 'total (' . count( $items ) . ')';
 		}
 		$location_index = array_search( 'location', $fields );
 		foreach ( $items as $item ) {
@@ -101,22 +103,24 @@ class Formatter {
 			}
 			$table->addRow( $values );
 		}
-		foreach( $totals as $i => $value ) {
-			if ( null === $value ) {
-				continue;
-			}
-			if ( stripos( $fields[ $i ], '_time' ) || 'time' === $fields[ $i ] ) {
-				$totals[ $i ] = round( $value, 4 ) . 's';
-			}
-			if ( is_array( $value ) ) {
-				if ( ! empty( $value ) ) {
-					$totals[ $i ] = round( ( array_sum( $value ) / count( $value ) ), 2 ) . '%';
-				} else {
-					$totals[ $i ] = null;
+		if ( $include_total ) {
+			foreach( $totals as $i => $value ) {
+				if ( null === $value ) {
+					continue;
+				}
+				if ( stripos( $fields[ $i ], '_time' ) || 'time' === $fields[ $i ] ) {
+					$totals[ $i ] = round( $value, 4 ) . 's';
+				}
+				if ( is_array( $value ) ) {
+					if ( ! empty( $value ) ) {
+						$totals[ $i ] = round( ( array_sum( $value ) / count( $value ) ), 2 ) . '%';
+					} else {
+						$totals[ $i ] = null;
+					}
 				}
 			}
+			$table->setFooters( $totals );
 		}
-		$table->setFooters( $totals );
 
 		foreach( $table->getDisplayLines() as $line ) {
 			\WP_CLI::line( $line );
