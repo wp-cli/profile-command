@@ -39,7 +39,7 @@ Feature: Basic profile usage
     When I run `wp profile hook setup_theme --fields=callback,time`
     Then STDOUT should be a table containing rows:
       | callback          | time   |
-      | total             |        |
+      | total (0)         |        |
     And STDERR should be empty
 
   Scenario: Trailingslash provided URL to avoid canonical redirect
@@ -49,7 +49,7 @@ Feature: Basic profile usage
     Then STDERR should be empty
     And STDOUT should be a table containing rows:
       | callback          | time   |
-      | total             |        |
+      | total (0)         |        |
 
   Scenario: Don't include 'total' cell when the name column is omitted
     Given a WP install

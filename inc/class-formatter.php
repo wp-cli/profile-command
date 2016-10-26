@@ -42,9 +42,9 @@ class Formatter {
 	 *
 	 * @param array $items
 	 */
-	public function display_items( $items ) {
+	public function display_items( $items, $include_total = true ) {
 		if ( 'table' === $this->args['format'] && empty( $this->args['field'] ) ) {
-			$this->show_table( $items, $this->args['fields'] );
+			$this->show_table( $items, $this->args['fields'], $include_total );
 		} else {
 			$this->formatter->display_items( $items );
 		}
@@ -56,7 +56,7 @@ class Formatter {
 	 * @param array $items
 	 * @param array $fields
 	 */
-	private function show_table( $items, $fields ) {
+	private function show_table( $items, $fields, $include_total ) {
 		$table = new \cli\Table();
 
 		$enabled = \cli\Colors::shouldColorize();
@@ -103,7 +103,7 @@ class Formatter {
 			}
 			$table->addRow( $values );
 		}
-		if ( count( $items ) > 1 ) {
+		if ( $include_total ) {
 			foreach( $totals as $i => $value ) {
 				if ( null === $value ) {
 					continue;
