@@ -29,7 +29,7 @@ Feature: Profile the template render stage
       | wp_loaded:before         |
       | wp_loaded                |
       | wp_loaded:after          |
-      | total                    |
+      | total (13)               |
 
     When I run `wp profile stage main_query --fields=hook`
     Then STDOUT should be a table containing rows:
@@ -45,7 +45,7 @@ Feature: Profile the template render stage
       | wp:before                |
       | wp                       |
       | wp:after                 |
-      | total                    |
+      | total (11)               |
 
     When I run `wp profile stage template --fields=hook`
     Then STDOUT should be a table containing rows:
@@ -63,7 +63,7 @@ Feature: Profile the template render stage
       | wp_footer:before         |
       | wp_footer                |
       | wp_footer:after          |
-      | total                    |
+      | total (13)               |
 
   Scenario: Use --all flag to profile all stages
     Given a WP install
@@ -106,7 +106,7 @@ Feature: Profile the template render stage
       | wp_footer:before         |
       | wp_footer                |
       | wp_footer:after          |
-      | total                    |
+      | total (35)               |
 
   Scenario: Invalid stage specified
     Given a WP install

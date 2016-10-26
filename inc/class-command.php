@@ -218,7 +218,7 @@ class Command {
 			'request_count',
 		);
 		$formatter = new Formatter( $assoc_args, $fields );
-		$formatter->display_items( array( $logger ) );
+		$formatter->display_items( array( $logger ), false );
 	}
 
 	/**
@@ -276,7 +276,7 @@ class Command {
 			'request_count',
 		);
 		$formatter = new Formatter( $assoc_args, $fields );
-		$formatter->display_items( array( $logger ) );
+		$formatter->display_items( array( $logger ), false );
 	}
 
 	/**
