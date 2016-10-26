@@ -105,6 +105,10 @@ class Profiler {
 				WP_CLI::add_hook( 'after_wp_config_load', array( $this, 'wp_tick_profile_begin' ) );
 			}
 			WP_CLI::add_wp_hook( $end_hook, array( $this, 'wp_tick_profile_end' ), -9999 );
+		} else if ( 'hook' === $this->type
+			&& ':after' === substr( $this->focus, -6, 6 ) ) {
+			$start_hook = substr( $this->focus, 0, -6 );
+			WP_CLI::add_wp_hook( $start_hook, array( $this, 'wp_tick_profile_begin' ), 9999 );
 		} else {
 			WP_CLI::add_wp_hook( 'all', array( $this, 'wp_hook_begin' ) );
 		}
@@ -387,6 +391,9 @@ class Profiler {
 			$this->loggers[ $this->running_hook ]->stop();
 			$this->running_hook = null;
 		}
+		if ( 'hook' === $this->type && 'wp_loaded:after' === $this->focus ) {
+			$this->wp_tick_profile_end();
+		}
 		if ( 'stage' === $this->type && ! $this->focus ) {
 			$logger->stop();
 			$this->loggers[] = $logger;
@@ -405,6 +412,9 @@ class Profiler {
 		if ( $this->running_hook ) {
 			$this->loggers[ $this->running_hook ]->stop();
 			$this->running_hook = null;
+		}
+		if ( 'hook' === $this->type && 'wp:after' === $this->focus ) {
+			$this->wp_tick_profile_end();
 		}
 		if ( 'stage' === $this->type && ! $this->focus ) {
 			$logger->stop();
@@ -433,6 +443,9 @@ class Profiler {
 		if ( $this->running_hook ) {
 			$this->loggers[ $this->running_hook ]->stop();
 			$this->running_hook = null;
+		}
+		if ( 'hook' === $this->type && 'wp_footer:after' === $this->focus ) {
+			$this->wp_tick_profile_end();
 		}
 		if ( 'stage' === $this->type && ! $this->focus ) {
 			$logger->stop();
