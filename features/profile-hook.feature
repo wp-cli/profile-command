@@ -137,3 +137,24 @@ Feature: Profile a specific hook
       """
       wp-content/mu-plugins/awesome-file.php
       """
+
+  Scenario: Profile the :after hooks
+    Given a WP install
+
+    When I run `wp profile hook wp_loaded:after`
+    Then STDOUT should contain:
+      """
+      do_action()
+      """
+
+    When I run `wp profile hook wp:after`
+    Then STDOUT should contain:
+      """
+      do_action_ref_array()
+      """
+
+    When I run `wp profile hook wp_footer:after`
+    Then STDOUT should contain:
+      """
+      do_action()
+      """
