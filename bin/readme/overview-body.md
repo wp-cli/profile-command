@@ -2,70 +2,64 @@
 
 Save hours diagnosing slow WordPress sites with `wp profile`. Because you can easily run it on any server that supports WP-CLI, `wp profile` compliments Xdebug and New Relic by pointing you in the right direction for further debugging. And, because it's a WP-CLI command, using `wp profile` means you don't have to install a plugin and deal with the painful dashboard of a slow WordPress site.
 
-First, run `wp profile` to see metrics for each stage of the WordPress load process:
+First, run `wp profile stage` to see metrics for each stage of the WordPress load process:
 
 ```
-$ wp profile
+$ wp profile stage
 +------------+---------+------------+-------------+-------------+------------+--------------+-----------+------------+--------------+---------------+
 | stage      | time    | query_time | query_count | cache_ratio | cache_hits | cache_misses | hook_time | hook_count | request_time | request_count |
 +------------+---------+------------+-------------+-------------+------------+--------------+-----------+------------+--------------+---------------+
-| bootstrap  | 2.0408s | 0.0365s    | 15          | 93.21%      | 412        | 30           | 0.9299s   | 3097       | 0s           | 0             |
-| main_query | 0.0123s | 0.0004s    | 3           | 94.29%      | 33         | 2            | 0.0098s   | 79         | 0s           | 0             |
-| template   | 0.305s  | 0.0175s    | 179         | 91.02%      | 2636       | 260          | 0.1125s   | 7777       | 0s           | 0             |
+| bootstrap  | 0.7597s | 0.0052s    | 14          | 93.21%      | 357        | 26           | 0.3328s   | 2717       | 0s           | 0             |
+| main_query | 0.0131s | 0.0004s    | 3           | 94.29%      | 33         | 2            | 0.0065s   | 78         | 0s           | 0             |
+| template   | 0.7041s | 0.0192s    | 147         | 92.16%      | 2350       | 200          | 0.6982s   | 6130       | 0s           | 0             |
 +------------+---------+------------+-------------+-------------+------------+--------------+-----------+------------+--------------+---------------+
-| total      | 2.3582s | 0.0544s    | 197         | 92.84%      | 3081       | 292          | 1.0522s   | 10953      | 0s           | 0             |
+| total (3)  | 1.477s  | 0.0248s    | 164         | 93.22%      | 2740       | 228          | 1.0375s   | 8925       | 0s           | 0             |
 +------------+---------+------------+-------------+-------------+------------+--------------+-----------+------------+--------------+---------------+
 ```
 
-Then, use `--stage=<stage>` to dive into higher fidelity of a particular stage:
+Then, use `wp profile stage bootstrap` to dive into higher fidelity of a particular stage. Include the `--spotlight` flag to filter out the zero-ish results.
 
 ```
-$ wp profile --stage=bootstrap
-+-------------------+---------+------------+-------------+-------------+------------+--------------+--------------+---------------+
-| hook              | time    | query_time | query_count | cache_ratio | cache_hits | cache_misses | request_time | request_count |
-+-------------------+---------+------------+-------------+-------------+------------+--------------+--------------+---------------+
-|                   | 0.3558s | 0.0014s    | 1           | 25%         | 1          | 3            | 0s           | 0             |
-| muplugins_loaded  | 0.0002s | 0s         | 0           | 50%         | 1          | 1            | 0s           | 0             |
-|                   | 0.8075s | 0.0007s    | 6           | 73.68%      | 56         | 20           | 0s           | 0             |
-| plugins_loaded    | 0.4271s | 0s         | 0           | 100%        | 138        | 0            | 0s           | 0             |
-|                   | 0.0046s | 0s         | 0           | 100%        | 6          | 0            | 0s           | 0             |
-| setup_theme       | 0s      | 0s         | 0           |             | 0          | 0            | 0s           | 0             |
-|                   | 0.2401s | 0s         | 0           | 100%        | 26         | 0            | 0s           | 0             |
-| after_setup_theme | 0.0007s | 0s         | 0           | 100%        | 4          | 0            | 0s           | 0             |
-|                   | 0.0001s | 0s         | 0           | 100%        | 2          | 0            | 0s           | 0             |
-| init              | 0.2922s | 0.0016s    | 8           | 96.3%       | 156        | 6            | 0s           | 0             |
-|                   | 0.0277s | 0s         | 0           | 100%        | 2          | 0            | 0s           | 0             |
-| wp_loaded         | 0.01s   | 0s         | 0           |             | 0          | 0            | 0s           | 0             |
-+-------------------+---------+------------+-------------+-------------+------------+--------------+--------------+---------------+
-| total             | 2.166s  | 0.0037s    | 15          | 84.5%       | 392        | 30           | 0s           | 0             |
-+-------------------+---------+------------+-------------+-------------+------------+--------------+--------------+---------------+
+$ wp profile stage bootstrap --spotlight
++--------------------------+----------------+---------+------------+-------------+-------------+------------+--------------+--------------+---------------+
+| hook                     | callback_count | time    | query_time | query_count | cache_ratio | cache_hits | cache_misses | request_time | request_count |
++--------------------------+----------------+---------+------------+-------------+-------------+------------+--------------+--------------+---------------+
+| muplugins_loaded:before  |                | 0.1644s | 0.0017s    | 1           | 40%         | 2          | 3            | 0s           | 0             |
+| muplugins_loaded         | 2              | 0.0005s | 0s         | 0           | 50%         | 1          | 1            | 0s           | 0             |
+| plugins_loaded:before    |                | 0.1771s | 0.0008s    | 6           | 77.63%      | 59         | 17           | 0s           | 0             |
+| plugins_loaded           | 14             | 0.0887s | 0s         | 0           | 100%        | 104        | 0            | 0s           | 0             |
+| after_setup_theme:before |                | 0.043s  | 0s         | 0           | 100%        | 26         | 0            | 0s           | 0             |
+| init                     | 82             | 0.1569s | 0.0018s    | 7           | 96.88%      | 155        | 5            | 0s           | 0             |
+| wp_loaded:after          |                | 0.027s  | 0s         | 0           |             | 0          | 0            | 0s           | 0             |
++--------------------------+----------------+---------+------------+-------------+-------------+------------+--------------+--------------+---------------+
+| total (7)                | 98             | 0.6575s | 0.0043s    | 14          | 77.42%      | 347        | 26           | 0s           | 0             |
++--------------------------+----------------+---------+------------+-------------+-------------+------------+--------------+--------------+---------------+
 ```
 
-Lastly, when you've found a specific hook you'd like to assess, use `--hook=<hook>`:
+Lastly, when you've found a specific hook you'd like to assess, use `wp profile hook <hook>`. Include the `--fields=<fields>` argument to focus on certain fields.
 
 ```
-$ wp profile --hook=plugins_loaded
-+------------------------------------------------------------+---------+------------+-------------+-------------+------------+--------------+--------------+---------------+
-| callback                                                   | time    | query_time | query_count | cache_ratio | cache_hits | cache_misses | request_time | request_count |
-+------------------------------------------------------------+---------+------------+-------------+-------------+------------+--------------+--------------+---------------+
-| wp_maybe_load_widgets()                                    | 0.0309s | 0s         | 0           |             | 0          | 0            | 0s           | 0             |
-| wp_maybe_load_embeds()                                     | 0.0001s | 0s         | 0           |             | 0          | 0            | 0s           | 0             |
-| VaultPress_Hotfixes->protect_jetpack_402_from_oembed_xss() | 0s      | 0s         | 0           |             | 0          | 0            | 0s           | 0             |
-| _wp_customize_include()                                    | 0s      | 0s         | 0           |             | 0          | 0            | 0s           | 0             |
-| Debug_Bar_Remote_Requests()                                | 0s      | 0s         | 0           |             | 0          | 0            | 0s           | 0             |
-| EasyRecipePlus->pluginsLoaded()                            | 0.0029s | 0s         | 0           | 100%        | 4          | 0            | 0s           | 0             |
-| Gamajo\GenesisHeaderNav\genesis_header_nav_i18n()          | 0.0007s | 0s         | 0           |             | 0          | 0            | 0s           | 0             |
-| DS_Public_Post_Preview::init()                             | 0s      | 0s         | 0           |             | 0          | 0            | 0s           | 0             |
-| wpseo_load_textdomain()                                    | 0.0006s | 0s         | 0           |             | 0          | 0            | 0s           | 0             |
-| load_yoast_notifications()                                 | 0.003s  | 0s         | 0           |             | 0          | 0            | 0s           | 0             |
-| wpseo_init()                                               | 0.101s  | 0s         | 0           | 100%        | 70         | 0            | 0s           | 0             |
-| wpseo_frontend_init()                                      | 0.0003s | 0s         | 0           | 100%        | 2          | 0            | 0s           | 0             |
-| Black_Studio_TinyMCE_Plugin->load_compatibility()          | 0.0122s | 0s         | 0           |             | 0          | 0            | 0s           | 0             |
-| Jetpack::load_modules()                                    | 0.2706s | 0s         | 0           | 100%        | 62         | 0            | 0s           | 0             |
-| function(){}                                               | 0s      | 0s         | 0           |             | 0          | 0            | 0s           | 0             |
-+------------------------------------------------------------+---------+------------+-------------+-------------+------------+--------------+--------------+---------------+
-| total                                                      | 0.4226s | 0s         | 0           | 100%        | 138        | 0            | 0s           | 0             |
-+------------------------------------------------------------+---------+------------+-------------+-------------+------------+--------------+--------------+---------------+
+$ wp profile hook plugins_loaded --fields=callback,location,time
++------------------------------------------------------------+-----------------------------------------------------------------+---------+
+| callback                                                   | location                                                        | time    |
++------------------------------------------------------------+-----------------------------------------------------------------+---------+
+| wp_maybe_load_widgets()                                    | wp-includes/functions.php:3501                                  | 0.0051s |
+| wp_maybe_load_embeds()                                     | wp-includes/embed.php:162                                       | 0.0004s |
+| VaultPress_Hotfixes->protect_jetpack_402_from_oembed_xss() | vaultpress/class.vaultpress-hotfixes.php:124                    | 0s      |
+| _wp_customize_include()                                    | wp-includes/theme.php:2052                                      | 0s      |
+| EasyRecipePlus->pluginsLoaded()                            | easyrecipeplus/lib/EasyRecipePlus.php:125                       | 0.0015s |
+| Gamajo\GenesisHeaderNav\genesis_header_nav_i18n()          | genesis-header-nav/genesis-header-nav.php:61                    | 0.0008s |
+| DS_Public_Post_Preview::init()                             | public-post-preview/public-post-preview.php:52                  | 0.0001s |
+| wpseo_load_textdomain()                                    | wordpress-seo-premium/wp-seo-main.php:222                       | 0.0006s |
+| load_yoast_notifications()                                 | wordpress-seo-premium/wp-seo-main.php:381                       | 0.0018s |
+| wpseo_init()                                               | wordpress-seo-premium/wp-seo-main.php:240                       | 0.0313s |
+| wpseo_premium_init()                                       | wordpress-seo-premium/wp-seo-premium.php:79                     | 0.002s  |
+| wpseo_frontend_init()                                      | wordpress-seo-premium/wp-seo-main.php:274                       | 0.0007s |
+| Black_Studio_TinyMCE_Plugin->load_compatibility()          | black-studio-tinymce-widget/black-studio-tinymce-widget.php:206 | 0.002s  |
+| Jetpack::load_modules()                                    | jetpack/class.jetpack.php:1672                                  | 0.0549s |
++------------------------------------------------------------+-----------------------------------------------------------------+---------+
+| total (14)                                                 |                                                                 | 0.1012s |
++------------------------------------------------------------+-----------------------------------------------------------------+---------+
 ```
 
 Et voila! You've identified some of the sources of slowness.
