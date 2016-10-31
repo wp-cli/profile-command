@@ -3,7 +3,7 @@
     "description": "Quickly identify what's slow with WordPress.",
     "type": "wp-cli-package",
     "homepage": "https://runcommand.io/wp/profile/",
-    "license": "GPL-2.0",
+    "license": "MIT",
     "version": "0.3.0-alpha",
     "authors": [],
     "minimum-stability": "dev",
