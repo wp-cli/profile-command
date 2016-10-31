@@ -39,27 +39,27 @@ $ wp profile stage bootstrap --spotlight
 Lastly, when you've found a specific hook you'd like to assess, use `wp profile hook <hook>`. Include the `--fields=<fields>` argument to focus on certain fields.
 
 ```
-$ wp profile hook plugins_loaded --fields=callback,location,time
-+------------------------------------------------------------+-----------------------------------------------------------------+---------+
-| callback                                                   | location                                                        | time    |
-+------------------------------------------------------------+-----------------------------------------------------------------+---------+
-| wp_maybe_load_widgets()                                    | wp-includes/functions.php:3501                                  | 0.0051s |
-| wp_maybe_load_embeds()                                     | wp-includes/embed.php:162                                       | 0.0004s |
-| VaultPress_Hotfixes->protect_jetpack_402_from_oembed_xss() | vaultpress/class.vaultpress-hotfixes.php:124                    | 0s      |
-| _wp_customize_include()                                    | wp-includes/theme.php:2052                                      | 0s      |
-| EasyRecipePlus->pluginsLoaded()                            | easyrecipeplus/lib/EasyRecipePlus.php:125                       | 0.0015s |
-| Gamajo\GenesisHeaderNav\genesis_header_nav_i18n()          | genesis-header-nav/genesis-header-nav.php:61                    | 0.0008s |
-| DS_Public_Post_Preview::init()                             | public-post-preview/public-post-preview.php:52                  | 0.0001s |
-| wpseo_load_textdomain()                                    | wordpress-seo-premium/wp-seo-main.php:222                       | 0.0006s |
-| load_yoast_notifications()                                 | wordpress-seo-premium/wp-seo-main.php:381                       | 0.0018s |
-| wpseo_init()                                               | wordpress-seo-premium/wp-seo-main.php:240                       | 0.0313s |
-| wpseo_premium_init()                                       | wordpress-seo-premium/wp-seo-premium.php:79                     | 0.002s  |
-| wpseo_frontend_init()                                      | wordpress-seo-premium/wp-seo-main.php:274                       | 0.0007s |
-| Black_Studio_TinyMCE_Plugin->load_compatibility()          | black-studio-tinymce-widget/black-studio-tinymce-widget.php:206 | 0.002s  |
-| Jetpack::load_modules()                                    | jetpack/class.jetpack.php:1672                                  | 0.0549s |
-+------------------------------------------------------------+-----------------------------------------------------------------+---------+
-| total (14)                                                 |                                                                 | 0.1012s |
-+------------------------------------------------------------+-----------------------------------------------------------------+---------+
+$ wp profile hook plugins_loaded --fields=callback,time,location
++------------------------------------------------------------+---------+-----------------------------------------------------------------+
+| callback                                                   | time    | location                                                        |
++------------------------------------------------------------+---------+-----------------------------------------------------------------+
+| wp_maybe_load_widgets()                                    | 0.0046s | wp-includes/functions.php:3501                                  |
+| wp_maybe_load_embeds()                                     | 0.0003s | wp-includes/embed.php:162                                       |
+| VaultPress_Hotfixes->protect_jetpack_402_from_oembed_xss() | 0s      | vaultpress/class.vaultpress-hotfixes.php:124                    |
+| _wp_customize_include()                                    | 0s      | wp-includes/theme.php:2052                                      |
+| EasyRecipePlus->pluginsLoaded()                            | 0.0013s | easyrecipeplus/lib/EasyRecipePlus.php:125                       |
+| Gamajo\GenesisHeaderNav\genesis_header_nav_i18n()          | 0.0007s | genesis-header-nav/genesis-header-nav.php:61                    |
+| DS_Public_Post_Preview::init()                             | 0.0001s | public-post-preview/public-post-preview.php:52                  |
+| wpseo_load_textdomain()                                    | 0.0004s | wordpress-seo-premium/wp-seo-main.php:222                       |
+| load_yoast_notifications()                                 | 0.0016s | wordpress-seo-premium/wp-seo-main.php:381                       |
+| wpseo_init()                                               | 0.0329s | wordpress-seo-premium/wp-seo-main.php:240                       |
+| wpseo_premium_init()                                       | 0.0019s | wordpress-seo-premium/wp-seo-premium.php:79                     |
+| wpseo_frontend_init()                                      | 0.0007s | wordpress-seo-premium/wp-seo-main.php:274                       |
+| Black_Studio_TinyMCE_Plugin->load_compatibility()          | 0.0016s | black-studio-tinymce-widget/black-studio-tinymce-widget.php:206 |
+| Jetpack::load_modules()                                    | 0.0564s | jetpack/class.jetpack.php:1672                                  |
++------------------------------------------------------------+---------+-----------------------------------------------------------------+
+| total (14)                                                 | 0.1026s |                                                                 |
++------------------------------------------------------------+---------+-----------------------------------------------------------------+
 ```
 
 Et voila! You've identified some of the sources of slowness.
