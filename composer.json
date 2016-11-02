@@ -4,7 +4,6 @@
     "type": "wp-cli-package",
     "homepage": "https://runcommand.io/wp/profile/",
     "license": "MIT",
-    "version": "0.3.0-beta",
     "authors": [],
     "minimum-stability": "dev",
     "autoload": {
