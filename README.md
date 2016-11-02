@@ -3,8 +3,7 @@ runcommand/profile
 
 Quickly identify what's slow with WordPress.
 
-[![runcommand premium](https://runcommand.io/wp-content/themes/runcommand-theme/bin/shields/runcommand-premium.svg)](https://runcommand.io/pricing/)
-[![CircleCI](https://circleci.com/gh/runcommand/profile/tree/master.svg?style=svg&circle-token=d916e588bf7c8ac469a3bd01930cf9eed886debe)](https://circleci.com/gh/runcommand/profile/tree/master)
+[![runcommand premium](https://runcommand.io/wp-content/themes/runcommand-theme/bin/shields/runcommand-premium.svg)](https://runcommand.io/pricing/) [![CircleCI](https://circleci.com/gh/runcommand/profile/tree/master.svg?style=svg&circle-token=d916e588bf7c8ac469a3bd01930cf9eed886debe)](https://circleci.com/gh/runcommand/profile/tree/master)
 
 Quick links: [Overview](#overview) | [Using](#using) | [Installing](#installing) | [Support](#support)
 
@@ -12,12 +11,12 @@ Quick links: [Overview](#overview) | [Using](#using) | [Installing](#installing)
 
 `wp profile` monitors key performance indicators of the WordPress execution process to help you quickly identify points of slowness.
 
-Save hours diagnosing slow WordPress sites with `wp profile`. Because you can easily run it on any server that supports WP-CLI, `wp profile` compliments Xdebug and New Relic by pointing you in the right direction for further debugging. And, because it's a WP-CLI command, using `wp profile` means you don't have to install a plugin and deal with the painful dashboard of a slow WordPress site.
+Save hours diagnosing slow WordPress sites with `wp profile`. Because you can easily run it on any server that supports WP-CLI, `wp profile` compliments Xdebug and New Relic by pointing you in the right direction for further debugging. Because runs on the command line, using `wp profile` means you don't have to install a plugin and deal with the painful dashboard of a slow WordPress site. And, because it's a WP-CLI command, `wp profile` makes it easy to perfom hard tasks (e.g. [profiling a WP REST API request](https://runcommand.io/to/profile-wp-rest-api/)).
 
-First, run `wp profile stage` to see metrics for each stage of the WordPress load process:
+First, run `wp profile stage` to see metrics for each stage of the WordPress load process. Use the `--url=<url>` argument to mock the request as a specific URL.
 
 ```
-$ wp profile stage
+$ wp profile stage --url=runcommand.io
 +------------+---------+------------+-------------+-------------+------------+--------------+-----------+------------+--------------+---------------+
 | stage      | time    | query_time | query_count | cache_ratio | cache_hits | cache_misses | hook_time | hook_count | request_time | request_count |
 +------------+---------+------------+-------------+-------------+------------+--------------+-----------+------------+--------------+---------------+
@@ -29,10 +28,10 @@ $ wp profile stage
 +------------+---------+------------+-------------+-------------+------------+--------------+-----------+------------+--------------+---------------+
 ```
 
-Then, use `wp profile stage bootstrap` to dive into higher fidelity of a particular stage. Include the `--spotlight` flag to filter out the zero-ish results.
+Then, run `wp profile stage bootstrap` to dive into higher fidelity of a particular stage. Include the `--spotlight` flag to filter out the zero-ish results.
 
 ```
-$ wp profile stage bootstrap --spotlight
+$ wp profile stage bootstrap --url=runcommand.io --spotlight
 +--------------------------+----------------+---------+------------+-------------+-------------+------------+--------------+--------------+---------------+
 | hook                     | callback_count | time    | query_time | query_count | cache_ratio | cache_hits | cache_misses | request_time | request_count |
 +--------------------------+----------------+---------+------------+-------------+-------------+------------+--------------+--------------+---------------+
@@ -48,10 +47,10 @@ $ wp profile stage bootstrap --spotlight
 +--------------------------+----------------+---------+------------+-------------+-------------+------------+--------------+--------------+---------------+
 ```
 
-Lastly, when you've found a specific hook you'd like to assess, use `wp profile hook <hook>`. Include the `--fields=<fields>` argument to focus on certain fields.
+Lastly, when you've found a specific hook you'd like to assess, run `wp profile hook <hook>`. Use the `--fields=<fields>` argument to focus on certain fields.
 
 ```
-$ wp profile hook plugins_loaded --fields=callback,time,location
+$ wp profile hook plugins_loaded --url=runcommand.io --fields=callback,time,location
 +------------------------------------------------------------+---------+-----------------------------------------------------------------+
 | callback                                                   | time    | location                                                        |
 +------------------------------------------------------------+---------+-----------------------------------------------------------------+
