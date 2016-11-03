@@ -3,7 +3,7 @@ runcommand/profile
 
 Quickly identify what's slow with WordPress.
 
-[![runcommand premium](https://runcommand.io/wp-content/themes/runcommand-theme/bin/shields/runcommand-premium.svg)](https://runcommand.io/pricing/) [![CircleCI](https://circleci.com/gh/runcommand/profile/tree/master.svg?style=svg&circle-token=d916e588bf7c8ac469a3bd01930cf9eed886debe)](https://circleci.com/gh/runcommand/profile/tree/master)
+[![runcommand premium](https://runcommand.io/wp-content/themes/runcommand-theme/bin/shields/runcommand-premium.svg)](https://runcommand.io/pricing/) [![version 0.3.0](https://runcommand.io/wp-content/themes/runcommand-theme/bin/shields/version-0-3-0.svg)](https://runcommand.io/2016/11/03/wp-profile-v0-3-0/) [![CircleCI](https://circleci.com/gh/runcommand/profile/tree/master.svg?style=svg&circle-token=d916e588bf7c8ac469a3bd01930cf9eed886debe)](https://circleci.com/gh/runcommand/profile/tree/master)
 
 Quick links: [Overview](#overview) | [Using](#using) | [Installing](#installing) | [Support](#support)
 
