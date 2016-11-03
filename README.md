@@ -3,7 +3,7 @@ runcommand/profile
 
 Quickly identify what's slow with WordPress.
 
-[![runcommand premium](https://runcommand.io/wp-content/themes/runcommand-theme/bin/shields/runcommand-premium.svg)](https://runcommand.io/pricing/) [![CircleCI](https://circleci.com/gh/runcommand/profile/tree/master.svg?style=svg&circle-token=d916e588bf7c8ac469a3bd01930cf9eed886debe)](https://circleci.com/gh/runcommand/profile/tree/master)
+[![runcommand premium](https://runcommand.io/wp-content/themes/runcommand-theme/bin/shields/runcommand-premium.svg)](https://runcommand.io/pricing/) [![version 0.3.0](https://runcommand.io/wp-content/themes/runcommand-theme/bin/shields/version-0-3-0.svg)](https://runcommand.io/2016/11/03/wp-profile-v0-3-0/) [![CircleCI](https://circleci.com/gh/runcommand/profile/tree/master.svg?style=svg&circle-token=d916e588bf7c8ac469a3bd01930cf9eed886debe)](https://circleci.com/gh/runcommand/profile/tree/master)
 
 Quick links: [Overview](#overview) | [Using](#using) | [Installing](#installing) | [Support](#support)
 
@@ -11,7 +11,7 @@ Quick links: [Overview](#overview) | [Using](#using) | [Installing](#installing)
 
 `wp profile` monitors key performance indicators of the WordPress execution process to help you quickly identify points of slowness.
 
-Save hours diagnosing slow WordPress sites. Because you can easily run it on any server that supports WP-CLI, `wp profile` compliments Xdebug and New Relic by pointing you in the right direction for further debugging. Because runs on the command line, using `wp profile` means you don't have to install a plugin and deal with the painful dashboard of a slow WordPress site. And, because it's a WP-CLI command, `wp profile` makes it easy to perfom hard tasks (e.g. [profiling a WP REST API request](https://runcommand.io/to/profile-wp-rest-api/)).
+Save hours diagnosing slow WordPress sites. Because you can easily run it on any server that supports WP-CLI, `wp profile` compliments Xdebug and New Relic by pointing you in the right direction for further debugging. Because runs on the command line, using `wp profile` means you don't have to install a plugin and deal with the painful dashboard of a slow WordPress site. And, because it's a WP-CLI command, `wp profile` makes it easy to perfom hard tasks (e.g. [profiling a WP REST API response](https://runcommand.io/to/profile-wp-rest-api/)).
 
 [Identify why WordPress is slow in just a few steps](https://runcommand.io/to/identify-wordpress-slowness/) with `wp profile`.
 
@@ -26,6 +26,47 @@ Profile each stage of the WordPress load process (bootstrap, main_query, templat
 ~~~
 wp profile stage [<stage>] [--all] [--spotlight] [--url=<url>] [--fields=<fields>] [--format=<format>]
 ~~~
+
+When WordPress handles a request from a browser, it’s essentially
+executing as one long PHP script. `wp profile stage` breaks the script
+into three stages:
+
+* **bootstrap** is where WordPress is setting itself up, loading plugins
+and the main theme, and firing the `init` hook.
+* **main_query** is how WordPress transforms the request (e.g. `/2016/10/21/moms-birthday/`)
+into the primary WP_Query.
+* **template** is where WordPress determines which theme template to
+render based on the main query, and renders it.
+
+```
+# `wp profile stage` gives an overview of each stage.
+$ wp profile stage --fields=stage,time,cache_ratio
++------------+---------+-------------+
+| stage      | time    | cache_ratio |
++------------+---------+-------------+
+| bootstrap  | 0.7994s | 93.21%      |
+| main_query | 0.0123s | 94.29%      |
+| template   | 0.792s  | 91.23%      |
++------------+---------+-------------+
+| total (3)  | 1.6037s | 92.91%      |
++------------+---------+-------------+
+
+# Then, dive into hooks for each stage with `wp profile stage <stage>`
+$ wp profile stage bootstrap --fields=hook,time,cache_ratio --spotlight
++--------------------------+---------+-------------+
+| hook                     | time    | cache_ratio |
++--------------------------+---------+-------------+
+| muplugins_loaded:before  | 0.2335s | 40%         |
+| muplugins_loaded         | 0.0007s | 50%         |
+| plugins_loaded:before    | 0.2792s | 77.63%      |
+| plugins_loaded           | 0.1502s | 100%        |
+| after_setup_theme:before | 0.068s  | 100%        |
+| init                     | 0.2643s | 96.88%      |
+| wp_loaded:after          | 0.0377s |             |
++--------------------------+---------+-------------+
+| total (7)                | 1.0335s | 77.42%      |
++--------------------------+---------+-------------+
+```
 
 **OPTIONS**
 
