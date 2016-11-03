@@ -11,69 +11,9 @@ Quick links: [Overview](#overview) | [Using](#using) | [Installing](#installing)
 
 `wp profile` monitors key performance indicators of the WordPress execution process to help you quickly identify points of slowness.
 
-Save hours diagnosing slow WordPress sites with `wp profile`. Because you can easily run it on any server that supports WP-CLI, `wp profile` compliments Xdebug and New Relic by pointing you in the right direction for further debugging. Because runs on the command line, using `wp profile` means you don't have to install a plugin and deal with the painful dashboard of a slow WordPress site. And, because it's a WP-CLI command, `wp profile` makes it easy to perfom hard tasks (e.g. [profiling a WP REST API request](https://runcommand.io/to/profile-wp-rest-api/)).
+Save hours diagnosing slow WordPress sites. Because you can easily run it on any server that supports WP-CLI, `wp profile` compliments Xdebug and New Relic by pointing you in the right direction for further debugging. Because runs on the command line, using `wp profile` means you don't have to install a plugin and deal with the painful dashboard of a slow WordPress site. And, because it's a WP-CLI command, `wp profile` makes it easy to perfom hard tasks (e.g. [profiling a WP REST API request](https://runcommand.io/to/profile-wp-rest-api/)).
 
-First, run `wp profile stage` to see metrics for each stage of the WordPress load process. Use the `--url=<url>` argument to mock the request as a specific URL.
-
-```
-$ wp profile stage --url=runcommand.io
-+------------+---------+------------+-------------+-------------+------------+--------------+-----------+------------+--------------+---------------+
-| stage      | time    | query_time | query_count | cache_ratio | cache_hits | cache_misses | hook_time | hook_count | request_time | request_count |
-+------------+---------+------------+-------------+-------------+------------+--------------+-----------+------------+--------------+---------------+
-| bootstrap  | 0.7597s | 0.0052s    | 14          | 93.21%      | 357        | 26           | 0.3328s   | 2717       | 0s           | 0             |
-| main_query | 0.0131s | 0.0004s    | 3           | 94.29%      | 33         | 2            | 0.0065s   | 78         | 0s           | 0             |
-| template   | 0.7041s | 0.0192s    | 147         | 92.16%      | 2350       | 200          | 0.6982s   | 6130       | 0s           | 0             |
-+------------+---------+------------+-------------+-------------+------------+--------------+-----------+------------+--------------+---------------+
-| total (3)  | 1.477s  | 0.0248s    | 164         | 93.22%      | 2740       | 228          | 1.0375s   | 8925       | 0s           | 0             |
-+------------+---------+------------+-------------+-------------+------------+--------------+-----------+------------+--------------+---------------+
-```
-
-Then, run `wp profile stage bootstrap` to dive into higher fidelity of a particular stage. Include the `--spotlight` flag to filter out the zero-ish results.
-
-```
-$ wp profile stage bootstrap --url=runcommand.io --spotlight
-+--------------------------+----------------+---------+------------+-------------+-------------+------------+--------------+--------------+---------------+
-| hook                     | callback_count | time    | query_time | query_count | cache_ratio | cache_hits | cache_misses | request_time | request_count |
-+--------------------------+----------------+---------+------------+-------------+-------------+------------+--------------+--------------+---------------+
-| muplugins_loaded:before  |                | 0.1644s | 0.0017s    | 1           | 40%         | 2          | 3            | 0s           | 0             |
-| muplugins_loaded         | 2              | 0.0005s | 0s         | 0           | 50%         | 1          | 1            | 0s           | 0             |
-| plugins_loaded:before    |                | 0.1771s | 0.0008s    | 6           | 77.63%      | 59         | 17           | 0s           | 0             |
-| plugins_loaded           | 14             | 0.0887s | 0s         | 0           | 100%        | 104        | 0            | 0s           | 0             |
-| after_setup_theme:before |                | 0.043s  | 0s         | 0           | 100%        | 26         | 0            | 0s           | 0             |
-| init                     | 82             | 0.1569s | 0.0018s    | 7           | 96.88%      | 155        | 5            | 0s           | 0             |
-| wp_loaded:after          |                | 0.027s  | 0s         | 0           |             | 0          | 0            | 0s           | 0             |
-+--------------------------+----------------+---------+------------+-------------+-------------+------------+--------------+--------------+---------------+
-| total (7)                | 98             | 0.6575s | 0.0043s    | 14          | 77.42%      | 347        | 26           | 0s           | 0             |
-+--------------------------+----------------+---------+------------+-------------+-------------+------------+--------------+--------------+---------------+
-```
-
-Lastly, when you've found a specific hook you'd like to assess, run `wp profile hook <hook>`. Use the `--fields=<fields>` argument to focus on certain fields.
-
-```
-$ wp profile hook plugins_loaded --url=runcommand.io --fields=callback,time,location
-+------------------------------------------------------------+---------+-----------------------------------------------------------------+
-| callback                                                   | time    | location                                                        |
-+------------------------------------------------------------+---------+-----------------------------------------------------------------+
-| wp_maybe_load_widgets()                                    | 0.0046s | wp-includes/functions.php:3501                                  |
-| wp_maybe_load_embeds()                                     | 0.0003s | wp-includes/embed.php:162                                       |
-| VaultPress_Hotfixes->protect_jetpack_402_from_oembed_xss() | 0s      | vaultpress/class.vaultpress-hotfixes.php:124                    |
-| _wp_customize_include()                                    | 0s      | wp-includes/theme.php:2052                                      |
-| EasyRecipePlus->pluginsLoaded()                            | 0.0013s | easyrecipeplus/lib/EasyRecipePlus.php:125                       |
-| Gamajo\GenesisHeaderNav\genesis_header_nav_i18n()          | 0.0007s | genesis-header-nav/genesis-header-nav.php:61                    |
-| DS_Public_Post_Preview::init()                             | 0.0001s | public-post-preview/public-post-preview.php:52                  |
-| wpseo_load_textdomain()                                    | 0.0004s | wordpress-seo-premium/wp-seo-main.php:222                       |
-| load_yoast_notifications()                                 | 0.0016s | wordpress-seo-premium/wp-seo-main.php:381                       |
-| wpseo_init()                                               | 0.0329s | wordpress-seo-premium/wp-seo-main.php:240                       |
-| wpseo_premium_init()                                       | 0.0019s | wordpress-seo-premium/wp-seo-premium.php:79                     |
-| wpseo_frontend_init()                                      | 0.0007s | wordpress-seo-premium/wp-seo-main.php:274                       |
-| Black_Studio_TinyMCE_Plugin->load_compatibility()          | 0.0016s | black-studio-tinymce-widget/black-studio-tinymce-widget.php:206 |
-| Jetpack::load_modules()                                    | 0.0564s | jetpack/class.jetpack.php:1672                                  |
-+------------------------------------------------------------+---------+-----------------------------------------------------------------+
-| total (14)                                                 | 0.1026s |                                                                 |
-+------------------------------------------------------------+---------+-----------------------------------------------------------------+
-```
-
-Et voila! You've identified some of the sources of slowness.
+[Identify why WordPress is slow](https://runcommand.io/to/identify-wordpress-slowness/) in just a few steps with `wp profile`.
 
 ## Using
 
