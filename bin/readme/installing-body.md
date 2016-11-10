@@ -1,6 +1,6 @@
 `wp profile` is available to [runcommand gold and silver subscribers](https://runcommand.io/pricing/), or you can purchase a single-seat updates and support subscription for [$129 per year](https://runcommand.memberful.com/checkout?plan=16079).
 
-Once you've signed up, you can install `wp profile` with:
+Once you've signed up, you can [download the latest version](https://runcommand.memberful.com/account/downloads) from your account dashboard. Then, install `wp profile` with:
 
 ```
 $ wp package install profile.zip
