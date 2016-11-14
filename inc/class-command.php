@@ -221,6 +221,9 @@ class Command {
 	 * <php-code>
 	 * : The code to execute, as a string.
 	 *
+	 * [--hook[=<hook>]]
+	 * : Focus on key metrics for all hooks, or callbacks on a specific hook.
+	 *
 	 * [--fields=<fields>]
 	 * : Display one or more fields.
 	 *
@@ -235,31 +238,13 @@ class Command {
 	 *   - csv
 	 * ---
 	 *
-	 * @when before_wp_load
 	 * @subcommand eval
 	 */
 	public function eval_( $args, $assoc_args ) {
-
-		$profiler = new Profiler( false, false );
-		$profiler->run();
-
-		$logger = new Logger();
-		$logger->start();
-		eval( $args[0] );
-		$logger->stop();
-
-		$fields = array(
-			'time',
-			'query_time',
-			'query_count',
-			'cache_ratio',
-			'cache_hits',
-			'cache_misses',
-			'request_time',
-			'request_count',
-		);
-		$formatter = new Formatter( $assoc_args, $fields );
-		$formatter->display_items( array( $logger ), false );
+		$statement = $args[0];
+		self::profile_eval_ish( $assoc_args, function() use ( $statement ) {
+			eval( $statement );
+		});
 	}
 
 	/**
@@ -274,6 +259,9 @@ class Command {
 	 * <file>
 	 * : The path to the PHP file to execute and profile.
 	 *
+	 * [--hook[=<hook>]]
+	 * : Focus on key metrics for all hooks, or callbacks on a specific hook.
+	 *
 	 * [--fields=<fields>]
 	 * : Display one or more fields.
 	 *
@@ -288,7 +276,6 @@ class Command {
 	 *   - csv
 	 * ---
 	 *
-	 * @when before_wp_load
 	 * @subcommand eval-file
 	 */
 	public function eval_file( $args, $assoc_args ) {
@@ -298,15 +285,41 @@ class Command {
 			WP_CLI::error( "'$file' does not exist." );
 		}
 
-		$profiler = new Profiler( false, false );
+		self::profile_eval_ish( $assoc_args, function() use ( $file ) {
+			self::include_file( $file );
+		});
+	}
+
+	/**
+	 * Profile an eval or eval-file statement.
+	 */
+	private static function profile_eval_ish( $assoc_args, $profile_callback ) {
+		$hook = Utils\get_flag_value( $assoc_args, 'hook' );
+		$type = $focus = false;
+		$fields = array();
+		if ( $hook ) {
+			$type = 'hook';
+			if ( true !== $hook ) {
+				$focus = $hook;
+				$fields[] = 'callback';
+				$fields[] = 'location';
+			} else {
+				$fields[] = 'hook';
+			}
+		}
+		$profiler = new Profiler( $type, $focus );
 		$profiler->run();
-
-		$logger = new Logger();
-		$logger->start();
-		self::include_file( $file );
-		$logger->stop();
-
-		$fields = array(
+		if ( $hook ) {
+			$profile_callback();
+			$loggers = $profiler->get_loggers();
+		} else {
+			$logger = new Logger();
+			$logger->start();
+			$profile_callback();
+			$logger->stop();
+			$loggers = array( $logger );
+		}
+		$fields = array_merge( $fields, array(
 			'time',
 			'query_time',
 			'query_count',
@@ -315,9 +328,9 @@ class Command {
 			'cache_misses',
 			'request_time',
 			'request_count',
-		);
+		) );
 		$formatter = new Formatter( $assoc_args, $fields );
-		$formatter->display_items( array( $logger ), false );
+		$formatter->display_items( $loggers, false );
 	}
 
 	/**
