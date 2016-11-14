@@ -370,6 +370,11 @@ class Profiler {
 	 */
 	private function load_wordpress_with_template() {
 
+		// WordPress already ran once.
+		if ( function_exists( 'add_filter' ) ) {
+			return;
+		}
+
 		if ( 'stage' === $this->type && true === $this->focus ) {
 			$hooks = array();
 			foreach( $this->stage_hooks as $stage_hook ) {

@@ -35,3 +35,16 @@ Feature: Profile arbitary code execution
     Then STDOUT should be a table containing rows:
       | cache_hits    | cache_misses |
       | 2             | 0            |
+
+  Scenario: Profile a function calling a hook
+    Given a WP install
+
+    When I run `wp profile eval "add_filter( 'logout_url', function( $url ) { wp_cache_get( 'foo' ); return $url; }); wp_logout_url();" --hook --fields=hook,cache_hits,cache_misses`
+    Then STDOUT should be a table containing rows:
+      | hook        | cache_hits   | cache_misses   |
+      | logout_url  | 0            | 1              |
+
+    When I run `wp profile eval "add_filter( 'logout_url', function( $url ) { wp_cache_get( 'foo' ); return $url; }); wp_logout_url();" --hook=logout_url --fields=callback,cache_hits,cache_misses`
+    Then STDOUT should be a table containing rows:
+      | callback        | cache_hits   | cache_misses   |
+      | function(){}    | 0            | 1              |

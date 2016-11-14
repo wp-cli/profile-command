@@ -144,7 +144,7 @@ will need to execute during the course of the request.
 Profile arbitrary code execution.
 
 ~~~
-wp profile eval <php-code> [--fields=<fields>] [--format=<format>]
+wp profile eval <php-code> [--hook[=<hook>]] [--fields=<fields>] [--format=<format>]
 ~~~
 
 Code execution happens after WordPress has loaded entirely, which means
@@ -155,6 +155,9 @@ current theme.
 
 	<php-code>
 		The code to execute, as a string.
+
+	[--hook[=<hook>]]
+		Focus on key metrics for all hooks, or callbacks on a specific hook.
 
 	[--fields=<fields>]
 		Display one or more fields.
@@ -177,7 +180,7 @@ current theme.
 Profile execution of an arbitrary file.
 
 ~~~
-wp profile eval-file <file> [--fields=<fields>] [--format=<format>]
+wp profile eval-file <file> [--hook[=<hook>]] [--fields=<fields>] [--format=<format>]
 ~~~
 
 File execution happens after WordPress has loaded entirely, which means
@@ -188,6 +191,9 @@ current theme.
 
 	<file>
 		The path to the PHP file to execute and profile.
+
+	[--hook[=<hook>]]
+		Focus on key metrics for all hooks, or callbacks on a specific hook.
 
 	[--fields=<fields>]
 		Display one or more fields.
