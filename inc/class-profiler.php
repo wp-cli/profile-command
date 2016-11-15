@@ -122,6 +122,10 @@ class Profiler {
 	 */
 	public function wp_tick_profile_begin( $value = null ) {
 
+		if ( version_compare( PHP_VERSION, '7.0.0' ) >= 0 ) {
+			WP_CLI::error( "Profiling intermediate hooks is broken in PHP 7, see https://bugs.php.net/bug.php?id=72966" );
+		}
+
 		// Disable opcode optimizers.  These "optimize" calls out of the stack
 		// and hide calls from the tick handler and backtraces.
 		// Copied from P3 Profiler
