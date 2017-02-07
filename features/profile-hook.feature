@@ -140,6 +140,7 @@ Feature: Profile a specific hook
       wp-content/mu-plugins/awesome-file.php
       """
 
+  @less-than-php-7
   Scenario: Profile the :after hooks
     Given a WP install
 
