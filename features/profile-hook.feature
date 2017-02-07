@@ -8,7 +8,7 @@ Feature: Profile a specific hook
       | hook              | callback_count   |
       | plugins_loaded    | 3                |
       | init              | 11               |
-      | template_redirect | 6                |
+      | template_redirect | 7                |
     And STDERR should be empty
 
   Scenario: Profile all callbacks when --all flag is used
@@ -21,6 +21,7 @@ Feature: Profile a specific hook
       | smilies_init()             | 2             | 0             |
       | feed_links()               | 8             | 0             |
 
+  @less-than-php-7
   Scenario: Profile an intermediate stage hook
     Given a WP install
 
@@ -121,6 +122,7 @@ Feature: Profile a specific hook
       Warning: Called 1
       """
 
+  @less-than-php-7
   Scenario: Profile the mu_plugins:before hook
     Given a WP install
     And a wp-content/mu-plugins/awesome-file.php file:
@@ -138,6 +140,7 @@ Feature: Profile a specific hook
       wp-content/mu-plugins/awesome-file.php
       """
 
+  @less-than-php-7
   Scenario: Profile the :after hooks
     Given a WP install
 

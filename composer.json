@@ -1,5 +1,5 @@
 {
-    "name": "runcommand/profile",
+    "name": "wp-cli/profile",
     "description": "Quickly identify what's slow with WordPress.",
     "type": "wp-cli-package",
     "homepage": "https://runcommand.io/wp/profile/",
@@ -9,7 +9,9 @@
     "autoload": {
         "files": [ "command.php" ]
     },
-    "require": {},
+    "require": {
+        "php": ">=5.4"
+    },
     "require-dev": {
         "behat/behat": "~2.5"
     },
@@ -21,27 +23,15 @@
             "profile eval-file"
         ],
         "readme": {
-            "shields": [
-                "[![runcommand premium](https://runcommand.io/wp-content/themes/runcommand-theme/bin/shields/runcommand-premium.svg)](https://runcommand.io/pricing/)",
-                "[![version 0.3.0](https://runcommand.io/wp-content/themes/runcommand-theme/bin/shields/version-0-3-0.svg)](https://runcommand.io/2016/11/03/wp-profile-v0-3-0/)",
-                "[![CircleCI](https://circleci.com/gh/runcommand/profile/tree/master.svg?style=svg&circle-token=d916e588bf7c8ac469a3bd01930cf9eed886debe)](https://circleci.com/gh/runcommand/profile/tree/master)"
-            ],
             "sections": [
                 "Overview",
                 "Using",
                 "Installing",
-                "Support"
+                "Contributing"
             ],
             "overview": {
                 "post": "bin/readme/overview-body.md"
-            },
-            "installing": {
-                "body": "bin/readme/installing-body.md"
-            },
-            "support": {
-                "body": "https://raw.githubusercontent.com/runcommand/runcommand-theme/master/bin/readme-partials/support-premium.md"
-            },
-            "show_powered_by": false
+            }
         }
     }
 }
