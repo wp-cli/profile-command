@@ -21,6 +21,7 @@ Feature: Profile a specific hook
       | smilies_init()             | 2             | 0             |
       | feed_links()               | 8             | 0             |
 
+  @less-than-php-7
   Scenario: Profile an intermediate stage hook
     Given a WP install
 
@@ -121,6 +122,7 @@ Feature: Profile a specific hook
       Warning: Called 1
       """
 
+  @less-than-php-7
   Scenario: Profile the mu_plugins:before hook
     Given a WP install
     And a wp-content/mu-plugins/awesome-file.php file:
