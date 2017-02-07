@@ -8,7 +8,7 @@ Feature: Profile a specific hook
       | hook              | callback_count   |
       | plugins_loaded    | 3                |
       | init              | 11               |
-      | template_redirect | 6                |
+      | template_redirect | 7                |
     And STDERR should be empty
 
   Scenario: Profile all callbacks when --all flag is used
