@@ -11,12 +11,6 @@ branches:
   only:
     - master
 
-php:
-  - 7.1
-  - 7.0
-  - 5.6
-  - 5.4
-
 cache:
   - composer
   - $HOME/.composer/cache
@@ -24,9 +18,19 @@ cache:
 env:
   global:
     - WP_CLI_BIN_DIR=/tmp/wp-cli-phar
-  matrix:
-    - WP_VERSION=latest
-    - WP_VERSION=trunk
+
+matrix:
+  include:
+    - php: 7.1
+      env: WP_VERSION=latest
+    - php: 7.0
+      env: WP_VERSION=latest
+    - php: 5.6
+      env: WP_VERSION=latest
+    - php: 5.6
+      env: WP_VERSION=trunk
+    - php: 5.4
+      env: WP_VERSION=latest
 
 before_script:
   - composer validate
