@@ -32,4 +32,4 @@ before_script:
   - composer validate
   - bash bin/install-package-tests.sh
 
-script: ./vendor/bin/behat --strict
+script: ./vendor/bin/behat --format progress --strict
