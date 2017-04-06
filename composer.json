@@ -6,16 +6,21 @@
     "license": "MIT",
     "authors": [],
     "minimum-stability": "dev",
+    "prefer-stable": true,
     "autoload": {
         "files": [ "command.php" ]
     },
     "require": {
-        "php": ">=5.4"
+        "php": ">=5.4",
+        "wp-cli/wp-cli": "*"
     },
     "require-dev": {
         "behat/behat": "~2.5"
     },
     "extra": {
+        "branch-alias": {
+            "dev-master": "1.x-dev"
+        },
         "commands": [
             "profile stage",
             "profile hook",
