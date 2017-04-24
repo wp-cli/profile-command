@@ -12,8 +12,9 @@ branches:
     - master
 
 cache:
-  - composer
-  - $HOME/.composer/cache
+  directories:
+    - vendor
+    - $HOME/.composer/cache
 
 env:
   global:
