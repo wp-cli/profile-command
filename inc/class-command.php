@@ -174,7 +174,7 @@ class Command {
 	 * @param double $a Floating number.
 	 * @param double $b Floating number.
 	 */
-	public function compare_float( $a, $b ) {
+	private function compare_float( $a, $b ) {
 		if ( abs( $a - $b ) < 0.00000001 ) {
 			return 0;
 		} elseif ( ( $a - $b ) < 0 ) {
