@@ -70,6 +70,13 @@ class Command {
 	 *
 	 * [--format=<format>]
 	 * : Render output in a particular format.
+	 *
+	 * [--order=<order>]
+	 * : Ascending or Descending order. ASC|DESC.
+	 *
+	 * [--orderby=<orderby>]
+	 * : Order by fields.
+	 *
 	 * ---
 	 * default: table
 	 * options:
@@ -86,6 +93,13 @@ class Command {
 
 		$focus = Utils\get_flag_value( $assoc_args, 'all', isset( $args[0] ) ? $args[0] : null );
 
+		$order       = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
+		$orderby     = Utils\get_flag_value( $assoc_args, 'orderby' );
+		
+		if ( Utils\get_flag_value( $assoc_args, 'fields' ) ) {
+			$set_fields  = explode( ',', Utils\get_flag_value( $assoc_args, 'fields' ) );
+		}
+ 
 		$valid_stages = array( 'bootstrap', 'main_query', 'template' );
 		if ( $focus && ( true !== $focus && ! in_array( $focus, $valid_stages, true ) ) ) {
 			WP_CLI::error( 'Invalid stage. Must be one of ' . implode( ', ', $valid_stages ) . ', or use --all.' );
@@ -132,7 +146,42 @@ class Command {
 		if ( Utils\get_flag_value( $assoc_args, 'spotlight' ) ) {
 			$loggers = self::shine_spotlight( $loggers, $metrics );
 		}
+
+		if ( $orderby ) {
+			usort( $loggers, function( $a, $b ) use ( $order, $orderby ) {
+				if ( 'ASC' === $order ) {
+					if ( is_numeric( $a->$orderby ) && is_numeric( $b->$orderby ) ) {
+						return $this->compare_float( $a->$orderby, $b->$orderby );
+					} else {
+						return strcmp( $a->$orderby, $b->$orderby );
+					}
+				} elseif ( 'DESC' === $order ) {
+					if ( is_numeric( $b->$orderby ) && is_numeric( $a->$orderby ) ) {
+						return $this->compare_float( $b->$orderby, $a->$orderby );
+					} else {
+						return strcmp( $b->$orderby, $a->$orderby );
+					}
+				}
+			});
+		}
+
 		$formatter->display_items( $loggers );
+	}
+
+	/**
+	 * Function to compare floats.
+	 *
+	 * @param double $a Floating number.
+	 * @param double $b Floating number.
+	 */
+	public function compare_float( $a, $b ) {
+		if ( abs( $a - $b ) < 0.00000001 ) {
+			return 0;
+		} elseif ( ( $a - $b ) < 0 ) {
+			return -1;
+		} else {
+			return 1;
+		}
 	}
 
 	/**
