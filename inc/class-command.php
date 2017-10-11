@@ -250,6 +250,13 @@ class Command {
 	 *
 	 * [--format=<format>]
 	 * : Render output in a particular format.
+	 *
+	 * [--order=<order>]
+	 * : Ascending or Descending order. ASC|DESC.
+	 *
+	 * [--orderby=<orderby>]
+	 * : Order by fields.
+	 *
 	 * ---
 	 * default: table
 	 * options:
@@ -263,7 +270,11 @@ class Command {
 	 */
 	public function eval_( $args, $assoc_args ) {
 		$statement = $args[0];
-		self::profile_eval_ish( $assoc_args, function() use ( $statement ) {
+
+		$order   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
+		$orderby = Utils\get_flag_value( $assoc_args, 'orderby', null );
+
+		self::profile_eval_ish( $order, $orderby, $assoc_args, function() use ( $statement ) {
 			eval( $statement );
 		});
 	}
@@ -288,6 +299,13 @@ class Command {
 	 *
 	 * [--format=<format>]
 	 * : Render output in a particular format.
+	 *
+	 * [--order=<order>]
+	 * : Ascending or Descending order. ASC|DESC.
+	 *
+	 * [--orderby=<orderby>]
+	 * : Order by fields.
+	 *
 	 * ---
 	 * default: table
 	 * options:
@@ -302,6 +320,10 @@ class Command {
 	public function eval_file( $args, $assoc_args ) {
 
 		$file = $args[0];
+
+		$order   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
+		$orderby = Utils\get_flag_value( $assoc_args, 'orderby', null );
+
 		if ( ! file_exists( $file ) ) {
 			WP_CLI::error( "'$file' does not exist." );
 		}
@@ -351,7 +373,7 @@ class Command {
 			'request_count',
 		) );
 		$formatter = new Formatter( $assoc_args, $fields );
-		$formatter->display_items( $loggers, false );
+		$formatter->display_items( $order, $orderby, $loggers, false );
 	}
 
 	/**
