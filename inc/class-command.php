@@ -274,9 +274,9 @@ class Command {
 		$order   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
 		$orderby = Utils\get_flag_value( $assoc_args, 'orderby', null );
 
-		self::profile_eval_ish( $order, $orderby, $assoc_args, function() use ( $statement ) {
+		self::profile_eval_ish( $assoc_args, function() use ( $statement ) {
 			eval( $statement );
-		});
+		}, $order, $orderby );
 	}
 
 	/**
