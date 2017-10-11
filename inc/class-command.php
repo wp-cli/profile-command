@@ -330,7 +330,7 @@ class Command {
 
 		self::profile_eval_ish( $assoc_args, function() use ( $file ) {
 			self::include_file( $file );
-		});
+		}, $order, $orderby );
 	}
 
 	/**
