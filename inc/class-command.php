@@ -72,7 +72,13 @@ class Command {
 	 * : Render output in a particular format.
 	 *
 	 * [--order=<order>]
-	 * : Ascending or Descending order. ASC|DESC.
+	 * : Ascending or Descending order.
+	 * ---
+	 * default: ASC
+	 * options:
+	 *   - ASC
+	 *   - DESC
+	 * ---
 	 *
 	 * [--orderby=<orderby>]
 	 * : Order by fields.
@@ -143,7 +149,7 @@ class Command {
 			$loggers = self::shine_spotlight( $loggers, $metrics );
 		}
 
-		$formatter->display_items( $order, $orderby, $loggers );
+		$formatter->display_items( $loggers, true, $order, $orderby );
 	}
 
 	/**
@@ -173,12 +179,17 @@ class Command {
 	 * : Render output in a particular format.
 	 *
 	 * [--order=<order>]
-	 * : Ascending or Descending order. ASC|DESC.
+	 * : Ascending or Descending order.
+	 * ---
+	 * default: ASC
+	 * options:
+	 *   - ASC
+	 *   - DESC
+	 * ---
 	 *
 	 * [--orderby=<orderby>]
 	 * : Order by fields.
 	 *
-	 * ---
 	 * default: table
 	 * options:
 	 *   - table
@@ -227,7 +238,7 @@ class Command {
 		if ( Utils\get_flag_value( $assoc_args, 'spotlight' ) ) {
 			$loggers = self::shine_spotlight( $loggers, $metrics );
 		}
-		$formatter->display_items( $order, $orderby, $loggers );
+		$formatter->display_items( $loggers, true, $order, $orderby );
 	}
 
 	/**
@@ -252,7 +263,13 @@ class Command {
 	 * : Render output in a particular format.
 	 *
 	 * [--order=<order>]
-	 * : Ascending or Descending order. ASC|DESC.
+	 * : Ascending or Descending order.
+	 * ---
+	 * default: ASC
+	 * options:
+	 *   - ASC
+	 *   - DESC
+	 * ---
 	 *
 	 * [--orderby=<orderby>]
 	 * : Order by fields.
@@ -301,7 +318,13 @@ class Command {
 	 * : Render output in a particular format.
 	 *
 	 * [--order=<order>]
-	 * : Ascending or Descending order. ASC|DESC.
+	 * : Ascending or Descending order.
+	 * ---
+	 * default: ASC
+	 * options:
+	 *   - ASC
+	 *   - DESC
+	 * ---
 	 *
 	 * [--orderby=<orderby>]
 	 * : Order by fields.
@@ -373,7 +396,7 @@ class Command {
 			'request_count',
 		) );
 		$formatter = new Formatter( $assoc_args, $fields );
-		$formatter->display_items( $order, $orderby, $loggers, false );
+		$formatter->display_items( $loggers, false, $order, $orderby );
 	}
 
 	/**
