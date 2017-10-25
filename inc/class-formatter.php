@@ -91,19 +91,13 @@ class Formatter {
 
 		if ( $orderby ) {
 			usort( $items, function( $a, $b ) use ( $order, $orderby ) {
-				if ( 'ASC' === $order ) {
-					if ( is_numeric( $a->$orderby ) && is_numeric( $b->$orderby ) ) {
-						return $this->compare_float( $a->$orderby, $b->$orderby );
-					} else {
-						return strcmp( $a->$orderby, $b->$orderby );
-					}
-				} elseif ( 'DESC' === $order ) {
-					if ( is_numeric( $b->$orderby ) && is_numeric( $a->$orderby ) ) {
-						return $this->compare_float( $b->$orderby, $a->$orderby );
-					} else {
-						return strcmp( $b->$orderby, $a->$orderby );
-					}
+				list( $first, $second ) = 'ASC' === $order ? array( $a, $b ) : array( $b, $a );
+
+				if ( is_numeric( $first->$orderby ) && is_numeric( $second->$orderby ) ) {
+					return $this->compare_float( $first->$orderby, $second->$orderby );
 				}
+
+				return strcmp( $first->$orderby, $second->$orderby );
 			});
 		}
 
