@@ -65,6 +65,25 @@ Feature: Profile the template render stage
       | wp_footer:after          |
       | total (13)               |
 
+    When I run `wp profile stage template --fields=hook --orderby=hook --order=DESC`
+    Then STDOUT should be a table containing rows:
+      | hook                     |
+      | wp_head:before           |
+      | wp_head                  |
+      | wp_footer:before         |
+      | wp_footer:after          |
+      | wp_footer                |
+      | template_redirect:before |
+      | template_redirect        |
+      | template_include:before  |
+      | template_include         |
+      | loop_start:before        |
+      | loop_start               |
+      | loop_end:before          |
+      | loop_end                 |
+      | total (13)               |
+
+
   Scenario: Use --all flag to profile all stages
     Given a WP install
 
