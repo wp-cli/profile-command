@@ -42,11 +42,29 @@ class Formatter {
 	 *
 	 * @param array $items
 	 */
-	public function display_items( $items, $include_total = true ) {
+	public function display_items( $items, $include_total = true, $order, $orderby ) {
 		if ( 'table' === $this->args['format'] && empty( $this->args['field'] ) ) {
-			$this->show_table( $items, $this->args['fields'], $include_total );
+			$this->show_table( $order, $orderby, $items, $this->args['fields'], $include_total );
 		} else {
 			$this->formatter->display_items( $items );
+		}
+	}
+
+	/**
+	 * Function to compare floats.
+	 *
+	 * @param double $a Floating number.
+	 * @param double $b Floating number.
+	 */
+	private function compare_float( $a, $b ) {
+		$a = number_format( $a, 4 );
+		$b = number_format( $b, 4 );
+		if ( 0 === $a - $b ) {
+			return 0;
+		} else if ( $a - $b < 0 ) {
+			return -1;
+		} else {
+			return 1;
 		}
 	}
 
@@ -56,7 +74,7 @@ class Formatter {
 	 * @param array $items
 	 * @param array $fields
 	 */
-	private function show_table( $items, $fields, $include_total ) {
+	private function show_table( $order, $orderby, $items, $fields, $include_total ) {
 		$table = new \cli\Table();
 
 		$enabled = \cli\Colors::shouldColorize();
@@ -70,6 +88,19 @@ class Formatter {
 		if ( ! is_null( $this->total_cell_index ) ) {
 			$totals[ $this->total_cell_index ] = 'total (' . count( $items ) . ')';
 		}
+
+		if ( $orderby ) {
+			usort( $items, function( $a, $b ) use ( $order, $orderby ) {
+				list( $first, $second ) = 'ASC' === $order ? array( $a, $b ) : array( $b, $a );
+
+				if ( is_numeric( $first->$orderby ) && is_numeric( $second->$orderby ) ) {
+					return $this->compare_float( $first->$orderby, $second->$orderby );
+				}
+
+				return strcmp( $first->$orderby, $second->$orderby );
+			});
+		}
+
 		$location_index = array_search( 'location', $fields );
 		foreach ( $items as $item ) {
 			$values = array_values( \WP_CLI\Utils\pick_fields( $item, $fields ) );

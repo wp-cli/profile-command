@@ -70,6 +70,19 @@ class Command {
 	 *
 	 * [--format=<format>]
 	 * : Render output in a particular format.
+	 *
+	 * [--order=<order>]
+	 * : Ascending or Descending order.
+	 * ---
+	 * default: ASC
+	 * options:
+	 *   - ASC
+	 *   - DESC
+	 * ---
+	 *
+	 * [--orderby=<orderby>]
+	 * : Order by fields.
+	 *
 	 * ---
 	 * default: table
 	 * options:
@@ -84,7 +97,10 @@ class Command {
 	public function stage( $args, $assoc_args ) {
 		global $wpdb;
 
-		$focus = Utils\get_flag_value( $assoc_args, 'all', isset( $args[0] ) ? $args[0] : null );
+		$focus   = Utils\get_flag_value( $assoc_args, 'all', isset( $args[0] ) ? $args[0] : null );
+
+		$order   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
+		$orderby = Utils\get_flag_value( $assoc_args, 'orderby', null );
 
 		$valid_stages = array( 'bootstrap', 'main_query', 'template' );
 		if ( $focus && ( true !== $focus && ! in_array( $focus, $valid_stages, true ) ) ) {
@@ -132,7 +148,8 @@ class Command {
 		if ( Utils\get_flag_value( $assoc_args, 'spotlight' ) ) {
 			$loggers = self::shine_spotlight( $loggers, $metrics );
 		}
-		$formatter->display_items( $loggers );
+
+		$formatter->display_items( $loggers, true, $order, $orderby );
 	}
 
 	/**
@@ -160,7 +177,19 @@ class Command {
 	 *
 	 * [--format=<format>]
 	 * : Render output in a particular format.
+	 *
+	 * [--order=<order>]
+	 * : Ascending or Descending order.
 	 * ---
+	 * default: ASC
+	 * options:
+	 *   - ASC
+	 *   - DESC
+	 * ---
+	 *
+	 * [--orderby=<orderby>]
+	 * : Order by fields.
+	 *
 	 * default: table
 	 * options:
 	 *   - table
@@ -174,6 +203,9 @@ class Command {
 	public function hook( $args, $assoc_args ) {
 
 		$focus = Utils\get_flag_value( $assoc_args, 'all', isset( $args[0] ) ? $args[0] : null );
+
+		$order   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
+		$orderby = Utils\get_flag_value( $assoc_args, 'orderby', null );
 
 		$profiler = new Profiler( 'hook', $focus );
 		$profiler->run();
@@ -206,7 +238,7 @@ class Command {
 		if ( Utils\get_flag_value( $assoc_args, 'spotlight' ) ) {
 			$loggers = self::shine_spotlight( $loggers, $metrics );
 		}
-		$formatter->display_items( $loggers );
+		$formatter->display_items( $loggers, true, $order, $orderby );
 	}
 
 	/**
@@ -229,6 +261,19 @@ class Command {
 	 *
 	 * [--format=<format>]
 	 * : Render output in a particular format.
+	 *
+	 * [--order=<order>]
+	 * : Ascending or Descending order.
+	 * ---
+	 * default: ASC
+	 * options:
+	 *   - ASC
+	 *   - DESC
+	 * ---
+	 *
+	 * [--orderby=<orderby>]
+	 * : Order by fields.
+	 *
 	 * ---
 	 * default: table
 	 * options:
@@ -242,9 +287,13 @@ class Command {
 	 */
 	public function eval_( $args, $assoc_args ) {
 		$statement = $args[0];
+
+		$order   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
+		$orderby = Utils\get_flag_value( $assoc_args, 'orderby', null );
+
 		self::profile_eval_ish( $assoc_args, function() use ( $statement ) {
 			eval( $statement );
-		});
+		}, $order, $orderby );
 	}
 
 	/**
@@ -267,6 +316,19 @@ class Command {
 	 *
 	 * [--format=<format>]
 	 * : Render output in a particular format.
+	 *
+	 * [--order=<order>]
+	 * : Ascending or Descending order.
+	 * ---
+	 * default: ASC
+	 * options:
+	 *   - ASC
+	 *   - DESC
+	 * ---
+	 *
+	 * [--orderby=<orderby>]
+	 * : Order by fields.
+	 *
 	 * ---
 	 * default: table
 	 * options:
@@ -281,13 +343,17 @@ class Command {
 	public function eval_file( $args, $assoc_args ) {
 
 		$file = $args[0];
+
+		$order   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
+		$orderby = Utils\get_flag_value( $assoc_args, 'orderby', null );
+
 		if ( ! file_exists( $file ) ) {
 			WP_CLI::error( "'$file' does not exist." );
 		}
 
 		self::profile_eval_ish( $assoc_args, function() use ( $file ) {
 			self::include_file( $file );
-		});
+		}, $order, $orderby );
 	}
 
 	/**
@@ -330,7 +396,7 @@ class Command {
 			'request_count',
 		) );
 		$formatter = new Formatter( $assoc_args, $fields );
-		$formatter->display_items( $loggers, false );
+		$formatter->display_items( $loggers, false, $order, $orderby );
 	}
 
 	/**
