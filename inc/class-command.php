@@ -70,6 +70,14 @@ class Command {
 	 *
 	 * [--format=<format>]
 	 * : Render output in a particular format.
+	 * ---
+	 * default: table
+	 * options:
+	 *   - table
+	 *   - json
+	 *   - yaml
+	 *   - csv
+	 * ---
 	 *
 	 * [--order=<order>]
 	 * : Ascending or Descending order.
@@ -82,15 +90,6 @@ class Command {
 	 *
 	 * [--orderby=<orderby>]
 	 * : Order by fields.
-	 *
-	 * ---
-	 * default: table
-	 * options:
-	 *   - table
-	 *   - json
-	 *   - yaml
-	 *   - csv
-	 * ---
 	 *
 	 * @when before_wp_load
 	 */
@@ -177,6 +176,14 @@ class Command {
 	 *
 	 * [--format=<format>]
 	 * : Render output in a particular format.
+	 * ---
+	 * default: table
+	 * options:
+	 *   - table
+	 *   - json
+	 *   - yaml
+	 *   - csv
+	 * ---
 	 *
 	 * [--order=<order>]
 	 * : Ascending or Descending order.
@@ -189,14 +196,6 @@ class Command {
 	 *
 	 * [--orderby=<orderby>]
 	 * : Order by fields.
-	 *
-	 * default: table
-	 * options:
-	 *   - table
-	 *   - json
-	 *   - yaml
-	 *   - csv
-	 * ---
 	 *
 	 * @when before_wp_load
 	 */
@@ -261,6 +260,14 @@ class Command {
 	 *
 	 * [--format=<format>]
 	 * : Render output in a particular format.
+	 * ---
+	 * default: table
+	 * options:
+	 *   - table
+	 *   - json
+	 *   - yaml
+	 *   - csv
+	 * ---
 	 *
 	 * [--order=<order>]
 	 * : Ascending or Descending order.
@@ -273,15 +280,6 @@ class Command {
 	 *
 	 * [--orderby=<orderby>]
 	 * : Order by fields.
-	 *
-	 * ---
-	 * default: table
-	 * options:
-	 *   - table
-	 *   - json
-	 *   - yaml
-	 *   - csv
-	 * ---
 	 *
 	 * @subcommand eval
 	 */
@@ -316,6 +314,14 @@ class Command {
 	 *
 	 * [--format=<format>]
 	 * : Render output in a particular format.
+	 * ---
+	 * default: table
+	 * options:
+	 *   - table
+	 *   - json
+	 *   - yaml
+	 *   - csv
+	 * ---
 	 *
 	 * [--order=<order>]
 	 * : Ascending or Descending order.
@@ -328,15 +334,6 @@ class Command {
 	 *
 	 * [--orderby=<orderby>]
 	 * : Order by fields.
-	 *
-	 * ---
-	 * default: table
-	 * options:
-	 *   - table
-	 *   - json
-	 *   - yaml
-	 *   - csv
-	 * ---
 	 *
 	 * @subcommand eval-file
 	 */

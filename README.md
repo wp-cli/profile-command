@@ -24,7 +24,7 @@ This package implements the following commands:
 Profile each stage of the WordPress load process (bootstrap, main_query, template).
 
 ~~~
-wp profile stage [<stage>] [--all] [--spotlight] [--url=<url>] [--fields=<fields>] [--format=<format>]
+wp profile stage [<stage>] [--all] [--spotlight] [--url=<url>] [--fields=<fields>] [--format=<format>] [--order=<order>] [--orderby=<orderby>]
 ~~~
 
 When WordPress handles a request from a browser, it’s essentially
@@ -96,6 +96,18 @@ $ wp profile stage bootstrap --fields=hook,time,cache_ratio --spotlight
 		  - csv
 		---
 
+	[--order=<order>]
+		Ascending or Descending order.
+		---
+		default: ASC
+		options:
+		  - ASC
+		  - DESC
+		---
+
+	[--orderby=<orderby>]
+		Order by fields.
+
 
 
 ### wp profile hook
@@ -103,7 +115,7 @@ $ wp profile stage bootstrap --fields=hook,time,cache_ratio --spotlight
 Profile key metrics for WordPress hooks (actions and filters).
 
 ~~~
-wp profile hook [<hook>] [--all] [--spotlight] [--url=<url>] [--fields=<fields>] [--format=<format>]
+wp profile hook [<hook>] [--all] [--spotlight] [--url=<url>] [--fields=<fields>] [--format=<format>] [--order=<order>] [--orderby=<orderby>]
 ~~~
 
 In order to profile callbacks on a specific hook, the action or filter
@@ -137,6 +149,18 @@ will need to execute during the course of the request.
 		  - csv
 		---
 
+	[--order=<order>]
+		Ascending or Descending order.
+		---
+		default: ASC
+		options:
+		  - ASC
+		  - DESC
+		---
+
+	[--orderby=<orderby>]
+		Order by fields.
+
 
 
 ### wp profile eval
@@ -144,7 +168,7 @@ will need to execute during the course of the request.
 Profile arbitrary code execution.
 
 ~~~
-wp profile eval <php-code> [--hook[=<hook>]] [--fields=<fields>] [--format=<format>]
+wp profile eval <php-code> [--hook[=<hook>]] [--fields=<fields>] [--format=<format>] [--order=<order>] [--orderby=<orderby>]
 ~~~
 
 Code execution happens after WordPress has loaded entirely, which means
@@ -173,6 +197,18 @@ current theme.
 		  - csv
 		---
 
+	[--order=<order>]
+		Ascending or Descending order.
+		---
+		default: ASC
+		options:
+		  - ASC
+		  - DESC
+		---
+
+	[--orderby=<orderby>]
+		Order by fields.
+
 
 
 ### wp profile eval-file
@@ -180,7 +216,7 @@ current theme.
 Profile execution of an arbitrary file.
 
 ~~~
-wp profile eval-file <file> [--hook[=<hook>]] [--fields=<fields>] [--format=<format>]
+wp profile eval-file <file> [--hook[=<hook>]] [--fields=<fields>] [--format=<format>] [--order=<order>] [--orderby=<orderby>]
 ~~~
 
 File execution happens after WordPress has loaded entirely, which means
@@ -208,6 +244,18 @@ current theme.
 		  - yaml
 		  - csv
 		---
+
+	[--order=<order>]
+		Ascending or Descending order.
+		---
+		default: ASC
+		options:
+		  - ASC
+		  - DESC
+		---
+
+	[--orderby=<orderby>]
+		Order by fields.
 
 ## Installing
 
