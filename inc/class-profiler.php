@@ -432,7 +432,7 @@ class Profiler {
 
 		define( 'WP_USE_THEMES', true );
 
-		// Template is normally loaded in global stage, so we need to replicate
+		// Template is normally loaded in global scope, so we need to replicate
 		foreach( $GLOBALS as $key => $value ) {
 			global $$key;
 		}
