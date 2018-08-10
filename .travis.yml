@@ -1,6 +1,8 @@
 sudo: false
+dist: trusty
 
 language: php
+php: 7.2
 
 notifications:
   email:
@@ -13,28 +15,59 @@ branches:
 
 cache:
   directories:
-    - vendor
     - $HOME/.composer/cache
 
 env:
   global:
-    - WP_CLI_BIN_DIR=/tmp/wp-cli-phar
+    - PATH="$TRAVIS_BUILD_DIR/vendor/bin:$PATH"
+    - WP_CLI_BIN_DIR="$TRAVIS_BUILD_DIR/vendor/bin"
 
-matrix:
-  include:
-    - php: 7.1
-      env: WP_VERSION=latest
-    - php: 7.0
-      env: WP_VERSION=latest
-    - php: 5.6
-      env: WP_VERSION=latest
-    - php: 5.6
-      env: WP_VERSION=trunk
-    - php: 5.4
-      env: WP_VERSION=latest
-
-before_script:
+before_install:
+  - |
+    # Remove Xdebug for a huge performance increase:
+    if [ -f ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/xdebug.ini ]; then
+      phpenv config-rm xdebug.ini
+    else
+      echo "xdebug.ini does not exist"
+    fi
+  - |
+    # Raise PHP memory limit to 2048MB
+    echo 'memory_limit = 2048M' >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
   - composer validate
-  - bash bin/install-package-tests.sh
 
-script: ./bin/test.sh
+install:
+  - composer install
+  - composer prepare-tests
+
+script:
+  - composer phpunit
+  - composer behat
+
+jobs:
+  include:
+    - stage: sniff
+      script:
+        - composer lint
+        - composer phpcs
+      env: BUILD=sniff
+    - stage: test
+      php: 7.2
+      env: WP_VERSION=latest
+    - stage: test
+      php: 7.1
+      env: WP_VERSION=latest
+    - stage: test
+      php: 7.0
+      env: WP_VERSION=latest
+    - stage: test
+      php: 5.6
+      env: WP_VERSION=latest
+    - stage: test
+      php: 5.6
+      env: WP_VERSION=3.7.11
+    - stage: test
+      php: 5.6
+      env: WP_VERSION=trunk
+    - stage: test
+      php: 5.4
+      env: WP_VERSION=latest

@@ -1,21 +1,17 @@
 {
     "name": "wp-cli/profile-command",
-    "description": "Quickly identify what's slow with WordPress.",
     "type": "wp-cli-package",
+    "description": "Quickly identify what's slow with WordPress.",
     "homepage": "https://runcommand.io/wp/profile/",
     "license": "MIT",
     "authors": [],
-    "minimum-stability": "dev",
-    "prefer-stable": true,
-    "autoload": {
-        "files": [ "command.php" ]
-    },
     "require": {
         "php": ">=5.4",
-        "wp-cli/wp-cli": "*"
+        "wp-cli/wp-cli": "2"
     },
     "require-dev": {
-        "behat/behat": "~2.5"
+        "behat/behat": "~2.5",
+        "wp-cli/wp-cli-tests": "2"
     },
     "extra": {
         "branch-alias": {
@@ -38,5 +34,12 @@
                 "post": "bin/readme/overview-body.md"
             }
         }
-    }
+    },
+    "autoload": {
+        "files": [
+            "command.php"
+        ]
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }
