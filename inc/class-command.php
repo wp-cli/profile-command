@@ -360,7 +360,7 @@ class Command {
 	/**
 	 * Profile an eval or eval-file statement.
 	 */
-	private static function profile_eval_ish( $assoc_args, $profile_callback ) {
+	private static function profile_eval_ish( $assoc_args, $profile_callback, $order = 'ASC', $order = null ) {
 		$hook   = Utils\get_flag_value( $assoc_args, 'hook' );
 		$type   = $focus = false;
 		$fields = array();
