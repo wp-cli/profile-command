@@ -446,7 +446,7 @@ class Profiler {
 
 		// Template is normally loaded in global scope, so we need to replicate
 		foreach ( $GLOBALS as $key => $value ) {
-			global ${$key};
+			global ${$key}; // phpcs:ignore PHPCompatibility.PHP.ForbiddenGlobalVariableVariable.NonBareVariableFound -- Syntax is updated to compatible with php 5 and 7.
 		}
 
 		// Load the theme template.
