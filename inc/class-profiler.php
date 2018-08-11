@@ -446,7 +446,7 @@ class Profiler {
 
 		// Template is normally loaded in global scope, so we need to replicate
 		foreach ( $GLOBALS as $key => $value ) {
-			global $$key;
+			global ${$key};
 		}
 
 		// Load the theme template.
