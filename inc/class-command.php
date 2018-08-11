@@ -291,7 +291,7 @@ class Command {
 
 		self::profile_eval_ish(
 			$assoc_args, function() use ( $statement ) {
-				eval( $statement ); // phpcs:ignore Squiz.PHP.Eval.Discouraged.Error -- no other way oround here
+				eval( $statement ); // phpcs:ignore Squiz.PHP.Eval.Discouraged -- no other way oround here
 			}, $order, $orderby
 		);
 	}
