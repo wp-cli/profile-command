@@ -7,7 +7,7 @@ Feature: Profile a specific hook
     Then STDOUT should be a table containing rows:
       | hook              | callback_count   |
       | plugins_loaded    | 3                |
-      | init              | 11               |
+      | init              | 13               |
       | template_redirect | 7                |
     And STDERR should be empty
 
@@ -116,7 +116,7 @@ Feature: Profile a specific hook
       });
       """
 
-    When I run `wp profile hook init`
+    When I try `wp profile hook init`
     Then STDERR should be:
       """
       Warning: Called 1
