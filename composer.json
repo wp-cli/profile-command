@@ -10,7 +10,6 @@
         "wp-cli/wp-cli": "^2"
     },
     "require-dev": {
-        "behat/behat": "~2.5",
         "wp-cli/wp-cli-tests": "^2"
     },
     "extra": {
