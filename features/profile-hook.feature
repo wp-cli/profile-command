@@ -116,7 +116,7 @@ Feature: Profile a specific hook
       });
       """
 
-    When I run `wp profile hook init`
+    When I try `wp profile hook init`
     Then STDERR should be:
       """
       Warning: Called 1
