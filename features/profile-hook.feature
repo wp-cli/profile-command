@@ -3,12 +3,12 @@ Feature: Profile a specific hook
   Scenario: Profile all hooks when a specific hook isn't specified
     Given a WP install
 
-    When I run `wp profile hook --fields=hook,callback_count`
+    When I run `wp profile hook --fields=hook`
     Then STDOUT should be a table containing rows:
-      | hook              | callback_count   |
-      | plugins_loaded    | 3                |
-      | init              | 11               |
-      | template_redirect | 7                |
+      | hook              |
+      | plugins_loaded    |
+      | init              |
+      | template_redirect |
     And STDERR should be empty
 
   Scenario: Profile all callbacks when --all flag is used
