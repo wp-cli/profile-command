@@ -290,9 +290,12 @@ class Command {
 		$orderby = Utils\get_flag_value( $assoc_args, 'orderby', null );
 
 		self::profile_eval_ish(
-			$assoc_args, function() use ( $statement ) {
+			$assoc_args,
+			function() use ( $statement ) {
 				eval( $statement ); // phpcs:ignore Squiz.PHP.Eval.Discouraged -- no other way oround here
-			}, $order, $orderby
+			},
+			$order,
+			$orderby
 		);
 	}
 
@@ -351,9 +354,12 @@ class Command {
 		}
 
 		self::profile_eval_ish(
-			$assoc_args, function() use ( $file ) {
+			$assoc_args,
+			function() use ( $file ) {
 				self::include_file( $file );
-			}, $order, $orderby
+			},
+			$order,
+			$orderby
 		);
 	}
 
@@ -387,7 +393,8 @@ class Command {
 			$loggers = array( $logger );
 		}
 		$fields    = array_merge(
-			$fields, array(
+			$fields,
+			array(
 				'time',
 				'query_time',
 				'query_count',

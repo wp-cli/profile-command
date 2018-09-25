@@ -76,7 +76,8 @@ class Profiler {
 	 */
 	public function run() {
 		WP_CLI::add_wp_hook(
-			'muplugins_loaded', function() {
+			'muplugins_loaded',
+			function() {
 				if ( $url = WP_CLI::get_runner()->config['url'] ) {
 					WP_CLI::set_url( trailingslashit( $url ) );
 				} else {
@@ -85,7 +86,8 @@ class Profiler {
 			}
 		);
 		WP_CLI::add_hook(
-			'after_wp_config_load', function() {
+			'after_wp_config_load',
+			function() {
 				if ( defined( 'SAVEQUERIES' ) && ! SAVEQUERIES ) {
 					WP_CLI::error( "'SAVEQUERIES' is defined as false, and must be true. Please check your wp-config.php" );
 				}
@@ -263,8 +265,7 @@ class Profiler {
 				if ( false !== $key && isset( $this->current_stage_hooks[ $key + 1 ] ) ) {
 					$pseudo_hook = "{$this->current_stage_hooks[$key+1]}:before";
 				} else {
-					$pseudo_hook = "{$this->current_stage_hooks[$key]}:after";
-					;
+					$pseudo_hook        = "{$this->current_stage_hooks[$key]}:after";
 					$this->running_hook = $pseudo_hook;
 				}
 				$this->loggers[ $pseudo_hook ] = new Logger( array( 'hook' => $pseudo_hook ) );

@@ -91,7 +91,8 @@ class Formatter {
 
 		if ( $orderby ) {
 			usort(
-				$items, function( $a, $b ) use ( $order, $orderby ) {
+				$items,
+				function( $a, $b ) use ( $order, $orderby ) {
 					list( $first, $second ) = 'ASC' === $order ? array( $a, $b ) : array( $b, $a );
 
 					if ( is_numeric( $first->$orderby ) && is_numeric( $second->$orderby ) ) {
