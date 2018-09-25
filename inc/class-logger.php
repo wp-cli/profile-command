@@ -61,7 +61,7 @@ class Logger {
 		if ( ! is_null( $this->start_time ) ) {
 			$this->time += microtime( true ) - $this->start_time;
 		}
-		if ( ! is_null( $this->query_offset ) && isset( $wpdb ) ) {
+		if ( ! is_null( $this->query_offset ) && isset( $wpdb ) && ! empty( $wpdb->queries ) ) {
 			for ( $i = $this->query_offset; $i < count( $wpdb->queries ); $i++ ) {
 				$this->query_time += $wpdb->queries[ $i ][1];
 				$this->query_count++;
