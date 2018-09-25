@@ -1,25 +1,24 @@
 {
     "name": "wp-cli/profile-command",
-    "description": "Quickly identify what's slow with WordPress.",
     "type": "wp-cli-package",
+    "description": "Quickly identify what's slow with WordPress.",
     "homepage": "https://runcommand.io/wp/profile/",
     "license": "MIT",
     "authors": [],
-    "minimum-stability": "dev",
-    "prefer-stable": true,
-    "autoload": {
-        "files": [ "command.php" ]
-    },
     "require": {
         "php": ">=5.4",
-        "wp-cli/wp-cli": "*"
+        "wp-cli/wp-cli": "^2"
     },
     "require-dev": {
-        "behat/behat": "~2.5"
+        "wp-cli/wp-cli-tests": "^2.0.7"
+    },
+    "config": {
+        "process-timeout": 7200,
+        "sort-packages": true
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "1.x-dev"
+            "dev-master": "2.x-dev"
         },
         "commands": [
             "profile stage",
@@ -38,5 +37,26 @@
                 "post": "bin/readme/overview-body.md"
             }
         }
+    },
+    "autoload": {
+        "files": [
+            "command.php"
+        ]
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "scripts": {
+        "behat": "run-behat-tests",
+        "behat-rerun": "rerun-behat-tests",
+        "lint": "run-linter-tests",
+        "phpcs": "run-phpcs-tests",
+        "phpunit": "run-php-unit-tests",
+        "prepare-tests": "install-package-tests",
+        "test": [
+            "@lint",
+            "@phpcs",
+            "@phpunit",
+            "@behat"
+        ]
     }
 }

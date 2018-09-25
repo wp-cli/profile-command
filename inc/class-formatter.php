@@ -14,7 +14,7 @@ class Formatter {
 		$format_args = array(
 			'format' => 'table',
 			'fields' => $fields,
-			'field' => null
+			'field'  => null,
 		);
 
 		foreach ( array( 'format', 'fields', 'field' ) as $key ) {
@@ -33,7 +33,7 @@ class Formatter {
 
 		$format_args['fields'] = array_map( 'trim', $format_args['fields'] );
 
-		$this->args = $format_args;
+		$this->args      = $format_args;
 		$this->formatter = new \WP_CLI\Formatter( $assoc_args, $fields, $prefix );
 	}
 
@@ -61,7 +61,7 @@ class Formatter {
 		$b = number_format( $b, 4 );
 		if ( 0 === $a - $b ) {
 			return 0;
-		} else if ( $a - $b < 0 ) {
+		} elseif ( $a - $b < 0 ) {
 			return -1;
 		} else {
 			return 1;
@@ -90,21 +90,24 @@ class Formatter {
 		}
 
 		if ( $orderby ) {
-			usort( $items, function( $a, $b ) use ( $order, $orderby ) {
-				list( $first, $second ) = 'ASC' === $order ? array( $a, $b ) : array( $b, $a );
+			usort(
+				$items,
+				function( $a, $b ) use ( $order, $orderby ) {
+					list( $first, $second ) = 'ASC' === $order ? array( $a, $b ) : array( $b, $a );
 
-				if ( is_numeric( $first->$orderby ) && is_numeric( $second->$orderby ) ) {
-					return $this->compare_float( $first->$orderby, $second->$orderby );
+					if ( is_numeric( $first->$orderby ) && is_numeric( $second->$orderby ) ) {
+						return $this->compare_float( $first->$orderby, $second->$orderby );
+					}
+
+					return strcmp( $first->$orderby, $second->$orderby );
 				}
-
-				return strcmp( $first->$orderby, $second->$orderby );
-			});
+			);
 		}
 
 		$location_index = array_search( 'location', $fields );
 		foreach ( $items as $item ) {
 			$values = array_values( \WP_CLI\Utils\pick_fields( $item, $fields ) );
-			foreach( $values as $i => $value ) {
+			foreach ( $values as $i => $value ) {
 				if ( ! is_null( $this->total_cell_index ) && $this->total_cell_index === $i ) {
 					continue;
 				}
@@ -135,7 +138,7 @@ class Formatter {
 			$table->addRow( $values );
 		}
 		if ( $include_total ) {
-			foreach( $totals as $i => $value ) {
+			foreach ( $totals as $i => $value ) {
 				if ( null === $value ) {
 					continue;
 				}
@@ -153,7 +156,7 @@ class Formatter {
 			$table->setFooters( $totals );
 		}
 
-		foreach( $table->getDisplayLines() as $line ) {
+		foreach ( $table->getDisplayLines() as $line ) {
 			\WP_CLI::line( $line );
 		}
 
