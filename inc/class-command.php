@@ -96,7 +96,7 @@ class Command {
 	public function stage( $args, $assoc_args ) {
 		global $wpdb;
 
-		$focus   = Utils\get_flag_value( $assoc_args, 'all', isset( $args[0] ) ? $args[0] : null );
+		$focus = Utils\get_flag_value( $assoc_args, 'all', isset( $args[0] ) ? $args[0] : null );
 
 		$order   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
 		$orderby = Utils\get_flag_value( $assoc_args, 'orderby', null );
@@ -110,7 +110,7 @@ class Command {
 		$profiler->run();
 
 		if ( $focus ) {
-			$base = array(
+			$base    = array(
 				'hook',
 				'callback_count',
 			);
@@ -125,7 +125,7 @@ class Command {
 				'request_count',
 			);
 		} else {
-			$base = array(
+			$base    = array(
 				'stage',
 			);
 			$metrics = array(
@@ -141,9 +141,9 @@ class Command {
 				'request_count',
 			);
 		}
-		$fields = array_merge( $base, $metrics );
+		$fields    = array_merge( $base, $metrics );
 		$formatter = new Formatter( $assoc_args, $fields );
-		$loggers = $profiler->get_loggers();
+		$loggers   = $profiler->get_loggers();
 		if ( Utils\get_flag_value( $assoc_args, 'spotlight' ) ) {
 			$loggers = self::shine_spotlight( $loggers, $metrics );
 		}
@@ -221,7 +221,7 @@ class Command {
 		} else {
 			$base = array( 'hook', 'callback_count' );
 		}
-		$metrics = array(
+		$metrics   = array(
 			'time',
 			'query_time',
 			'query_count',
@@ -231,9 +231,9 @@ class Command {
 			'request_time',
 			'request_count',
 		);
-		$fields = array_merge( $base, $metrics );
+		$fields    = array_merge( $base, $metrics );
 		$formatter = new Formatter( $assoc_args, $fields );
-		$loggers = $profiler->get_loggers();
+		$loggers   = $profiler->get_loggers();
 		if ( Utils\get_flag_value( $assoc_args, 'spotlight' ) ) {
 			$loggers = self::shine_spotlight( $loggers, $metrics );
 		}
@@ -289,9 +289,14 @@ class Command {
 		$order   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
 		$orderby = Utils\get_flag_value( $assoc_args, 'orderby', null );
 
-		self::profile_eval_ish( $assoc_args, function() use ( $statement ) {
-			eval( $statement );
-		}, $order, $orderby );
+		self::profile_eval_ish(
+			$assoc_args,
+			function() use ( $statement ) {
+				eval( $statement ); // phpcs:ignore Squiz.PHP.Eval.Discouraged -- no other way oround here
+			},
+			$order,
+			$orderby
+		);
 	}
 
 	/**
@@ -348,22 +353,27 @@ class Command {
 			WP_CLI::error( "'$file' does not exist." );
 		}
 
-		self::profile_eval_ish( $assoc_args, function() use ( $file ) {
-			self::include_file( $file );
-		}, $order, $orderby );
+		self::profile_eval_ish(
+			$assoc_args,
+			function() use ( $file ) {
+				self::include_file( $file );
+			},
+			$order,
+			$orderby
+		);
 	}
 
 	/**
 	 * Profile an eval or eval-file statement.
 	 */
-	private static function profile_eval_ish( $assoc_args, $profile_callback ) {
-		$hook = Utils\get_flag_value( $assoc_args, 'hook' );
-		$type = $focus = false;
+	private static function profile_eval_ish( $assoc_args, $profile_callback, $order = 'ASC', $orderby = null ) {
+		$hook   = Utils\get_flag_value( $assoc_args, 'hook' );
+		$type   = $focus = false;
 		$fields = array();
 		if ( $hook ) {
 			$type = 'hook';
 			if ( true !== $hook ) {
-				$focus = $hook;
+				$focus    = $hook;
 				$fields[] = 'callback';
 				$fields[] = 'location';
 			} else {
@@ -382,16 +392,19 @@ class Command {
 			$logger->stop();
 			$loggers = array( $logger );
 		}
-		$fields = array_merge( $fields, array(
-			'time',
-			'query_time',
-			'query_count',
-			'cache_ratio',
-			'cache_hits',
-			'cache_misses',
-			'request_time',
-			'request_count',
-		) );
+		$fields    = array_merge(
+			$fields,
+			array(
+				'time',
+				'query_time',
+				'query_count',
+				'cache_ratio',
+				'cache_hits',
+				'cache_misses',
+				'request_time',
+				'request_count',
+			)
+		);
 		$formatter = new Formatter( $assoc_args, $fields );
 		$formatter->display_items( $loggers, false, $order, $orderby );
 	}
@@ -414,9 +427,9 @@ class Command {
 	 */
 	private static function shine_spotlight( $loggers, $metrics ) {
 
-		foreach( $loggers as $k => $logger ) {
+		foreach ( $loggers as $k => $logger ) {
 			$non_zero = false;
-			foreach( $metrics as $metric ) {
+			foreach ( $metrics as $metric ) {
 				switch ( $metric ) {
 					// 100% cache ratio is fine by us
 					case 'cache_ratio':

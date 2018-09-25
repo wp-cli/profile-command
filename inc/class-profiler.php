@@ -8,9 +8,9 @@ class Profiler {
 
 	private $type;
 	private $focus;
-	private $loggers = array();
-	private $stage_hooks = array(
-		'bootstrap'    => array(
+	private $loggers                   = array();
+	private $stage_hooks               = array(
+		'bootstrap'  => array(
 			'muplugins_loaded',
 			'plugins_loaded',
 			'setup_theme',
@@ -18,14 +18,14 @@ class Profiler {
 			'init',
 			'wp_loaded',
 		),
-		'main_query'   => array(
+		'main_query' => array(
 			'parse_request',
 			'send_headers',
 			'pre_get_posts',
 			'the_posts',
 			'wp',
 		),
-		'template'     => array(
+		'template'   => array(
 			'template_redirect',
 			'template_include',
 			'wp_head',
@@ -34,26 +34,26 @@ class Profiler {
 			'wp_footer',
 		),
 	);
-	private $current_stage_hooks = array();
-	private $running_hook = null;
-	private $previous_filter = null;
+	private $current_stage_hooks       = array();
+	private $running_hook              = null;
+	private $previous_filter           = null;
 	private $previous_filter_callbacks = null;
-	private $filter_depth = 0;
+	private $filter_depth              = 0;
 
-	private $tick_callback = null;
-	private $tick_location = null;
-	private $tick_start_time = null;
-	private $tick_query_offset = null;
-	private $tick_cache_hit_offset = null;
+	private $tick_callback          = null;
+	private $tick_location          = null;
+	private $tick_start_time        = null;
+	private $tick_query_offset      = null;
+	private $tick_cache_hit_offset  = null;
 	private $tick_cache_miss_offset = null;
 
 	public function __construct( $type, $focus ) {
-		$this->type = $type;
+		$this->type  = $type;
 		$this->focus = $focus;
 	}
 
 	public function get_loggers() {
-		foreach( $this->loggers as $i => $logger ) {
+		foreach ( $this->loggers as $i => $logger ) {
 			if ( is_array( $logger ) ) {
 				$this->loggers[ $i ] = $logger = new Logger( $logger );
 			}
@@ -62,10 +62,10 @@ class Profiler {
 			}
 			if ( ! isset( $logger->location ) ) {
 				list( $name, $location ) = self::get_name_location_from_callback( $logger->callback );
-				$logger->callback = $name;
-				$logger->location = $location;
+				$logger->callback        = $name;
+				$logger->location        = $location;
 			}
-			$logger->location = self::get_short_location( $logger->location );
+			$logger->location    = self::get_short_location( $logger->location );
 			$this->loggers[ $i ] = $logger;
 		}
 		return $this->loggers;
@@ -75,29 +75,35 @@ class Profiler {
 	 * Run the profiler against WordPress
 	 */
 	public function run() {
-		WP_CLI::add_wp_hook( 'muplugins_loaded', function(){
-			if ( $url = WP_CLI::get_runner()->config['url'] ) {
-				WP_CLI::set_url( trailingslashit( $url ) );
-			} else {
-				WP_CLI::set_url( home_url( '/' ) );
+		WP_CLI::add_wp_hook(
+			'muplugins_loaded',
+			function() {
+				if ( $url = WP_CLI::get_runner()->config['url'] ) {
+					WP_CLI::set_url( trailingslashit( $url ) );
+				} else {
+					WP_CLI::set_url( home_url( '/' ) );
+				}
 			}
-		});
-		WP_CLI::add_hook( 'after_wp_config_load', function() {
-			if ( defined( 'SAVEQUERIES' ) && ! SAVEQUERIES ) {
-				WP_CLI::error( "'SAVEQUERIES' is defined as false, and must be true. Please check your wp-config.php" );
+		);
+		WP_CLI::add_hook(
+			'after_wp_config_load',
+			function() {
+				if ( defined( 'SAVEQUERIES' ) && ! SAVEQUERIES ) {
+					WP_CLI::error( "'SAVEQUERIES' is defined as false, and must be true. Please check your wp-config.php" );
+				}
+				if ( ! defined( 'SAVEQUERIES' ) ) {
+					define( 'SAVEQUERIES', true );
+				}
 			}
-			if ( ! defined( 'SAVEQUERIES' ) ) {
-				define( 'SAVEQUERIES', true );
-			}
-		});
+		);
 		if ( 'hook' === $this->type
 			&& ':before' === substr( $this->focus, -7, 7 ) ) {
 			$stage_hooks = array();
-			foreach( $this->stage_hooks as $hooks ) {
+			foreach ( $this->stage_hooks as $hooks ) {
 				$stage_hooks = array_merge( $stage_hooks, $hooks );
 			}
 			$end_hook = substr( $this->focus, 0, -7 );
-			$key = array_search( $end_hook, $stage_hooks );
+			$key      = array_search( $end_hook, $stage_hooks );
 			if ( isset( $stage_hooks[ $key - 1 ] ) ) {
 				$start_hook = $stage_hooks[ $key - 1 ];
 				WP_CLI::add_wp_hook( $start_hook, array( $this, 'wp_tick_profile_begin' ), 9999 );
@@ -105,7 +111,7 @@ class Profiler {
 				WP_CLI::add_hook( 'after_wp_config_load', array( $this, 'wp_tick_profile_begin' ) );
 			}
 			WP_CLI::add_wp_hook( $end_hook, array( $this, 'wp_tick_profile_end' ), -9999 );
-		} else if ( 'hook' === $this->type
+		} elseif ( 'hook' === $this->type
 			&& ':after' === substr( $this->focus, -6, 6 ) ) {
 			$start_hook = substr( $this->focus, 0, -6 );
 			WP_CLI::add_wp_hook( $start_hook, array( $this, 'wp_tick_profile_begin' ), 9999 );
@@ -123,24 +129,24 @@ class Profiler {
 	public function wp_tick_profile_begin( $value = null ) {
 
 		if ( version_compare( PHP_VERSION, '7.0.0' ) >= 0 ) {
-			WP_CLI::error( "Profiling intermediate hooks is broken in PHP 7, see https://bugs.php.net/bug.php?id=72966" );
+			WP_CLI::error( 'Profiling intermediate hooks is broken in PHP 7, see https://bugs.php.net/bug.php?id=72966' );
 		}
 
 		// Disable opcode optimizers.  These "optimize" calls out of the stack
 		// and hide calls from the tick handler and backtraces.
 		// Copied from P3 Profiler
 		if ( extension_loaded( 'xcache' ) ) {
-			@ini_set( 'xcache.optimizer', false );
+			@ini_set( 'xcache.optimizer', false ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- ini_set can be disabled on server.
 		} elseif ( extension_loaded( 'apc' ) ) {
-			@ini_set( 'apc.optimization', 0 );
+			@ini_set( 'apc.optimization', 0 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- ini_set can be disabled on server.
 			apc_clear_cache();
 		} elseif ( extension_loaded( 'eaccelerator' ) ) {
-			@ini_set( 'eaccelerator.optimizer', 0 );
+			@ini_set( 'eaccelerator.optimizer', 0 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- ini_set can be disabled on server.
 			if ( function_exists( 'eaccelerator_optimizer' ) ) {
-				@eaccelerator_optimizer( false );
+				@eaccelerator_optimizer( false ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- disabling eaccelerator on runtime can faild
 			}
 		} elseif ( extension_loaded( 'Zend Optimizer+' ) ) {
-			@ini_set( 'zend_optimizerplus.optimization_level', 0 );
+			@ini_set( 'zend_optimizerplus.optimization_level', 0 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- ini_set can be disabled on server.
 		}
 
 		register_tick_function( array( $this, 'handle_function_tick' ) );
@@ -162,7 +168,7 @@ class Profiler {
 	 */
 	public function wp_hook_begin() {
 
-		foreach( Logger::$active_loggers as $logger ) {
+		foreach ( Logger::$active_loggers as $logger ) {
 			$logger->start_hook_timer();
 		}
 
@@ -174,13 +180,18 @@ class Profiler {
 				$this->loggers[ $pseudo_hook ]->stop();
 			}
 			$callback_count = 0;
-			$callbacks = self::get_filter_callbacks( $current_filter );
+			$callbacks      = self::get_filter_callbacks( $current_filter );
 			if ( false !== $callbacks ) {
-				foreach( $callbacks as $priority => $cbs ) {
+				foreach ( $callbacks as $priority => $cbs ) {
 					$callback_count += count( $cbs );
 				}
 			}
-			$this->loggers[ $current_filter ] = new Logger( array( 'hook' => $current_filter, 'callback_count' => $callback_count ) );
+			$this->loggers[ $current_filter ] = new Logger(
+				array(
+					'hook'           => $current_filter,
+					'callback_count' => $callback_count,
+				)
+			);
 			$this->loggers[ $current_filter ]->start();
 		}
 
@@ -210,24 +221,26 @@ class Profiler {
 		if ( false === $callbacks ) {
 			return;
 		}
-		$this->previous_filter = $current_filter;
+		$this->previous_filter           = $current_filter;
 		$this->previous_filter_callbacks = $callbacks;
 
-		foreach( $callbacks as $priority => $priority_callbacks ) {
-			foreach( $priority_callbacks as $i => $the_ ) {
+		foreach ( $callbacks as $priority => $priority_callbacks ) {
+			foreach ( $priority_callbacks as $i => $the_ ) {
 				$callbacks[ $priority ][ $i ] = array(
-					'function'       => function() use( $the_, $i ) {
+					'function'      => function() use ( $the_, $i ) {
 						if ( ! isset( $this->loggers[ $i ] ) ) {
-							$this->loggers[ $i ] = new Logger( array(
-								'callback'     => $the_['function'],
-							) );
+							$this->loggers[ $i ] = new Logger(
+								array(
+									'callback' => $the_['function'],
+								)
+							);
 						}
 						$this->loggers[ $i ]->start();
 						$value = call_user_func_array( $the_['function'], func_get_args() );
 						$this->loggers[ $i ]->stop();
 						return $value;
 					},
-					'accepted_args'  => $the_['accepted_args'],
+					'accepted_args' => $the_['accepted_args'],
 				);
 			}
 		}
@@ -239,7 +252,7 @@ class Profiler {
 	 */
 	public function wp_hook_end( $filter_value = null ) {
 
-		foreach( Logger::$active_loggers as $logger ) {
+		foreach ( Logger::$active_loggers as $logger ) {
 			$logger->stop_hook_timer();
 		}
 
@@ -252,7 +265,7 @@ class Profiler {
 				if ( false !== $key && isset( $this->current_stage_hooks[ $key + 1 ] ) ) {
 					$pseudo_hook = "{$this->current_stage_hooks[$key+1]}:before";
 				} else {
-					$pseudo_hook = "{$this->current_stage_hooks[$key]}:after";;
+					$pseudo_hook        = "{$this->current_stage_hooks[$key]}:after";
 					$this->running_hook = $pseudo_hook;
 				}
 				$this->loggers[ $pseudo_hook ] = new Logger( array( 'hook' => $pseudo_hook ) );
@@ -277,14 +290,14 @@ class Profiler {
 			$callback_hash = md5( serialize( $this->tick_callback . $this->tick_location ) );
 			if ( ! isset( $this->loggers[ $callback_hash ] ) ) {
 				$this->loggers[ $callback_hash ] = array(
-					'callback'          => $this->tick_callback,
-					'location'          => $this->tick_location,
-					'time'              => 0,
-					'query_time'        => 0,
-					'query_count'       => 0,
-					'cache_hits'        => 0,
-					'cache_misses'      => 0,
-					'cache_ratio'       => null,
+					'callback'     => $this->tick_callback,
+					'location'     => $this->tick_location,
+					'time'         => 0,
+					'query_time'   => 0,
+					'query_count'  => 0,
+					'cache_hits'   => 0,
+					'cache_misses' => 0,
+					'cache_ratio'  => null,
 				);
 			}
 
@@ -298,9 +311,9 @@ class Profiler {
 			}
 
 			if ( isset( $wp_object_cache ) ) {
-				$hits = ! empty( $wp_object_cache->cache_hits ) ? $wp_object_cache->cache_hits : 0;
+				$hits   = ! empty( $wp_object_cache->cache_hits ) ? $wp_object_cache->cache_hits : 0;
 				$misses = ! empty( $wp_object_cache->cache_misses ) ? $wp_object_cache->cache_misses : 0;
-				$this->loggers[ $callback_hash ]['cache_hits'] = ( $hits - $this->tick_cache_hit_offset ) + $this->loggers[ $callback_hash ]['cache_hits'];
+				$this->loggers[ $callback_hash ]['cache_hits']   = ( $hits - $this->tick_cache_hit_offset ) + $this->loggers[ $callback_hash ]['cache_hits'];
 				$this->loggers[ $callback_hash ]['cache_misses'] = ( $misses - $this->tick_cache_miss_offset ) + $this->loggers[ $callback_hash ]['cache_misses'];
 				$total = $this->loggers[ $callback_hash ]['cache_hits'] + $this->loggers[ $callback_hash ]['cache_misses'];
 				if ( $total ) {
@@ -310,7 +323,7 @@ class Profiler {
 			}
 		}
 
-		$bt = debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS | DEBUG_BACKTRACE_PROVIDE_OBJECT, 2 );
+		$bt    = debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS | DEBUG_BACKTRACE_PROVIDE_OBJECT, 2 );
 		$frame = $bt[0];
 		if ( isset( $bt[1] ) ) {
 			$frame = $bt[1];
@@ -319,11 +332,11 @@ class Profiler {
 		$callback = $location = '';
 		if ( in_array( strtolower( $frame['function'] ), array( 'include', 'require', 'include_once', 'require_once' ) ) ) {
 			$callback = $frame['function'] . " '" . $frame['args'][0] . "'";
-		} else if ( isset( $frame['object'] ) && method_exists( $frame['object'], $frame['function'] ) ) {
+		} elseif ( isset( $frame['object'] ) && method_exists( $frame['object'], $frame['function'] ) ) {
 			$callback = get_class( $frame['object'] ) . '->' . $frame['function'] . '()';
-		} else if ( isset( $frame['class'] ) && method_exists( $frame['class'], $frame['function'] ) ) {
+		} elseif ( isset( $frame['class'] ) && method_exists( $frame['class'], $frame['function'] ) ) {
 			$callback = $frame['class'] . '::' . $frame['function'] . '()';
-		} else if ( ! empty( $frame['function'] ) && function_exists( $frame['function'] ) ) {
+		} elseif ( ! empty( $frame['function'] ) && function_exists( $frame['function'] ) ) {
 			$callback = $frame['function'] . '()';
 		} elseif ( '__lambda_func' == $frame['function'] || '{closure}' == $frame['function'] ) {
 			$callback = 'function(){}';
@@ -341,11 +354,11 @@ class Profiler {
 			}
 		}
 
-		$this->tick_callback = $callback;
-		$this->tick_location = $location;
-		$this->tick_start_time = microtime( true );
-		$this->tick_query_offset = ! empty( $wpdb->queries ) ? count( $wpdb->queries ) : 0;
-		$this->tick_cache_hit_offset = ! empty( $wp_object_cache->cache_hits ) ? $wp_object_cache->cache_hits : 0;
+		$this->tick_callback          = $callback;
+		$this->tick_location          = $location;
+		$this->tick_start_time        = microtime( true );
+		$this->tick_query_offset      = ! empty( $wpdb->queries ) ? count( $wpdb->queries ) : 0;
+		$this->tick_cache_hit_offset  = ! empty( $wp_object_cache->cache_hits ) ? $wp_object_cache->cache_hits : 0;
 		$this->tick_cache_miss_offset = ! empty( $wp_object_cache->cache_misses ) ? $wp_object_cache->cache_misses : 0;
 	}
 
@@ -353,7 +366,7 @@ class Profiler {
 	 * Profiling request time for any active Loggers
 	 */
 	public function wp_request_begin( $filter_value = null ) {
-		foreach( Logger::$active_loggers as $logger ) {
+		foreach ( Logger::$active_loggers as $logger ) {
 			$logger->start_request_timer();
 		}
 		return $filter_value;
@@ -363,7 +376,7 @@ class Profiler {
 	 * Profiling request time for any active Loggers
 	 */
 	public function wp_request_end( $filter_value = null ) {
-		foreach( Logger::$active_loggers as $logger ) {
+		foreach ( Logger::$active_loggers as $logger ) {
 			$logger->stop_request_timer();
 		}
 		return $filter_value;
@@ -381,7 +394,7 @@ class Profiler {
 
 		if ( 'stage' === $this->type && true === $this->focus ) {
 			$hooks = array();
-			foreach( $this->stage_hooks as $stage_hook ) {
+			foreach ( $this->stage_hooks as $stage_hook ) {
 				$hooks = array_merge( $hooks, $stage_hook );
 			}
 			$this->set_stage_hooks( $hooks );
@@ -390,7 +403,7 @@ class Profiler {
 		if ( 'stage' === $this->type ) {
 			if ( 'bootstrap' === $this->focus ) {
 				$this->set_stage_hooks( $this->stage_hooks['bootstrap'] );
-			} else if ( ! $this->focus ) {
+			} elseif ( ! $this->focus ) {
 				$logger = new Logger( array( 'stage' => 'bootstrap' ) );
 				$logger->start();
 			}
@@ -412,7 +425,7 @@ class Profiler {
 		if ( 'stage' === $this->type ) {
 			if ( 'main_query' === $this->focus ) {
 				$this->set_stage_hooks( $this->stage_hooks['main_query'] );
-			} else if ( ! $this->focus ) {
+			} elseif ( ! $this->focus ) {
 				$logger = new Logger( array( 'stage' => 'main_query' ) );
 				$logger->start();
 			}
@@ -433,15 +446,15 @@ class Profiler {
 		define( 'WP_USE_THEMES', true );
 
 		// Template is normally loaded in global scope, so we need to replicate
-		foreach( $GLOBALS as $key => $value ) {
-			global $$key;
+		foreach ( $GLOBALS as $key => $value ) {
+			global ${$key}; // phpcs:ignore PHPCompatibility.PHP.ForbiddenGlobalVariableVariable.NonBareVariableFound -- Syntax is updated to compatible with php 5 and 7.
 		}
 
 		// Load the theme template.
 		if ( 'stage' === $this->type ) {
 			if ( 'template' === $this->focus ) {
 				$this->set_stage_hooks( $this->stage_hooks['template'] );
-			} else if ( ! $this->focus ) {
+			} elseif ( ! $this->focus ) {
 				$logger = new Logger( array( 'stage' => 'template' ) );
 				$logger->start();
 			}
@@ -467,20 +480,20 @@ class Profiler {
 	 * Get a human-readable name from a callback
 	 */
 	private static function get_name_location_from_callback( $callback ) {
-		$name = $location = '';
+		$name       = $location = '';
 		$reflection = false;
 		if ( is_array( $callback ) && is_object( $callback[0] ) ) {
 			$reflection = new \ReflectionMethod( $callback[0], $callback[1] );
-			$name = get_class( $callback[0] ) . '->' . $callback[1] . '()';
+			$name       = get_class( $callback[0] ) . '->' . $callback[1] . '()';
 		} elseif ( is_array( $callback ) && method_exists( $callback[0], $callback[1] ) ) {
 			$reflection = new \ReflectionMethod( $callback[0], $callback[1] );
-			$name = $callback[0] . '::' . $callback[1] . '()';
+			$name       = $callback[0] . '::' . $callback[1] . '()';
 		} elseif ( is_object( $callback ) && is_a( $callback, 'Closure' ) ) {
 			$reflection = new \ReflectionFunction( $callback );
-			$name = 'function(){}';
-		} else if ( is_string( $callback ) && function_exists( $callback ) ) {
+			$name       = 'function(){}';
+		} elseif ( is_string( $callback ) && function_exists( $callback ) ) {
 			$reflection = new \ReflectionFunction( $callback );
-			$name = $callback . '()';
+			$name       = $callback . '()';
 		}
 		if ( $reflection ) {
 			$location = $reflection->getFileName() . ':' . $reflection->getStartLine();
@@ -498,13 +511,13 @@ class Profiler {
 		$abspath = rtrim( realpath( ABSPATH ), '/' ) . '/';
 		if ( defined( 'WP_PLUGIN_DIR' ) && 0 === stripos( $location, WP_PLUGIN_DIR ) ) {
 			$location = str_replace( trailingslashit( WP_PLUGIN_DIR ), '', $location );
-		} else if ( defined( 'WPMU_PLUGIN_DIR' ) && 0 === stripos( $location, WPMU_PLUGIN_DIR ) ) {
+		} elseif ( defined( 'WPMU_PLUGIN_DIR' ) && 0 === stripos( $location, WPMU_PLUGIN_DIR ) ) {
 			$location = str_replace( trailingslashit( dirname( WPMU_PLUGIN_DIR ) ), '', $location );
-		} else if ( function_exists( 'get_theme_root' ) && 0 === stripos( $location, get_theme_root() ) ) {
+		} elseif ( function_exists( 'get_theme_root' ) && 0 === stripos( $location, get_theme_root() ) ) {
 			$location = str_replace( trailingslashit( get_theme_root() ), '', $location );
-		} else if ( 0 === stripos( $location, $abspath . 'wp-admin/' ) ) {
+		} elseif ( 0 === stripos( $location, $abspath . 'wp-admin/' ) ) {
 			$location = str_replace( $abspath, '', $location );
-		} else if ( 0 === stripos( $location, $abspath . 'wp-includes/' ) ) {
+		} elseif ( 0 === stripos( $location, $abspath . 'wp-includes/' ) ) {
 			$location = str_replace( $abspath, '', $location );
 		}
 		return $location;
@@ -514,8 +527,8 @@ class Profiler {
 	 * Set the hooks for the current stage
 	 */
 	private function set_stage_hooks( $hooks ) {
-		$this->current_stage_hooks = $hooks;
-		$pseudo_hook = "{$hooks[0]}:before";
+		$this->current_stage_hooks     = $hooks;
+		$pseudo_hook                   = "{$hooks[0]}:before";
 		$this->loggers[ $pseudo_hook ] = new Logger( array( 'hook' => $pseudo_hook ) );
 		$this->loggers[ $pseudo_hook ]->start();
 	}
@@ -563,5 +576,5 @@ class Profiler {
 			$wp_filter[ $filter ] = $callbacks;
 		}
 	}
-	
+
 }
