@@ -5,6 +5,8 @@
 .editorconfig
 .travis.yml
 circle.yml
+phpcs.xml.dist
+phpunit.xml.dist
 bin/
 features/
 utils/
