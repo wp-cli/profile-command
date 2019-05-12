@@ -28,7 +28,7 @@ class Formatter {
 		}
 
 		if ( 'time' !== $fields[0] ) {
-			$this->total_cell_index = array_search( $fields[0], $format_args['fields'] );
+			$this->total_cell_index = array_search( $fields[0], $format_args['fields'], true );
 		}
 
 		$format_args['fields'] = array_map( 'trim', $format_args['fields'] );
@@ -104,7 +104,7 @@ class Formatter {
 			);
 		}
 
-		$location_index = array_search( 'location', $fields );
+		$location_index = array_search( 'location', $fields, true );
 		foreach ( $items as $item ) {
 			$values = array_values( \WP_CLI\Utils\pick_fields( $item, $fields ) );
 			foreach ( $values as $i => $value ) {

@@ -415,7 +415,7 @@ class Command {
 	 * @param string $file
 	 */
 	private static function include_file( $file ) {
-		include( $file );
+		include $file;
 	}
 
 	/**
