@@ -51,5 +51,11 @@
 			</property>
 		</properties>
 		<exclude name="WordPress.Files.FileName.NotHyphenatedLowercase" />
+		<exclude-pattern>*/inc/*.php$</exclude-pattern>
 	</rule>
+
+	<rule ref="WordPress.PHP.NoSilencedErrors.Discouraged">
+		<exclude-pattern>*/inc/class-profiler.php$</exclude-pattern>
+	</rule>
+
 </ruleset>
