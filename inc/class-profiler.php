@@ -460,7 +460,7 @@ class Profiler {
 			}
 		}
 		ob_start();
-		require_once( ABSPATH . WPINC . '/template-loader.php' );
+		require_once ABSPATH . WPINC . '/template-loader.php';
 		ob_get_clean();
 		if ( $this->running_hook ) {
 			$this->loggers[ $this->running_hook ]->stop();
@@ -567,7 +567,7 @@ class Profiler {
 		global $wp_filter;
 
 		if ( ! isset( $wp_filter[ $filter ] ) && class_exists( 'WP_Hook' ) ) {
-			$wp_filter[ $filter ] = new \WP_Hook;
+			$wp_filter[ $filter ] = new \WP_Hook();
 		}
 
 		if ( is_a( $wp_filter[ $filter ], 'WP_Hook' ) ) {
