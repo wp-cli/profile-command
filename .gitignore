@@ -6,3 +6,6 @@ vendor/
 *.zip
 *.tar.gz
 *.log
+phpunit.xml
+phpcs.xml
+.phpcs.xml

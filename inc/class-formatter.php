@@ -28,7 +28,7 @@ class Formatter {
 		}
 
 		if ( 'time' !== $fields[0] ) {
-			$this->total_cell_index = array_search( $fields[0], $format_args['fields'] );
+			$this->total_cell_index = array_search( $fields[0], $format_args['fields'], true );
 		}
 
 		$format_args['fields'] = array_map( 'trim', $format_args['fields'] );
@@ -93,7 +93,9 @@ class Formatter {
 			usort(
 				$items,
 				function( $a, $b ) use ( $order, $orderby ) {
-					list( $first, $second ) = 'ASC' === $order ? array( $a, $b ) : array( $b, $a );
+
+					$orderby_array          = 'ASC' === $order ? array( $a, $b ) : array( $b, $a );
+					list( $first, $second ) = $orderby_array;
 
 					if ( is_numeric( $first->$orderby ) && is_numeric( $second->$orderby ) ) {
 						return $this->compare_float( $first->$orderby, $second->$orderby );
@@ -104,7 +106,7 @@ class Formatter {
 			);
 		}
 
-		$location_index = array_search( 'location', $fields );
+		$location_index = array_search( 'location', $fields, true );
 		foreach ( $items as $item ) {
 			$values = array_values( \WP_CLI\Utils\pick_fields( $item, $fields ) );
 			foreach ( $values as $i => $value ) {

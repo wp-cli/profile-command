@@ -368,7 +368,8 @@ class Command {
 	 */
 	private static function profile_eval_ish( $assoc_args, $profile_callback, $order = 'ASC', $orderby = null ) {
 		$hook   = Utils\get_flag_value( $assoc_args, 'hook' );
-		$type   = $focus = false;
+		$focus  = false;
+		$type   = false;
 		$fields = array();
 		if ( $hook ) {
 			$type = 'hook';
@@ -415,7 +416,7 @@ class Command {
 	 * @param string $file
 	 */
 	private static function include_file( $file ) {
-		include( $file );
+		include $file;
 	}
 
 	/**
