@@ -8,8 +8,8 @@ class Profiler {
 
 	private $type;
 	private $focus;
-	private $loggers                   = array();
-	private $stage_hooks               = array(
+	private $loggers     = array();
+	private $stage_hooks = array(
 		'bootstrap'  => array(
 			'muplugins_loaded',
 			'plugins_loaded',
@@ -34,6 +34,7 @@ class Profiler {
 			'wp_footer',
 		),
 	);
+
 	private $current_stage_hooks       = array();
 	private $running_hook              = null;
 	private $previous_filter           = null;
@@ -55,7 +56,8 @@ class Profiler {
 	public function get_loggers() {
 		foreach ( $this->loggers as $i => $logger ) {
 			if ( is_array( $logger ) ) {
-				$this->loggers[ $i ] = $logger = new Logger( $logger );
+				$logger              = new Logger( $logger );
+				$this->loggers[ $i ] = $logger;
 			}
 			if ( ! isset( $logger->callback ) ) {
 				continue;
@@ -78,7 +80,8 @@ class Profiler {
 		WP_CLI::add_wp_hook(
 			'muplugins_loaded',
 			function() {
-				if ( $url = WP_CLI::get_runner()->config['url'] ) {
+				$url = WP_CLI::get_runner()->config['url'];
+				if ( ! empty( $url ) ) {
 					WP_CLI::set_url( trailingslashit( $url ) );
 				} else {
 					WP_CLI::set_url( home_url( '/' ) );
@@ -103,7 +106,7 @@ class Profiler {
 				$stage_hooks = array_merge( $stage_hooks, $hooks );
 			}
 			$end_hook = substr( $this->focus, 0, -7 );
-			$key      = array_search( $end_hook, $stage_hooks );
+			$key      = array_search( $end_hook, $stage_hooks, true );
 			if ( isset( $stage_hooks[ $key - 1 ] ) ) {
 				$start_hook = $stage_hooks[ $key - 1 ];
 				WP_CLI::add_wp_hook( $start_hook, array( $this, 'wp_tick_profile_begin' ), 9999 );
@@ -136,17 +139,22 @@ class Profiler {
 		// and hide calls from the tick handler and backtraces.
 		// Copied from P3 Profiler
 		if ( extension_loaded( 'xcache' ) ) {
-			@ini_set( 'xcache.optimizer', false ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- ini_set can be disabled on server.
+			@ini_set( 'xcache.optimizer', false ); // phpcs:ignore
+			// WordPress.PHP.NoSilencedErrors.Discouraged -- ini_set can be disabled on server.
 		} elseif ( extension_loaded( 'apc' ) ) {
-			@ini_set( 'apc.optimization', 0 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- ini_set can be disabled on server.
+			@ini_set( 'apc.optimization', 0 ); // phpcs:ignore
+			// WordPress.PHP.NoSilencedErrors.Discouraged -- ini_set can be disabled on server.
 			apc_clear_cache();
 		} elseif ( extension_loaded( 'eaccelerator' ) ) {
-			@ini_set( 'eaccelerator.optimizer', 0 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- ini_set can be disabled on server.
+			@ini_set( 'eaccelerator.optimizer', 0 ); // phpcs:ignore
+			// WordPress.PHP.NoSilencedErrors.Discouraged -- ini_set can be disabled on server.
 			if ( function_exists( 'eaccelerator_optimizer' ) ) {
-				@eaccelerator_optimizer( false ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- disabling eaccelerator on runtime can faild
+				@eaccelerator_optimizer( false ); // phpcs:ignore
+				// WordPress.PHP.NoSilencedErrors.Discouraged -- disabling eaccelerator on runtime can faild
 			}
 		} elseif ( extension_loaded( 'Zend Optimizer+' ) ) {
-			@ini_set( 'zend_optimizerplus.optimization_level', 0 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- ini_set can be disabled on server.
+			@ini_set( 'zend_optimizerplus.optimization_level', 0 ); // phpcs:ignore
+			// WordPress.PHP.NoSilencedErrors.Discouraged -- ini_set can be disabled on server.
 		}
 
 		register_tick_function( array( $this, 'handle_function_tick' ) );
@@ -173,7 +181,7 @@ class Profiler {
 		}
 
 		$current_filter = current_filter();
-		if ( ( 'stage' === $this->type && in_array( $current_filter, $this->current_stage_hooks ) )
+		if ( ( 'stage' === $this->type && in_array( $current_filter, $this->current_stage_hooks, true ) )
 			|| ( 'hook' === $this->type && ! $this->focus ) ) {
 			$pseudo_hook = "{$current_filter}:before";
 			if ( isset( $this->loggers[ $pseudo_hook ] ) ) {
@@ -257,11 +265,11 @@ class Profiler {
 		}
 
 		$current_filter = current_filter();
-		if ( ( 'stage' === $this->type && in_array( $current_filter, $this->current_stage_hooks ) )
+		if ( ( 'stage' === $this->type && in_array( $current_filter, $this->current_stage_hooks, true ) )
 			|| ( 'hook' === $this->type && ! $this->focus ) ) {
 			$this->loggers[ $current_filter ]->stop();
 			if ( 'stage' === $this->type ) {
-				$key = array_search( $current_filter, $this->current_stage_hooks );
+				$key = array_search( $current_filter, $this->current_stage_hooks, true );
 				if ( false !== $key && isset( $this->current_stage_hooks[ $key + 1 ] ) ) {
 					$pseudo_hook = "{$this->current_stage_hooks[$key+1]}:before";
 				} else {
@@ -287,7 +295,7 @@ class Profiler {
 		if ( ! is_null( $this->tick_callback ) ) {
 			$time = microtime( true ) - $this->tick_start_time;
 
-			$callback_hash = md5( serialize( $this->tick_callback . $this->tick_location ) );
+			$callback_hash = md5( serialize( $this->tick_callback . $this->tick_location ) ); // phpcs:ignore
 			if ( ! isset( $this->loggers[ $callback_hash ] ) ) {
 				$this->loggers[ $callback_hash ] = array(
 					'callback'     => $this->tick_callback,
@@ -304,7 +312,8 @@ class Profiler {
 			$this->loggers[ $callback_hash ]['time'] += $time;
 
 			if ( isset( $wpdb ) ) {
-				for ( $i = $this->tick_query_offset; $i < count( $wpdb->queries ); $i++ ) {
+				$total_queries = count( $wpdb->queries );
+				for ( $i = $this->tick_query_offset; $i < $total_queries; $i++ ) {
 					$this->loggers[ $callback_hash ]['query_time'] += $wpdb->queries[ $i ][1];
 					$this->loggers[ $callback_hash ]['query_count']++;
 				}
@@ -329,8 +338,9 @@ class Profiler {
 			$frame = $bt[1];
 		}
 
-		$callback = $location = '';
-		if ( in_array( strtolower( $frame['function'] ), array( 'include', 'require', 'include_once', 'require_once' ) ) ) {
+		$location = '';
+		$callback = '';
+		if ( in_array( strtolower( $frame['function'] ), array( 'include', 'require', 'include_once', 'require_once' ), true ) ) {
 			$callback = $frame['function'] . " '" . $frame['args'][0] . "'";
 		} elseif ( isset( $frame['object'] ) && method_exists( $frame['object'], $frame['function'] ) ) {
 			$callback = get_class( $frame['object'] ) . '->' . $frame['function'] . '()';
@@ -338,7 +348,7 @@ class Profiler {
 			$callback = $frame['class'] . '::' . $frame['function'] . '()';
 		} elseif ( ! empty( $frame['function'] ) && function_exists( $frame['function'] ) ) {
 			$callback = $frame['function'] . '()';
-		} elseif ( '__lambda_func' == $frame['function'] || '{closure}' == $frame['function'] ) {
+		} elseif ( '__lambda_func' === $frame['function'] || '{closure}' === $frame['function'] ) {
 			$callback = 'function(){}';
 		}
 
@@ -447,7 +457,8 @@ class Profiler {
 
 		// Template is normally loaded in global scope, so we need to replicate
 		foreach ( $GLOBALS as $key => $value ) {
-			global ${$key}; // phpcs:ignore PHPCompatibility.PHP.ForbiddenGlobalVariableVariable.NonBareVariableFound -- Syntax is updated to compatible with php 5 and 7.
+			global ${$key}; // phpcs:ignore
+			// PHPCompatibility.PHP.ForbiddenGlobalVariableVariable.NonBareVariableFound -- Syntax is updated to compatible with php 5 and 7.
 		}
 
 		// Load the theme template.
@@ -460,7 +471,7 @@ class Profiler {
 			}
 		}
 		ob_start();
-		require_once( ABSPATH . WPINC . '/template-loader.php' );
+		require_once ABSPATH . WPINC . '/template-loader.php';
 		ob_get_clean();
 		if ( $this->running_hook ) {
 			$this->loggers[ $this->running_hook ]->stop();
@@ -480,7 +491,8 @@ class Profiler {
 	 * Get a human-readable name from a callback
 	 */
 	private static function get_name_location_from_callback( $callback ) {
-		$name       = $location = '';
+		$location   = '';
+		$name       = '';
 		$reflection = false;
 		if ( is_array( $callback ) && is_object( $callback[0] ) ) {
 			$reflection = new \ReflectionMethod( $callback[0], $callback[1] );
@@ -567,13 +579,13 @@ class Profiler {
 		global $wp_filter;
 
 		if ( ! isset( $wp_filter[ $filter ] ) && class_exists( 'WP_Hook' ) ) {
-			$wp_filter[ $filter ] = new \WP_Hook;
+			$wp_filter[ $filter ] = new \WP_Hook(); // phpcs:ignore
 		}
 
 		if ( is_a( $wp_filter[ $filter ], 'WP_Hook' ) ) {
 			$wp_filter[ $filter ]->callbacks = $callbacks;
 		} else {
-			$wp_filter[ $filter ] = $callbacks;
+			$wp_filter[ $filter ] = $callbacks; // phpcs:ignore
 		}
 	}
 

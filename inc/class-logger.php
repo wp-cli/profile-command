@@ -38,7 +38,9 @@ class Logger {
 		global $wpdb, $wp_object_cache;
 		$this->start_time   = microtime( true );
 		$this->query_offset = ! empty( $wpdb->queries ) ? count( $wpdb->queries ) : 0;
-		if ( false === ( $key = array_search( $this, self::$active_loggers ) ) ) {
+		$key                = array_search( $this, self::$active_loggers, true );
+
+		if ( false === $key ) {
 			self::$active_loggers[] = $this;
 		}
 		$this->cache_hit_offset  = ! empty( $wp_object_cache->cache_hits ) ? $wp_object_cache->cache_hits : 0;
@@ -62,7 +64,10 @@ class Logger {
 			$this->time += microtime( true ) - $this->start_time;
 		}
 		if ( ! is_null( $this->query_offset ) && isset( $wpdb ) && ! empty( $wpdb->queries ) ) {
-			for ( $i = $this->query_offset; $i < count( $wpdb->queries ); $i++ ) {
+
+			$query_total_count = count( $wpdb->queries );
+
+			for ( $i = $this->query_offset; $i < $query_total_count; $i++ ) {
 				$this->query_time += $wpdb->queries[ $i ][1];
 				$this->query_count++;
 			}
@@ -84,7 +89,9 @@ class Logger {
 		$this->query_offset      = null;
 		$this->cache_hit_offset  = null;
 		$this->cache_miss_offset = null;
-		if ( false !== ( $key = array_search( $this, self::$active_loggers ) ) ) {
+		$key                     = array_search( $this, self::$active_loggers, true );
+
+		if ( false !== $key ) {
 			unset( self::$active_loggers[ $key ] );
 		}
 	}
