@@ -42,7 +42,7 @@ class Formatter {
 	 *
 	 * @param array $items
 	 */
-	public function display_items( $items, $include_total = true, $order, $orderby ) {
+	public function display_items( $items, $include_total, $order, $orderby ) {
 		if ( 'table' === $this->args['format'] && empty( $this->args['field'] ) ) {
 			$this->show_table( $order, $orderby, $items, $this->args['fields'], $include_total );
 		} else {
