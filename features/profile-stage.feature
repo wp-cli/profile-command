@@ -29,7 +29,6 @@ Feature: Profile the template render stage
       | wp_loaded:before         |
       | wp_loaded                |
       | wp_loaded:after          |
-      | total (13)               |
 
     When I run `wp profile stage main_query --fields=hook`
     Then STDOUT should be a table containing rows:
@@ -45,7 +44,6 @@ Feature: Profile the template render stage
       | wp:before                |
       | wp                       |
       | wp:after                 |
-      | total (11)               |
 
     When I run `wp profile stage template --fields=hook`
     Then STDOUT should be a table containing rows:
@@ -63,7 +61,6 @@ Feature: Profile the template render stage
       | wp_footer:before         |
       | wp_footer                |
       | wp_footer:after          |
-      | total (13)               |
 
     When I run `wp profile stage template --fields=hook --orderby=hook --order=DESC`
     Then STDOUT should be a table containing rows:
@@ -81,8 +78,6 @@ Feature: Profile the template render stage
       | loop_start               |
       | loop_end:before          |
       | loop_end                 |
-      | total (13)               |
-
 
   Scenario: Use --all flag to profile all stages
     Given a WP install
@@ -142,7 +137,7 @@ Feature: Profile the template render stage
     When I run `wp profile stage bootstrap --fields=hook,callback_count`
     Then STDOUT should be a table containing rows:
       | hook              | callback_count   |
-      | plugins_loaded    | 3                |
+      | muplugins_loaded  | 2                |
 
   Scenario: Use spotlight mode to filter out the zero-ish values
     Given a WP install
