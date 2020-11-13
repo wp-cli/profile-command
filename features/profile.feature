@@ -36,7 +36,7 @@ Feature: Basic profile usage
   Scenario: Profile a hook without any callbacks
     Given a WP install
 
-    When I run `wp profile hook setup_theme --fields=callback,time`
+    When I run `wp profile hook get_search_form --fields=callback,time`
     Then STDOUT should be a table containing rows:
       | callback          | time   |
       | total (0)         |        |
@@ -45,7 +45,7 @@ Feature: Basic profile usage
   Scenario: Trailingslash provided URL to avoid canonical redirect
     Given a WP install
 
-    When I run `wp profile hook setup_theme --url=example.com --fields=callback,time`
+    When I run `wp profile hook get_search_form --url=example.com --fields=callback,time`
     Then STDERR should be empty
     And STDOUT should be a table containing rows:
       | callback          | time   |
