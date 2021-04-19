@@ -39,8 +39,11 @@
         }
     },
     "autoload": {
+        "psr-4": {
+            "": "src/"
+        },
         "files": [
-            "command.php"
+            "profile-command.php"
         ]
     },
     "minimum-stability": "dev",
