@@ -5,10 +5,10 @@ Feature: Profile arbitary file execution
     And a lame-function.php file:
       """
       <?php
-      function runcommand_do_nothing() {
+      function wp_cli_do_nothing() {
 
       }
-      runcommand_do_nothing();
+      wp_cli_do_nothing();
       """
 
     When I run `wp profile eval-file lame-function.php --fields=query_time,query_count,cache_ratio,cache_hits,cache_misses,request_time,request_count`
@@ -21,7 +21,7 @@ Feature: Profile arbitary file execution
     And a http-request.php file:
       """
       <?php
-      wp_remote_get( "http://apple.com" );
+      wp_remote_get( "https://www.apple.com/" );
       """
 
     When I run `wp profile eval-file http-request.php --fields=request_count`

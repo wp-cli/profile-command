@@ -1,5 +1,6 @@
 Feature: Profile a specific hook
 
+  @require-wp-4.0
   Scenario: Profile all hooks when a specific hook isn't specified
     Given a WP install
 
@@ -11,6 +12,7 @@ Feature: Profile a specific hook
       | template_redirect |
     And STDERR should be empty
 
+  @require-wp-4.4
   Scenario: Profile all callbacks when --all flag is used
     Given a WP install
 
@@ -21,7 +23,7 @@ Feature: Profile a specific hook
       | smilies_init()             | 2             | 0             |
       | feed_links()               | 8             | 0             |
 
-  @less-than-php-7
+  @less-than-php-7 @require-wp-4.0
   Scenario: Profile an intermediate stage hook
     Given a WP install
 
@@ -32,9 +34,10 @@ Feature: Profile a specific hook
       | load_template()           | 0              | 0             |
     And STDOUT should not contain:
       """
-      runcommand\Profile\Profiler->wp_tick_profile_begin()
+      WP_CLI\Profile\Profiler->wp_tick_profile_begin()
       """
 
+  @require-wp-4.0
   Scenario: Profile a hook before the template is loaded
     Given a WP install
 
@@ -43,6 +46,7 @@ Feature: Profile a specific hook
       | callback          |
     And STDERR should be empty
 
+  @require-wp-4.0
   Scenario: Profile a hook without any callbacks
     Given a WP install
 
@@ -52,6 +56,7 @@ Feature: Profile a specific hook
       | total (0)         |
     And STDERR should be empty
 
+  @require-wp-4.0
   Scenario: Profile a hook that has actions with output
     Given a WP install
 
@@ -63,44 +68,47 @@ Feature: Profile a specific hook
       <meta name="generator"
       """
 
+  @require-wp-4.0
   Scenario: Profile the shutdown hook
     Given a WP install
     And a wp-content/mu-plugins/shutdown.php file:
       """
       <?php
-      function runcommand_shutdown_hook() {
+      function wp_cli_shutdown_hook() {
         wp_cache_get( 'foo' );
       }
-      add_action( 'shutdown', 'runcommand_shutdown_hook' );
+      add_action( 'shutdown', 'wp_cli_shutdown_hook' );
       """
 
     When I run `wp profile hook shutdown --fields=callback,cache_hits,cache_misses`
     Then STDOUT should be a table containing rows:
-      | callback                   | cache_hits     | cache_misses     |
-      | runcommand_shutdown_hook() | 0              | 1                |
-      | wp_ob_end_flush_all()      | 0              | 0                |
-      | total (2)                  | 0              | 1                |
+      | callback               | cache_hits     | cache_misses     |
+      | wp_cli_shutdown_hook() | 0              | 1                |
+      | wp_ob_end_flush_all()  | 0              | 0                |
+      | total (2)              | 0              | 1                |
     And STDERR should be empty
 
+  @require-wp-4.0
   Scenario: Indicate where a callback is defined with profiling a hook
     Given a WP install
     And a wp-content/mu-plugins/custom-action.php file:
       """
       <?php
-      function runcommand_custom_action_hook() {
+      function wp_cli_custom_action_hook() {
         wp_cache_get( 'foo' );
       }
-      add_action( 'runcommand_custom_action', 'runcommand_custom_action_hook' );
-      do_action( 'runcommand_custom_action' );
+      add_action( 'wp_cli_custom_action', 'wp_cli_custom_action_hook' );
+      do_action( 'wp_cli_custom_action' );
       """
 
-    When I run `wp profile hook runcommand_custom_action --fields=callback,location,cache_hits,cache_misses`
+    When I run `wp profile hook wp_cli_custom_action --fields=callback,location,cache_hits,cache_misses`
     Then STDOUT should be a table containing rows:
-      | callback                        | location                                  | cache_hits | cache_misses |
-      | runcommand_custom_action_hook() | mu-plugins/custom-action.php:2            | 0          | 1            |
-      | total (1)                       |                                           | 0          | 1            |
+      | callback                    | location                                  | cache_hits | cache_misses |
+      | wp_cli_custom_action_hook() | mu-plugins/custom-action.php:2            | 0          | 1            |
+      | total (1)                   |                                           | 0          | 1            |
     And STDERR should be empty
 
+  @require-wp-4.4
   Scenario: Hooks should only be called once
     Given a WP install
     And a wp-content/mu-plugins/action-test.php file:
@@ -122,7 +130,7 @@ Feature: Profile a specific hook
       Warning: Called 1
       """
 
-  @less-than-php-7
+  @less-than-php-7 @require-wp-4.0
   Scenario: Profile the mu_plugins:before hook
     Given a WP install
     And a wp-content/mu-plugins/awesome-file.php file:
@@ -140,7 +148,7 @@ Feature: Profile a specific hook
       wp-content/mu-plugins/awesome-file.php
       """
 
-  @less-than-php-7
+  @less-than-php-7 @require-wp-4.0
   Scenario: Profile the :after hooks
     Given a WP install
 
