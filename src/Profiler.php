@@ -1,6 +1,6 @@
 <?php
 
-namespace runcommand\Profile;
+namespace WP_CLI\Profile;
 
 use WP_CLI;
 
@@ -352,7 +352,7 @@ class Profiler {
 			$callback = 'function(){}';
 		}
 
-		if ( 'runcommand\Profile\Profiler->wp_tick_profile_begin()' === $callback ) {
+		if ( 'WP_CLI\Profile\Profiler->wp_tick_profile_begin()' === $callback ) {
 			$this->tick_callback = null;
 			return;
 		}
