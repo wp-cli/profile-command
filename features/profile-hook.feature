@@ -1,5 +1,6 @@
 Feature: Profile a specific hook
 
+  @require-wp-4.0
   Scenario: Profile all hooks when a specific hook isn't specified
     Given a WP install
 
@@ -11,6 +12,7 @@ Feature: Profile a specific hook
       | template_redirect |
     And STDERR should be empty
 
+  @require-wp-4.4
   Scenario: Profile all callbacks when --all flag is used
     Given a WP install
 
@@ -21,7 +23,7 @@ Feature: Profile a specific hook
       | smilies_init()             | 2             | 0             |
       | feed_links()               | 8             | 0             |
 
-  @less-than-php-7
+  @less-than-php-7 @require-wp-4.0
   Scenario: Profile an intermediate stage hook
     Given a WP install
 
@@ -35,6 +37,7 @@ Feature: Profile a specific hook
       runcommand\Profile\Profiler->wp_tick_profile_begin()
       """
 
+  @require-wp-4.0
   Scenario: Profile a hook before the template is loaded
     Given a WP install
 
@@ -43,6 +46,7 @@ Feature: Profile a specific hook
       | callback          |
     And STDERR should be empty
 
+  @require-wp-4.0
   Scenario: Profile a hook without any callbacks
     Given a WP install
 
@@ -52,6 +56,7 @@ Feature: Profile a specific hook
       | total (0)         |
     And STDERR should be empty
 
+  @require-wp-4.0
   Scenario: Profile a hook that has actions with output
     Given a WP install
 
@@ -63,6 +68,7 @@ Feature: Profile a specific hook
       <meta name="generator"
       """
 
+  @require-wp-4.0
   Scenario: Profile the shutdown hook
     Given a WP install
     And a wp-content/mu-plugins/shutdown.php file:
@@ -82,6 +88,7 @@ Feature: Profile a specific hook
       | total (2)                  | 0              | 1                |
     And STDERR should be empty
 
+  @require-wp-4.0
   Scenario: Indicate where a callback is defined with profiling a hook
     Given a WP install
     And a wp-content/mu-plugins/custom-action.php file:
@@ -101,6 +108,7 @@ Feature: Profile a specific hook
       | total (1)                       |                                           | 0          | 1            |
     And STDERR should be empty
 
+  @require-wp-4.4
   Scenario: Hooks should only be called once
     Given a WP install
     And a wp-content/mu-plugins/action-test.php file:
@@ -122,7 +130,7 @@ Feature: Profile a specific hook
       Warning: Called 1
       """
 
-  @less-than-php-7
+  @less-than-php-7 @require-wp-4.0
   Scenario: Profile the mu_plugins:before hook
     Given a WP install
     And a wp-content/mu-plugins/awesome-file.php file:
@@ -140,7 +148,7 @@ Feature: Profile a specific hook
       wp-content/mu-plugins/awesome-file.php
       """
 
-  @less-than-php-7
+  @less-than-php-7 @require-wp-4.0
   Scenario: Profile the :after hooks
     Given a WP install
 
