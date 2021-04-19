@@ -21,7 +21,7 @@ Feature: Profile arbitary file execution
     And a http-request.php file:
       """
       <?php
-      wp_remote_get( "http://apple.com" );
+      wp_remote_get( "https://www.apple.com/" );
       """
 
     When I run `wp profile eval-file http-request.php --fields=request_count`

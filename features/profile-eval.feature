@@ -18,7 +18,7 @@ Feature: Profile arbitary code execution
   Scenario: Profile a function that makes one HTTP request
     Given a WP install
 
-    When I run `wp profile eval 'wp_remote_get( "http://apple.com" );' --fields=request_count`
+    When I run `wp profile eval 'wp_remote_get( "https://www.apple.com/" );' --fields=request_count`
     Then STDOUT should be a table containing rows:
       | request_count |
       | 1             |
