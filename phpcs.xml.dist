@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<ruleset name="WP-CLI-find">
+<ruleset name="WP-CLI-profile">
 	<description>Custom ruleset for WP-CLI profile-command</description>
 
 	<!--
@@ -51,11 +51,11 @@
 			</property>
 		</properties>
 		<exclude name="WordPress.Files.FileName.NotHyphenatedLowercase" />
-		<exclude-pattern>*/inc/*.php$</exclude-pattern>
+		<exclude-pattern>*/src/*.php$</exclude-pattern>
 	</rule>
 
 	<rule ref="WordPress.PHP.NoSilencedErrors.Discouraged">
-		<exclude-pattern>*/inc/class-profiler.php$</exclude-pattern>
+		<exclude-pattern>*/src/class-profiler.php$</exclude-pattern>
 	</rule>
 
 </ruleset>
