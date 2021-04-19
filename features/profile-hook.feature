@@ -34,7 +34,7 @@ Feature: Profile a specific hook
       | load_template()           | 0              | 0             |
     And STDOUT should not contain:
       """
-      runcommand\Profile\Profiler->wp_tick_profile_begin()
+      WP_CLI\Profile\Profiler->wp_tick_profile_begin()
       """
 
   @require-wp-4.0
@@ -74,18 +74,18 @@ Feature: Profile a specific hook
     And a wp-content/mu-plugins/shutdown.php file:
       """
       <?php
-      function runcommand_shutdown_hook() {
+      function wp_cli_shutdown_hook() {
         wp_cache_get( 'foo' );
       }
-      add_action( 'shutdown', 'runcommand_shutdown_hook' );
+      add_action( 'shutdown', 'wp_cli_shutdown_hook' );
       """
 
     When I run `wp profile hook shutdown --fields=callback,cache_hits,cache_misses`
     Then STDOUT should be a table containing rows:
-      | callback                   | cache_hits     | cache_misses     |
-      | runcommand_shutdown_hook() | 0              | 1                |
-      | wp_ob_end_flush_all()      | 0              | 0                |
-      | total (2)                  | 0              | 1                |
+      | callback               | cache_hits     | cache_misses     |
+      | wp_cli_shutdown_hook() | 0              | 1                |
+      | wp_ob_end_flush_all()  | 0              | 0                |
+      | total (2)              | 0              | 1                |
     And STDERR should be empty
 
   @require-wp-4.0
@@ -94,18 +94,18 @@ Feature: Profile a specific hook
     And a wp-content/mu-plugins/custom-action.php file:
       """
       <?php
-      function runcommand_custom_action_hook() {
+      function wp_cli_custom_action_hook() {
         wp_cache_get( 'foo' );
       }
-      add_action( 'runcommand_custom_action', 'runcommand_custom_action_hook' );
-      do_action( 'runcommand_custom_action' );
+      add_action( 'wp_cli_custom_action', 'wp_cli_custom_action_hook' );
+      do_action( 'wp_cli_custom_action' );
       """
 
-    When I run `wp profile hook runcommand_custom_action --fields=callback,location,cache_hits,cache_misses`
+    When I run `wp profile hook wp_cli_custom_action --fields=callback,location,cache_hits,cache_misses`
     Then STDOUT should be a table containing rows:
-      | callback                        | location                                  | cache_hits | cache_misses |
-      | runcommand_custom_action_hook() | mu-plugins/custom-action.php:2            | 0          | 1            |
-      | total (1)                       |                                           | 0          | 1            |
+      | callback                    | location                                  | cache_hits | cache_misses |
+      | wp_cli_custom_action_hook() | mu-plugins/custom-action.php:2            | 0          | 1            |
+      | total (1)                   |                                           | 0          | 1            |
     And STDERR should be empty
 
   @require-wp-4.4
