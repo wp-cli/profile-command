@@ -1,2 +1,2 @@
 require:
-  - command.php
+  - profile-command.php
