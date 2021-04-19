@@ -1,6 +1,6 @@
 <?php
 
-namespace runcommand\Profile;
+namespace WP_CLI\Profile;
 
 use WP_CLI;
 
