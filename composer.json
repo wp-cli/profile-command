@@ -40,7 +40,7 @@
     },
     "autoload": {
         "psr-4": {
-            "": "src/"
+            "WP_CLI\\Profile\\": "src/"
         },
         "files": [
             "profile-command.php"
