@@ -5,12 +5,12 @@ Feature: Profile arbitary code execution
     And a wp-content/mu-plugins/lame-function.php file:
       """
       <?php
-      function runcommand_do_nothing() {
+      function wp_cli_do_nothing() {
 
       }
       """
 
-    When I run `wp profile eval 'runcommand_do_nothing();' --fields=query_time,query_count,cache_ratio,cache_hits,cache_misses,request_time,request_count`
+    When I run `wp profile eval 'wp_cli_do_nothing();' --fields=query_time,query_count,cache_ratio,cache_hits,cache_misses,request_time,request_count`
     Then STDOUT should be a table containing rows:
       | query_time | query_count | cache_ratio | cache_hits | cache_misses | request_time | request_count |
       | 0s         | 0           |             | 0          | 0            | 0s           | 0             |

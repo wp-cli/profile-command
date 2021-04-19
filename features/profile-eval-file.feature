@@ -5,10 +5,10 @@ Feature: Profile arbitary file execution
     And a lame-function.php file:
       """
       <?php
-      function runcommand_do_nothing() {
+      function wp_cli_do_nothing() {
 
       }
-      runcommand_do_nothing();
+      wp_cli_do_nothing();
       """
 
     When I run `wp profile eval-file lame-function.php --fields=query_time,query_count,cache_ratio,cache_hits,cache_misses,request_time,request_count`
