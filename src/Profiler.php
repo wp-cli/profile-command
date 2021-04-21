@@ -50,7 +50,7 @@ class Profiler {
 	private $tick_query_offset      = null;
 	private $tick_cache_hit_offset  = null;
 	private $tick_cache_miss_offset = null;
-	private $is_php7 = false;
+	private $is_php7                = false;
 
 	public function __construct( $type, $focus ) {
 		$this->type  = $type;
@@ -350,8 +350,8 @@ class Profiler {
 		$location = '';
 		$callback = '';
 		if ( in_array( strtolower( $frame['function'] ), array( 'include', 'require', 'include_once', 'require_once' ), true ) ) {
-			$ext      = pathinfo( $frame['args'][0] , PATHINFO_EXTENSION);
-			$callback = $frame['function'] . " '" . str_replace( "_profile.{$ext}"  ,  ".{$ext}", $frame['args'][0]) . "'";
+			$ext      = pathinfo( $frame['args'][0], PATHINFO_EXTENSION );
+			$callback = $frame['function'] . " '" . str_replace( "_profile.{$ext}", ".{$ext}", $frame['args'][0] ) . "'";
 		} elseif ( isset( $frame['object'] ) && method_exists( $frame['object'], $frame['function'] ) ) {
 			$callback = get_class( $frame['object'] ) . '->' . $frame['function'] . '()';
 		} elseif ( isset( $frame['class'] ) && method_exists( $frame['class'], $frame['function'] ) ) {

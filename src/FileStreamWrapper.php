@@ -66,7 +66,6 @@ class FileStreamWrapper {
 			return false;
 		}
 
-
 		$meta = stream_get_meta_data( $handle );
 		if ( ! isset( $meta['uri'] ) ) {
 			throw new \UnexpectedValueException( 'Uri not in meta data' );
@@ -103,7 +102,7 @@ class FileStreamWrapper {
 	 */
 	public function stream_stat() {
 		self::restore();
-		$array = @fstat( $this->handle );
+		$array = @fstat( $this->handle ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 		self::init();
 
 		return $array;
@@ -124,7 +123,7 @@ class FileStreamWrapper {
 
 	public function stream_eof() {
 		self::restore();
-		$result = @feof( $this->handle );
+		$result = @feof( $this->handle ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 		self::init();
 
 		return $result;
@@ -136,13 +135,13 @@ class FileStreamWrapper {
 
 	public function url_stat( $path, $flags ) {
 		self::restore();
-		$array = @stat( $path );
+		$array = @stat( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 		self::init();
 
 		return $array;
 	}
 
 	public function cleanup() {
-		@unlink( $this->file );
+		@unlink( $this->file ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 	}
 }
