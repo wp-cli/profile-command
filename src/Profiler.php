@@ -2,9 +2,6 @@
 
 namespace WP_CLI\Profile;
 
-use Countable;
-use ResourceBundle;
-use SimpleXMLElement;
 use WP_CLI;
 
 class Profiler {
