@@ -1,14 +1,12 @@
 <?php
 
-namespace runcommand\Profile;
+namespace WP_CLI\Profile;
 
 /**
- * Stream Wrapper Class to create a temporary file with ticks enabled
+ * Stream Wrapper Class to create a temporary file with ticks enabled.
  * Props to https://github.com/hakre for the original P.O.C.
  *
- * Class FileStreamWrapper
- *
- * @package runcommand\Profile
+ * @package WP_CLI\Profile
  * @author  Derrick Hammer
  */
 class FileStreamWrapper {
@@ -97,7 +95,7 @@ class FileStreamWrapper {
 		if ( false === $result ) {
 			throw new \UnexpectedValueException( 'Failed to unregister' );
 		}
-		stream_wrapper_register( self::PROTOCOL, '\runcommand\Profile\FileStreamWrapper', 0 );
+		stream_wrapper_register( self::PROTOCOL, '\WP_CLI\Profile\FileStreamWrapper', 0 );
 	}
 
 	/**
