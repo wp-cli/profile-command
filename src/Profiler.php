@@ -2,6 +2,9 @@
 
 namespace WP_CLI\Profile;
 
+use Countable;
+use ResourceBundle;
+use SimpleXMLElement;
 use WP_CLI;
 
 class Profiler {
@@ -157,10 +160,10 @@ class Profiler {
 			// WordPress.PHP.NoSilencedErrors.Discouraged -- ini_set can be disabled on server.
 		}
 
+		register_tick_function( array( $this, 'handle_function_tick' ) );
 		declare( ticks=1 );
 
 		if ( $this->is_php7 ) {
-			register_tick_function( array( $this, 'handle_function_tick' ) );
 			FileStreamWrapper::init();
 		}
 
@@ -317,7 +320,7 @@ class Profiler {
 
 			$this->loggers[ $callback_hash ]['time'] += $time;
 
-			if ( isset( $wpdb ) ) {
+			if ( isset( $wpdb ) && is_array( $wpdb->queries ) ) {
 				$total_queries = count( $wpdb->queries );
 				for ( $i = $this->tick_query_offset; $i < $total_queries; $i++ ) {
 					$this->loggers[ $callback_hash ]['query_time'] += $wpdb->queries[ $i ][1];
@@ -346,8 +349,8 @@ class Profiler {
 
 		$location = '';
 		$callback = '';
-		if ( in_array( strtolower( $frame['function'] ), [ 'include', 'require', 'include_once', 'require_once' ] ) ) {
-			$ext = pathinfo( $frame['args'][0] , PATHINFO_EXTENSION);
+		if ( in_array( strtolower( $frame['function'] ), array( 'include', 'require', 'include_once', 'require_once' ), true ) ) {
+			$ext      = pathinfo( $frame['args'][0] , PATHINFO_EXTENSION);
 			$callback = $frame['function'] . " '" . str_replace( "_profile.{$ext}"  ,  ".{$ext}", $frame['args'][0]) . "'";
 		} elseif ( isset( $frame['object'] ) && method_exists( $frame['object'], $frame['function'] ) ) {
 			$callback = get_class( $frame['object'] ) . '->' . $frame['function'] . '()';
@@ -366,7 +369,7 @@ class Profiler {
 
 		if ( isset( $frame['file'] ) ) {
 			$ext      = pathinfo( $frame['file'], PATHINFO_EXTENSION );
-			$location = str_replace( "_profile.{$ext}", ".{$ext}", $frame['args'][0] );
+			$location = str_replace( "_profile.{$ext}", ".{$ext}", $frame['file'] );
 			if ( isset( $frame['line'] ) ) {
 				$location .= ':' . $frame['line'];
 			}
@@ -596,5 +599,4 @@ class Profiler {
 			$wp_filter[ $filter ] = $callbacks; // phpcs:ignore
 		}
 	}
-
 }
