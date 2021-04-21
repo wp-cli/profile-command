@@ -23,7 +23,7 @@ Feature: Profile a specific hook
       | smilies_init()             | 2          | 0            |
       | feed_links()               | 12         | 0            |
 
-  @less-than-php-7 @require-wp-4.0
+  @require-wp-4.0
   Scenario: Profile an intermediate stage hook
     Given a WP install
 
@@ -130,7 +130,7 @@ Feature: Profile a specific hook
       Warning: Called 1
       """
 
-  @less-than-php-7 @require-wp-4.0
+  @require-wp-4.0
   Scenario: Profile the mu_plugins:before hook
     Given a WP install
     And a wp-content/mu-plugins/awesome-file.php file:
@@ -148,7 +148,7 @@ Feature: Profile a specific hook
       wp-content/mu-plugins/awesome-file.php
       """
 
-  @less-than-php-7 @require-wp-4.0
+  @require-wp-4.0
   Scenario: Profile the :after hooks
     Given a WP install
 

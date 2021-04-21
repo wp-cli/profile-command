@@ -161,10 +161,11 @@ class Profiler {
 		}
 
 		register_tick_function( array( $this, 'handle_function_tick' ) );
-		declare( ticks=1 );
 
 		if ( $this->is_php7 ) {
 			FileStreamWrapper::init();
+		} else {
+			declare( ticks=1 );
 		}
 
 		return $value;
@@ -175,7 +176,11 @@ class Profiler {
 	 */
 	public function wp_tick_profile_end( $value = null ) {
 		unregister_tick_function( array( $this, 'handle_function_tick' ) );
-		FileStreamWrapper::restore();
+
+		if ( $this->is_php7 ) {
+			FileStreamWrapper::restore();
+		}
+
 		$this->tick_callback = null;
 		return $value;
 	}
