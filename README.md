@@ -3,7 +3,7 @@ wp-cli/profile-command
 
 Quickly identify what's slow with WordPress.
 
-[![Build Status](https://travis-ci.org/wp-cli/profile-command.svg?branch=master)](https://travis-ci.org/wp-cli/profile-command)
+[![Testing](https://github.com/wp-cli/profile-command/actions/workflows/testing.yml/badge.svg)](https://github.com/wp-cli/profile-command/actions/workflows/testing.yml)
 
 Quick links: [Overview](#overview) | [Using](#using) | [Installing](#installing) | [Contributing](#contributing)
 
@@ -259,11 +259,19 @@ current theme.
 
 ## Installing
 
-Installing this package requires WP-CLI's latest stable release. Update to the latest stable release with `wp cli update`.
+Installing this package requires WP-CLI dev-master or greater. Update to the latest stable release with `wp cli update`.
 
-Once you've done so, you can install this package with:
+Once you've done so, you can install the latest stable version of this package with:
 
-    wp package install git@github.com:wp-cli/profile-command.git
+```bash
+wp package install wp-cli/profile-command:@stable
+```
+
+To install the latest development version of this package, use the following command instead:
+
+```bash
+wp package install wp-cli/profile-command:dev-master
+```
 
 ## Contributing
 
@@ -285,7 +293,7 @@ Once you’ve done a bit of searching and discovered there isn’t an open or fi
 
 Want to contribute a new feature? Please first [open a new issue](https://github.com/wp-cli/profile-command/issues/new) to discuss whether the feature is a good fit for the project.
 
-Once you've decided to commit the time to seeing your pull request through, [please follow our guidelines for creating a pull request](https://make.wordpress.org/cli/handbook/pull-requests/) to make sure it's a pleasant experience.
+Once you've decided to commit the time to seeing your pull request through, [please follow our guidelines for creating a pull request](https://make.wordpress.org/cli/handbook/pull-requests/) to make sure it's a pleasant experience. See "[Setting up](https://make.wordpress.org/cli/handbook/pull-requests/#setting-up)" for details specific to working on this package locally.
 
 
 *This README.md is generated dynamically from the project's codebase using `wp scaffold package-readme` ([doc](https://github.com/wp-cli/scaffold-package-command#wp-scaffold-package-readme)). To suggest changes, please submit a pull request against the corresponding part of the codebase.*
