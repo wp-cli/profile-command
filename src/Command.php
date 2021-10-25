@@ -241,6 +241,67 @@ class Command {
 	}
 
 	/**
+	 * Profile key metrics for WordPress hooks (actions and filters).
+	 *
+	 * In order to profile callbacks on a specific hook, the action or filter
+	 * will need to execute during the course of the request.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [<hook>]
+	 * : Drill into key metrics of callbacks on a specific WordPress hook.
+	 *
+	 * [--all]
+	 * : Profile callbacks for all WordPress hooks.
+	 *
+	 * [--spotlight]
+	 * : Filter out logs with zero-ish values from the set.
+	 *
+	 * [--url=<url>]
+	 * : Execute a request against a specified URL. Defaults to the home URL.
+	 *
+	 * [--fields=<fields>]
+	 * : Display one or more fields.
+	 *
+	 * [--format=<format>]
+	 * : Render output in a particular format.
+	 * ---
+	 * default: table
+	 * options:
+	 *   - table
+	 *   - json
+	 *   - yaml
+	 *   - csv
+	 * ---
+	 *
+	 * [--order=<order>]
+	 * : Ascending or Descending order.
+	 * ---
+	 * default: ASC
+	 * options:
+	 *   - ASC
+	 *   - DESC
+	 * ---
+	 *
+	 * [--orderby=<orderby>]
+	 * : Order by fields.
+	 *
+	 * @when before_wp_load
+	 * @subcommand new-hook
+	 */
+	public function new_hook( $args, $assoc_args ) {
+
+		$focus = Utils\get_flag_value( $assoc_args, 'all', isset( $args[0] ) ? $args[0] : null );
+
+		$order   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
+		$orderby = Utils\get_flag_value( $assoc_args, 'orderby', null );
+
+		$profiler = new NewProfiler( new Scope\AllHooks() );
+		$profiler->profile();
+		$profiler->report();
+	}
+
+	/**
 	 * Profile arbitrary code execution.
 	 *
 	 * Code execution happens after WordPress has loaded entirely, which means
