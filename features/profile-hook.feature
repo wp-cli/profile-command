@@ -18,10 +18,10 @@ Feature: Profile a specific hook
 
     When I run `wp profile hook --all --fields=callback,cache_hits,cache_misses`
     Then STDOUT should be a table containing rows:
-      | callback                   | cache_hits    | cache_misses  |
-      | sanitize_comment_cookies() | 0             | 0             |
-      | smilies_init()             | 2             | 0             |
-      | feed_links()               | 8             | 0             |
+      | callback                   | cache_hits | cache_misses |
+      | sanitize_comment_cookies() | 0          | 0            |
+      | smilies_init()             | 2          | 0            |
+      | feed_links()               | 12         | 0            |
 
   @less-than-php-7 @require-wp-4.0
   Scenario: Profile an intermediate stage hook
@@ -29,9 +29,9 @@ Feature: Profile a specific hook
 
     When I run `wp profile hook wp_head:before --fields=callback,cache_hits,cache_misses`
     Then STDOUT should be a table containing rows:
-      | callback                  | cache_hits     | cache_misses  |
-      | locate_template()         | 0              | 0             |
-      | load_template()           | 0              | 0             |
+      | callback                       | cache_hits | cache_misses |
+      | parse_blocks()                 | 0          | 0            |
+      | _get_wptexturize_split_regex() | 0          | 0            |
     And STDOUT should not contain:
       """
       WP_CLI\Profile\Profiler->wp_tick_profile_begin()
