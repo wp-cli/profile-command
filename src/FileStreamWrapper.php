@@ -144,4 +144,24 @@ class FileStreamWrapper {
 	public function cleanup() {
 		@unlink( $this->file ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 	}
+
+	public function dir_opendir( $path, $options ) {
+		// TODO: Implement opendir method.
+		return true;
+	}
+
+	public function dir_closedir() {
+		// TODO: Implement closedir method.
+		return true;
+	}
+
+	public function dir_readdir() {
+		// TODO: Implement readdir method.
+		return false;
+	}
+
+	public function dir_rewinddir() {
+		// TODO: Implement rewinddir method.
+		return true;
+	}
 }
