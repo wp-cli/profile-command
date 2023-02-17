@@ -1,68 +1,70 @@
 {
-    "name": "wp-cli/profile-command",
-    "type": "wp-cli-package",
-    "description": "Quickly identify what's slow with WordPress.",
-    "homepage": "https://github.com/wp-cli/profile-command/",
-    "license": "MIT",
-    "authors": [],
-    "require": {
-        "php": ">=5.6",
-        "wp-cli/wp-cli": "^2.5"
-    },
-    "require-dev": {
-        "wp-cli/wp-cli-tests": "^3.1"
-    },
-    "config": {
-        "process-timeout": 7200,
-        "sort-packages": true,
-        "allow-plugins": {
-            "dealerdirect/phpcodesniffer-composer-installer": true
-        }
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-master": "2.x-dev"
-        },
-        "commands": [
-            "profile stage",
-            "profile hook",
-            "profile eval",
-            "profile eval-file"
-        ],
-        "readme": {
-            "sections": [
-                "Overview",
-                "Using",
-                "Installing",
-                "Contributing"
-            ],
-            "overview": {
-                "post": "bin/readme/overview-body.md"
-            }
-        }
-    },
-    "autoload": {
-        "psr-4": {
-            "WP_CLI\\Profile\\": "src/"
-        },
-        "files": [
-            "profile-command.php"
-        ]
-    },
-    "minimum-stability": "dev",
-    "prefer-stable": true,
-    "scripts": {
-        "behat": "run-behat-tests",
-        "behat-rerun": "rerun-behat-tests",
-        "lint": "run-linter-tests",
-        "phpcs": "run-phpcs-tests",
-        "phpunit": "run-php-unit-tests",
-        "prepare-tests": "install-package-tests",
-        "test": [
-            "@lint",
-            "@phpcs",
-            "@phpunit",
-            "@behat"
-        ]
+  "name": "wp-cli/profile-command",
+  "type": "wp-cli-package",
+  "description": "Quickly identify what's slow with WordPress.",
+  "homepage": "https://github.com/wp-cli/profile-command/",
+  "license": "MIT",
+  "authors": [],
+  "require": {
+    "php": ">=5.6",
+    "wp-cli/wp-cli": "^2.5"
+  },
+  "require-dev": {
+    "wp-cli/wp-cli-tests": "^3.1"
+  },
+  "config": {
+    "process-timeout": 7200,
+    "sort-packages": true,
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true,
+      "johnpbloch/wordpress-core-installer": true
     }
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-master": "2.x-dev"
+    },
+    "commands": [
+      "profile stage",
+      "profile hook",
+      "profile eval",
+      "profile eval-file"
+    ],
+    "readme": {
+      "sections": [
+        "Overview",
+        "Using",
+        "Installing",
+        "Contributing"
+      ],
+      "overview": {
+        "post": "bin/readme/overview-body.md"
+      }
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "WP_CLI\\Profile\\": "src/"
+    },
+    "files": [
+      "profile-command.php"
+    ]
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "scripts": {
+    "behat": "run-behat-tests",
+    "behat-rerun": "rerun-behat-tests",
+    "lint": "run-linter-tests",
+    "phpcs": "run-phpcs-tests",
+    "phpcbf": "run-phpcbf-cleanup",
+    "phpunit": "run-php-unit-tests",
+    "prepare-tests": "install-package-tests",
+    "test": [
+      "@lint",
+      "@phpcs",
+      "@phpunit",
+      "@behat"
+    ]
+  }
 }
