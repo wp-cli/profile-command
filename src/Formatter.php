@@ -92,7 +92,7 @@ class Formatter {
 		if ( $orderby ) {
 			usort(
 				$items,
-				function( $a, $b ) use ( $order, $orderby ) {
+				function ( $a, $b ) use ( $order, $orderby ) {
 
 					$orderby_array          = 'ASC' === $order ? array( $a, $b ) : array( $b, $a );
 					list( $first, $second ) = $orderby_array;
