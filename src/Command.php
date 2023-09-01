@@ -324,7 +324,7 @@ class Command {
 
 		self::profile_eval_ish(
 			$assoc_args,
-			function() use ( $statement ) {
+			function () use ( $statement ) {
 				eval( $statement ); // phpcs:ignore Squiz.PHP.Eval.Discouraged -- no other way oround here
 			},
 			$order,
@@ -388,7 +388,7 @@ class Command {
 
 		self::profile_eval_ish(
 			$assoc_args,
-			function() use ( $file ) {
+			function () use ( $file ) {
 				self::include_file( $file );
 			},
 			$order,
@@ -493,5 +493,4 @@ class Command {
 
 		return $loggers;
 	}
-
 }

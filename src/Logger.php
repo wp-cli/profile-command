@@ -70,7 +70,7 @@ class Logger {
 
 			for ( $i = $this->query_offset; $i < $query_total_count; $i++ ) {
 				$this->query_time += $wpdb->queries[ $i ][1];
-				$this->query_count++;
+				++$this->query_count;
 			}
 		}
 
@@ -101,10 +101,10 @@ class Logger {
 	 * Start this logger's hook timer
 	 */
 	public function start_hook_timer() {
-		$this->hook_count++;
+		++$this->hook_count;
 		// Timer already running means a subhook has been called
 		if ( ! is_null( $this->hook_start_time ) ) {
-			$this->hook_depth++;
+			++$this->hook_depth;
 		} else {
 			$this->hook_start_time = microtime( true );
 		}
@@ -115,7 +115,7 @@ class Logger {
 	 */
 	public function stop_hook_timer() {
 		if ( $this->hook_depth ) {
-			$this->hook_depth--;
+			--$this->hook_depth;
 		} else {
 			if ( ! is_null( $this->hook_start_time ) ) {
 				$this->hook_time += microtime( true ) - $this->hook_start_time;
@@ -128,7 +128,7 @@ class Logger {
 	 * Start this logger's request timer
 	 */
 	public function start_request_timer() {
-		$this->request_count++;
+		++$this->request_count;
 		$this->request_start_time = microtime( true );
 	}
 
@@ -141,5 +141,4 @@ class Logger {
 		}
 		$this->request_start_time = null;
 	}
-
 }

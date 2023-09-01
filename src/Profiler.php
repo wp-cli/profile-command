@@ -79,7 +79,7 @@ class Profiler {
 	public function run() {
 		WP_CLI::add_wp_hook(
 			'muplugins_loaded',
-			function() {
+			function () {
 				$url = WP_CLI::get_runner()->config['url'];
 				if ( ! empty( $url ) ) {
 					WP_CLI::set_url( trailingslashit( $url ) );
@@ -90,7 +90,7 @@ class Profiler {
 		);
 		WP_CLI::add_hook(
 			'after_wp_config_load',
-			function() {
+			function () {
 				if ( defined( 'SAVEQUERIES' ) && ! SAVEQUERIES ) {
 					WP_CLI::error( "'SAVEQUERIES' is defined as false, and must be true. Please check your wp-config.php" );
 				}
@@ -215,7 +215,7 @@ class Profiler {
 			$this->wrap_current_filter_callbacks( $current_filter );
 		}
 
-		$this->filter_depth++;
+		++$this->filter_depth;
 
 		WP_CLI::add_wp_hook( $current_filter, array( $this, 'wp_hook_end' ), 9999 );
 	}
@@ -235,7 +235,7 @@ class Profiler {
 		foreach ( $callbacks as $priority => $priority_callbacks ) {
 			foreach ( $priority_callbacks as $i => $the_ ) {
 				$callbacks[ $priority ][ $i ] = array(
-					'function'      => function() use ( $the_, $i ) {
+					'function'      => function () use ( $the_, $i ) {
 						if ( ! isset( $this->loggers[ $i ] ) ) {
 							$this->loggers[ $i ] = new Logger(
 								array(
@@ -281,7 +281,7 @@ class Profiler {
 			}
 		}
 
-		$this->filter_depth--;
+		--$this->filter_depth;
 
 		return $filter_value;
 	}
@@ -315,7 +315,7 @@ class Profiler {
 				$total_queries = count( $wpdb->queries );
 				for ( $i = $this->tick_query_offset; $i < $total_queries; $i++ ) {
 					$this->loggers[ $callback_hash ]['query_time'] += $wpdb->queries[ $i ][1];
-					$this->loggers[ $callback_hash ]['query_count']++;
+					++$this->loggers[ $callback_hash ]['query_count'];
 				}
 			}
 
@@ -484,7 +484,6 @@ class Profiler {
 			$logger->stop();
 			$this->loggers[] = $logger;
 		}
-
 	}
 
 	/**
@@ -588,5 +587,4 @@ class Profiler {
 			$wp_filter[ $filter ] = $callbacks; // phpcs:ignore
 		}
 	}
-
 }

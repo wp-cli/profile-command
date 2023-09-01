@@ -44,7 +44,6 @@
 		 See: https://github.com/WordPress-Coding-Standards/WordPress-Coding-Standards/wiki/Customizable-sniff-properties#naming-conventions-prefix-everything-in-the-global-namespace -->
 	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
 		<properties>
-			<property name="strict_class_file_names" value="false"/>
 			<property name="prefixes" type="array">
 				<element value="WP_CLI\Profile"/><!-- Namespaces. -->
 				<element value="wpcli_profile"/><!-- Global variables and such. -->

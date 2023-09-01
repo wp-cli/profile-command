@@ -92,7 +92,7 @@ class Formatter {
 		if ( $orderby ) {
 			usort(
 				$items,
-				function( $a, $b ) use ( $order, $orderby ) {
+				function ( $a, $b ) use ( $order, $orderby ) {
 
 					$orderby_array          = 'ASC' === $order ? array( $a, $b ) : array( $b, $a );
 					list( $first, $second ) = $orderby_array;
@@ -149,7 +149,7 @@ class Formatter {
 				}
 				if ( is_array( $value ) ) {
 					if ( ! empty( $value ) ) {
-						$totals[ $i ] = round( ( array_sum( $value ) / count( $value ) ), 2 ) . '%';
+						$totals[ $i ] = round( ( array_sum( array_map( 'floatval', $value ) ) / count( $value ) ), 2 ) . '%';
 					} else {
 						$totals[ $i ] = null;
 					}
