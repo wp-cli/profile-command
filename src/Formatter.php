@@ -149,7 +149,7 @@ class Formatter {
 				}
 				if ( is_array( $value ) ) {
 					if ( ! empty( $value ) ) {
-						$totals[ $i ] = round( ( array_sum( $value ) / count( $value ) ), 2 ) . '%';
+						$totals[ $i ] = round( ( array_sum( array_map( 'floatval', $value ) ) / count( $value ) ), 2 ) . '%';
 					} else {
 						$totals[ $i ] = null;
 					}
