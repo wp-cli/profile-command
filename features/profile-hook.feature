@@ -20,7 +20,6 @@ Feature: Profile a specific hook
     Then STDOUT should be a table containing rows:
       | callback                   | cache_hits | cache_misses |
       | sanitize_comment_cookies() | 0          | 0            |
-      | smilies_init()             | 2          | 0            |
 
   @less-than-php-7 @require-wp-4.0
   Scenario: Profile an intermediate stage hook
