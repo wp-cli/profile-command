@@ -93,8 +93,8 @@ class Command {
 	 *   - DESC
 	 * ---
 	 *
-	 * [--orderby=<orderby>]
-	 * : Order by fields.
+	 * [--orderby=<fields>]
+	 * : Set orderby which field.
 	 *
 	 * ## EXAMPLES
 	 *
@@ -229,8 +229,8 @@ class Command {
 	 *   - DESC
 	 * ---
 	 *
-	 * [--orderby=<orderby>]
-	 * : Order by fields.
+	 * [--orderby=<fields>]
+	 * : Set orderby which field.
 	 *
 	 * ## EXAMPLES
 	 *
@@ -331,8 +331,8 @@ class Command {
 	 *   - DESC
 	 * ---
 	 *
-	 * [--orderby=<orderby>]
-	 * : Order by fields.
+	 * [--orderby=<fields>]
+	 * : Set orderby which field.
 	 *
 	 * ## EXAMPLES
 	 *
@@ -400,8 +400,8 @@ class Command {
 	 *   - DESC
 	 * ---
 	 *
-	 * [--orderby=<orderby>]
-	 * : Order by fields.
+	 * [--orderby=<fields>]
+	 * : Set orderby which field.
 	 *
 	 * ## EXAMPLES
 	 *

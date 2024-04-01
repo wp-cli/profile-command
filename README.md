@@ -24,7 +24,7 @@ This package implements the following commands:
 Profile each stage of the WordPress load process (bootstrap, main_query, template).
 
 ~~~
-wp profile stage [<stage>] [--all] [--spotlight] [--url=<url>] [--fields=<fields>] [--format=<format>] [--order=<order>] [--orderby=<orderby>]
+wp profile stage [<stage>] [--all] [--spotlight] [--url=<url>] [--fields=<fields>] [--format=<format>] [--order=<order>] [--orderby=<fields>]
 ~~~
 
 When WordPress handles a request from a browser, it’s essentially
@@ -75,8 +75,8 @@ render based on the main query, and renders it.
 		  - DESC
 		---
 
-	[--orderby=<orderby>]
-		Order by fields.
+	[--orderby=<fields>]
+		Set orderby which field.
 
 **EXAMPLES**
 
@@ -115,7 +115,7 @@ render based on the main query, and renders it.
 Profile key metrics for WordPress hooks (actions and filters).
 
 ~~~
-wp profile hook [<hook>] [--all] [--spotlight] [--url=<url>] [--fields=<fields>] [--format=<format>] [--order=<order>] [--orderby=<orderby>]
+wp profile hook [<hook>] [--all] [--spotlight] [--url=<url>] [--fields=<fields>] [--format=<format>] [--order=<order>] [--orderby=<fields>]
 ~~~
 
 In order to profile callbacks on a specific hook, the action or filter
@@ -158,8 +158,8 @@ will need to execute during the course of the request.
 		  - DESC
 		---
 
-	[--orderby=<orderby>]
-		Order by fields.
+	[--orderby=<fields>]
+		Set orderby which field.
 
 **EXAMPLES**
 
@@ -186,7 +186,7 @@ will need to execute during the course of the request.
 Profile arbitrary code execution.
 
 ~~~
-wp profile eval <php-code> [--hook[=<hook>]] [--fields=<fields>] [--format=<format>] [--order=<order>] [--orderby=<orderby>]
+wp profile eval <php-code> [--hook[=<hook>]] [--fields=<fields>] [--format=<format>] [--order=<order>] [--orderby=<fields>]
 ~~~
 
 Code execution happens after WordPress has loaded entirely, which means
@@ -224,8 +224,8 @@ current theme.
 		  - DESC
 		---
 
-	[--orderby=<orderby>]
-		Order by fields.
+	[--orderby=<fields>]
+		Set orderby which field.
 
 **EXAMPLES**
 
@@ -244,7 +244,7 @@ current theme.
 Profile execution of an arbitrary file.
 
 ~~~
-wp profile eval-file <file> [--hook[=<hook>]] [--fields=<fields>] [--format=<format>] [--order=<order>] [--orderby=<orderby>]
+wp profile eval-file <file> [--hook[=<hook>]] [--fields=<fields>] [--format=<format>] [--order=<order>] [--orderby=<fields>]
 ~~~
 
 File execution happens after WordPress has loaded entirely, which means
@@ -282,8 +282,8 @@ current theme.
 		  - DESC
 		---
 
-	[--orderby=<orderby>]
-		Order by fields.
+	[--orderby=<fields>]
+		Set orderby which field.
 
 **EXAMPLES**
 
