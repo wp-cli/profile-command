@@ -4,18 +4,16 @@ namespace WP_CLI\Profile;
 
 class Logger {
 
-	public $time           = 0;
-	public $query_count    = 0;
-	public $query_time     = 0;
-	public $cache_hits     = 0;
-	public $cache_misses   = 0;
-	public $cache_ratio    = null;
-	public $hook_count     = 0;
-	public $hook_time      = 0;
-	public $request_count  = 0;
-	public $request_time   = 0;
-	public $callback_count = 0;
-
+	public $time                = 0;
+	public $query_count         = 0;
+	public $query_time          = 0;
+	public $cache_hits          = 0;
+	public $cache_misses        = 0;
+	public $cache_ratio         = null;
+	public $hook_count          = 0;
+	public $hook_time           = 0;
+	public $request_count       = 0;
+	public $request_time        = 0;
 	private $start_time         = null;
 	private $query_offset       = null;
 	private $cache_hit_offset   = null;
@@ -24,12 +22,30 @@ class Logger {
 	private $hook_depth         = 0;
 	private $request_start_time = null;
 
+	private $definitions = array();
+
 	public static $active_loggers = array();
 
 	public function __construct( $definition = array() ) {
 		foreach ( $definition as $k => $v ) {
-			$this->$k = $v;
+			$this->definitions[ $k ] = $v;
 		}
+	}
+
+	public function __get( $key ) {
+		if ( isset( $this->definitions[ $key ] ) ) {
+			return $this->definitions[ $key ];
+		}
+
+		return null;
+	}
+
+	public function __set( $key, $value ) {
+		$this->definitions[ $key ] = $value;
+	}
+
+	public function __isset( $key ) {
+		return isset( $this->definitions[ $key ] );
 	}
 
 	/**
