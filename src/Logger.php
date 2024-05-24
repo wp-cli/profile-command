@@ -40,6 +40,10 @@ class Logger {
 		return null;
 	}
 
+	public function __set( $key, $value ) {
+		$this->definitions[ $key ] = $value;
+	}
+
 	public function __isset( $key ) {
 		return isset( $this->definitions[ $key ] );
 	}
