@@ -99,8 +99,11 @@ class Profiler {
 				}
 			}
 		);
-		if ( 'hook' === $this->type
-			&& ':before' === substr( $this->focus, -7, 7 ) ) {
+		if (
+			'hook' === $this->type &&
+			$this->focus &&
+			':before' === substr( $this->focus, -7, 7 )
+		) {
 			$stage_hooks = array();
 			foreach ( $this->stage_hooks as $hooks ) {
 				$stage_hooks = array_merge( $stage_hooks, $hooks );
@@ -114,8 +117,11 @@ class Profiler {
 				WP_CLI::add_hook( 'after_wp_config_load', array( $this, 'wp_tick_profile_begin' ) );
 			}
 			WP_CLI::add_wp_hook( $end_hook, array( $this, 'wp_tick_profile_end' ), -9999 );
-		} elseif ( 'hook' === $this->type
-			&& ':after' === substr( $this->focus, -6, 6 ) ) {
+		} elseif (
+			'hook' === $this->type &&
+			$this->focus &&
+			':after' === substr( $this->focus, -6, 6 )
+		) {
 			$start_hook = substr( $this->focus, 0, -6 );
 			WP_CLI::add_wp_hook( $start_hook, array( $this, 'wp_tick_profile_begin' ), 9999 );
 		} else {
