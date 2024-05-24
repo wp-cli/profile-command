@@ -22,12 +22,26 @@ class Logger {
 	private $hook_depth         = 0;
 	private $request_start_time = null;
 
+	private $definitions        = array();
+
 	public static $active_loggers = array();
 
 	public function __construct( $definition = array() ) {
 		foreach ( $definition as $k => $v ) {
-			$this->$k = $v;
+			$this->definitions[ $k ] = $v;
 		}
+	}
+
+	public function __get( $key ) {
+		if ( isset( $this->definitions[ $key ] ) ) {
+			return $this->definitions[ $key ];
+		}
+
+		return null;
+	}
+
+	public function __isset( $key ) {
+		return isset( $this->definitions[ $key ] );
 	}
 
 	/**
