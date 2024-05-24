@@ -14,8 +14,6 @@ class Logger {
 	public $hook_time      = 0;
 	public $request_count  = 0;
 	public $request_time   = 0;
-	public $callback_count = 0;
-
 	private $start_time         = null;
 	private $query_offset       = null;
 	private $cache_hit_offset   = null;
