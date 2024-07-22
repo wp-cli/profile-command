@@ -11,7 +11,7 @@ Quick links: [Overview](#overview) | [Using](#using) | [Installing](#installing)
 
 `wp profile` monitors key performance indicators of the WordPress execution process to help you quickly identify points of slowness.
 
-Save hours diagnosing slow WordPress sites. Because you can easily run it on any server that supports WP-CLI, `wp profile` compliments Xdebug and New Relic by pointing you in the right direction for further debugging. Because it runs on the command line, using `wp profile` means you don't have to install a plugin and deal with the painful dashboard of a slow WordPress site. And, because it's a WP-CLI command, `wp profile` makes it easy to perfom hard tasks (e.g. [profiling a WP REST API response](https://danielbachhuber.com/tip/profile-wp-rest-api/)).
+Save hours diagnosing slow WordPress sites. Because you can easily run it on any server that supports WP-CLI, `wp profile` compliments Xdebug and New Relic by pointing you in the right direction for further debugging. Because it runs on the command line, using `wp profile` means you don't have to install a plugin and deal with the painful dashboard of a slow WordPress site. And, because it's a WP-CLI command, `wp profile` makes it easy to perform hard tasks (e.g. [profiling a WP REST API response](https://danielbachhuber.com/tip/profile-wp-rest-api/)).
 
 [Identify why WordPress is slow in just a few steps](https://danielbachhuber.com/tip/identify-wordpress-slowness/) with `wp profile`.
 
@@ -97,15 +97,16 @@ render based on the main query, and renders it.
     +--------------------------+---------+-------------+
     | hook                     | time    | cache_ratio |
     +--------------------------+---------+-------------+
-    | muplugins_loaded:before  | 0.2335s | 40%         |
-    | muplugins_loaded         | 0.0007s | 50%         |
-    | plugins_loaded:before    | 0.2792s | 77.63%      |
-    | plugins_loaded           | 0.1502s | 100%        |
-    | after_setup_theme:before | 0.068s  | 100%        |
-    | init                     | 0.2643s | 96.88%      |
-    | wp_loaded:after          | 0.0377s |             |
+    | muplugins_loaded:before  | 0.1767s | 33.33%      |
+    | plugins_loaded:before    | 0.103s  | 78.13%      |
+    | plugins_loaded           | 0.0194s | 19.32%      |
+    | setup_theme              | 0.0018s | 75%         |
+    | after_setup_theme:before | 0.0116s | 95.45%      |
+    | after_setup_theme        | 0.0049s | 96%         |
+    | init                     | 0.1428s | 76.74%      |
+    | wp_loaded:after          | 0.0236s |             |
     +--------------------------+---------+-------------+
-    | total (7)                | 1.0335s | 77.42%      |
+    | total (8)                | 0.4837s | 67.71%      |
     +--------------------------+---------+-------------+
 
 
