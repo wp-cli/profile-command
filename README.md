@@ -97,16 +97,15 @@ render based on the main query, and renders it.
     +--------------------------+---------+-------------+
     | hook                     | time    | cache_ratio |
     +--------------------------+---------+-------------+
-    | muplugins_loaded:before  | 0.1767s | 33.33%      |
-    | plugins_loaded:before    | 0.103s  | 78.13%      |
-    | plugins_loaded           | 0.0194s | 19.32%      |
-    | setup_theme              | 0.0018s | 75%         |
-    | after_setup_theme:before | 0.0116s | 95.45%      |
-    | after_setup_theme        | 0.0049s | 96%         |
-    | init                     | 0.1428s | 76.74%      |
-    | wp_loaded:after          | 0.0236s |             |
+    | muplugins_loaded:before  | 0.2335s | 40%         |
+    | muplugins_loaded         | 0.0007s | 50%         |
+    | plugins_loaded:before    | 0.2792s | 77.63%      |
+    | plugins_loaded           | 0.1502s | 100%        |
+    | after_setup_theme:before | 0.068s  | 100%        |
+    | init                     | 0.2643s | 96.88%      |
+    | wp_loaded:after          | 0.0377s |             |
     +--------------------------+---------+-------------+
-    | total (8)                | 0.4837s | 67.71%      |
+    | total (7)                | 1.0335s | 77.42%      |
     +--------------------------+---------+-------------+
 
 
@@ -309,7 +308,7 @@ wp package install wp-cli/profile-command:@stable
 To install the latest development version of this package, use the following command instead:
 
 ```bash
-wp package install wp-cli/profile-command:dev-master
+wp package install wp-cli/profile-command:dev-main
 ```
 
 ## Contributing
