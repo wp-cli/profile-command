@@ -66,7 +66,7 @@ Feature: Profile a specific hook
       <meta name="generator"
       """
 
-  @require-wp-4.0
+  @require-wp-4.0 @less-than-wp-6.9
   Scenario: Profile the shutdown hook
     Given a WP install
     And a wp-content/mu-plugins/shutdown.php file:
@@ -84,6 +84,28 @@ Feature: Profile a specific hook
       | wp_cli_shutdown_hook() | 0              | 1                |
       | wp_ob_end_flush_all()  | 0              | 0                |
       | total (2)              | 0              | 1                |
+    And STDERR should be empty
+
+  # `_wp_cron` was added to shutdown hook in 6.9, see https://core.trac.wordpress.org/changeset/60925.
+  @require-wp-6.9
+  Scenario: Profile the shutdown hook
+    Given a WP install
+    And a wp-content/mu-plugins/shutdown.php file:
+      """
+      <?php
+      function wp_cli_shutdown_hook() {
+        wp_cache_get( 'foo' );
+      }
+      add_action( 'shutdown', 'wp_cli_shutdown_hook' );
+      """
+
+    When I run `wp profile hook shutdown --fields=callback,cache_hits,cache_misses`
+    Then STDOUT should be a table containing rows:
+      | callback               | cache_hits     | cache_misses     |
+      | wp_cli_shutdown_hook() | 0              | 1                |
+      | wp_ob_end_flush_all()  | 0              | 0                |
+      | _wp_cron()             | 0              | 0                |
+      | total (3)              | 0              | 1                |
     And STDERR should be empty
 
   @require-wp-4.0
