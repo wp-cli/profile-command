@@ -127,7 +127,7 @@ class Profiler {
 		) {
 			$start_hook = substr( $this->focus, 0, -6 );
 			WP_CLI::add_wp_hook( $start_hook, array( $this, 'wp_tick_profile_begin' ), 9999 );
-		} else {
+		} elseif ( 'request' !== $this->type ) {
 			WP_CLI::add_wp_hook( 'all', array( $this, 'wp_hook_begin' ) );
 		}
 		WP_CLI::add_wp_hook( 'pre_http_request', array( $this, 'wp_request_begin' ), 10, 3 );
