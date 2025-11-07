@@ -29,7 +29,8 @@
       "profile stage",
       "profile hook",
       "profile eval",
-      "profile eval-file"
+      "profile eval-file",
+      "profile requests"
     ],
     "readme": {
       "sections": [

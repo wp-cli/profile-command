@@ -295,6 +295,78 @@ class Command {
 	}
 
 	/**
+	 * Profile HTTP requests made during the WordPress load process.
+	 *
+	 * Monitors all HTTP requests made during the WordPress load process,
+	 * displaying information about each request including URL, method,
+	 * execution time, and response code.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--url=<url>]
+	 * : Execute a request against a specified URL. Defaults to the home URL.
+	 *
+	 * [--fields=<fields>]
+	 * : Limit the output to specific fields. Default is all fields.
+	 *
+	 * [--format=<format>]
+	 * : Render output in a particular format.
+	 * ---
+	 * default: table
+	 * options:
+	 *   - table
+	 *   - json
+	 *   - yaml
+	 *   - csv
+	 * ---
+	 *
+	 * [--order=<order>]
+	 * : Ascending or Descending order.
+	 * ---
+	 * default: ASC
+	 * options:
+	 *   - ASC
+	 *   - DESC
+	 * ---
+	 *
+	 * [--orderby=<fields>]
+	 * : Set orderby which field.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     # List all HTTP requests during page load
+	 *     $ wp profile requests
+	 *     +-----------+----------------------------+----------+---------+
+	 *     | method    | url                        | status   | time    |
+	 *     +-----------+----------------------------+----------+---------+
+	 *     | GET       | https://api.example.com    | 200      | 0.2341s |
+	 *     | POST      | https://api.example.com    | 201      | 0.1653s |
+	 *     +-----------+----------------------------+----------+---------+
+	 *     | total (2) |                            |          | 0.3994s |
+	 *     +-----------+----------------------------+----------+---------+
+	 *
+	 * @when before_wp_load
+	 */
+	public function requests( $args, $assoc_args ) {
+		$order   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
+		$orderby = Utils\get_flag_value( $assoc_args, 'orderby', null );
+
+		$profiler = new Profiler( 'request', false );
+		$profiler->run();
+
+		$fields    = array(
+			'method',
+			'url',
+			'status',
+			'time',
+		);
+		$formatter = new Formatter( $assoc_args, $fields );
+		$loggers   = $profiler->get_loggers();
+
+		$formatter->display_items( $loggers, true, $order, $orderby );
+	}
+
+	/**
 	 * Profile arbitrary code execution.
 	 *
 	 * Code execution happens after WordPress has loaded entirely, which means
