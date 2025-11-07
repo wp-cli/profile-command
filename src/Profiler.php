@@ -384,7 +384,7 @@ class Profiler {
 	/**
 	 * Profiling request time for any active Loggers
 	 */
-	public function wp_request_begin( $filter_value = null, $parsed_args = null, $url = null ) {
+	public function wp_request_begin( $preempt = null, $parsed_args = null, $url = null ) {
 		foreach ( Logger::$active_loggers as $logger ) {
 			$logger->start_request_timer();
 		}
@@ -398,13 +398,13 @@ class Profiler {
 			);
 		}
 
-		return $filter_value;
+		return $preempt;
 	}
 
 	/**
 	 * Profiling request time for any active Loggers
 	 */
-	public function wp_request_end( $filter_value = null, $response = null, $context = null, $class = null, $parsed_args = null, $url = null ) {
+	public function wp_request_end( $response = null, $context = null, $class = null, $parsed_args = null, $url = null ) {
 		foreach ( Logger::$active_loggers as $logger ) {
 			$logger->stop_request_timer();
 		}
@@ -437,7 +437,7 @@ class Profiler {
 			$this->request_args       = null;
 		}
 
-		return $filter_value;
+		return $response;
 	}
 
 	/**
