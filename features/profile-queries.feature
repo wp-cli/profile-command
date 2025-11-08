@@ -59,3 +59,42 @@ Feature: Profile database queries
       "time"
       """
     And STDERR should be empty
+
+  @require-wp-4.0
+  Scenario: Filter queries by hook
+    Given a WP install
+    And a wp-content/mu-plugins/query-test.php file:
+      """
+      <?php
+      add_action( 'init', function() {
+        global $wpdb;
+        $wpdb->query( "SELECT 1 as test_query" );
+      });
+      """
+
+    When I run `wp profile queries --hook=init --fields=query,callback`
+    Then STDOUT should contain:
+      """
+      SELECT 1 as test_query
+      """
+    And STDERR should be empty
+
+  @require-wp-4.0
+  Scenario: Filter queries by callback
+    Given a WP install
+    And a wp-content/mu-plugins/callback-test.php file:
+      """
+      <?php
+      function my_test_callback() {
+        global $wpdb;
+        $wpdb->query( "SELECT 2 as callback_test" );
+      }
+      add_action( 'init', 'my_test_callback' );
+      """
+
+    When I run `wp profile queries --callback=my_test_callback --fields=query,hook`
+    Then STDOUT should contain:
+      """
+      SELECT 2 as callback_test
+      """
+    And STDERR should be empty

@@ -497,12 +497,20 @@ class Command {
 	 * Profile database queries and their execution time.
 	 *
 	 * Displays all database queries executed during a WordPress request,
-	 * along with their execution time and caller information.
+	 * along with their execution time and caller information. You can filter
+	 * queries to only show those executed during a specific hook or by a
+	 * specific callback.
 	 *
 	 * ## OPTIONS
 	 *
 	 * [--url=<url>]
 	 * : Execute a request against a specified URL. Defaults to the home URL.
+	 *
+	 * [--hook=<hook>]
+	 * : Filter queries to only show those executed during a specific hook.
+	 *
+	 * [--callback=<callback>]
+	 * : Filter queries to only show those executed by a specific callback.
 	 *
 	 * [--fields=<fields>]
 	 * : Limit the output to specific fields.
@@ -535,8 +543,11 @@ class Command {
 	 *     # Show all queries with their execution time
 	 *     $ wp profile queries --fields=query,time
 	 *
-	 *     # Show all queries with caller information
-	 *     $ wp profile queries --fields=query,time,caller
+	 *     # Show queries executed during the 'init' hook
+	 *     $ wp profile queries --hook=init --fields=query,time,caller
+	 *
+	 *     # Show queries executed by a specific callback
+	 *     $ wp profile queries --callback='WP_Query->get_posts()' --fields=query,time
 	 *
 	 *     # Show queries ordered by execution time
 	 *     $ wp profile queries --fields=query,time --orderby=time --order=DESC
@@ -546,21 +557,74 @@ class Command {
 	public function queries( $args, $assoc_args ) {
 		global $wpdb;
 
-		$order   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
-		$orderby = Utils\get_flag_value( $assoc_args, 'orderby', null );
+		$hook     = Utils\get_flag_value( $assoc_args, 'hook' );
+		$callback = Utils\get_flag_value( $assoc_args, 'callback' );
+		$order    = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
+		$orderby  = Utils\get_flag_value( $assoc_args, 'orderby', null );
 
-		// Run WordPress profiling
-		$profiler = new Profiler( null, null );
+		// Set up profiler to track hooks and callbacks
+		$type  = null;
+		$focus = null;
+		if ( $hook ) {
+			$type  = 'hook';
+			$focus = $hook;
+		} elseif ( $callback ) {
+			$type  = 'hook';
+			$focus = true; // Profile all hooks to find the specific callback
+		}
+
+		$profiler = new Profiler( $type, $focus );
 		$profiler->run();
+
+		// Build a map of query indices to hooks/callbacks
+		$query_map = array();
+		if ( $hook || $callback ) {
+			$loggers = $profiler->get_loggers();
+			foreach ( $loggers as $logger ) {
+				// Skip if filtering by callback and this isn't the right one
+				if ( $callback && isset( $logger->callback ) ) {
+					// Normalize callback for comparison
+					$normalized_callback = str_replace( array( '->', '::' ), '', (string) $logger->callback );
+					$normalized_filter   = str_replace( array( '->', '::' ), '', $callback );
+					if ( false === stripos( $normalized_callback, $normalized_filter ) ) {
+						continue;
+					}
+				}
+
+				// Skip if filtering by hook and this isn't the right one
+				if ( $hook && isset( $logger->hook ) && $logger->hook !== $hook ) {
+					continue;
+				}
+
+				// Get the query indices for this logger
+				if ( isset( $logger->query_indices ) && ! empty( $logger->query_indices ) ) {
+					foreach ( $logger->query_indices as $query_index ) {
+						if ( ! isset( $query_map[ $query_index ] ) ) {
+							$query_map[ $query_index ] = array(
+								'hook'     => isset( $logger->hook ) ? $logger->hook : null,
+								'callback' => isset( $logger->callback ) ? $logger->callback : null,
+							);
+						}
+					}
+				}
+			}
+		}
 
 		// Get all queries
 		$queries = array();
 		if ( ! empty( $wpdb->queries ) ) {
-			foreach ( $wpdb->queries as $query_data ) {
+			foreach ( $wpdb->queries as $index => $query_data ) {
+				// If filtering by hook/callback, only include queries in the map
+				if ( ( $hook || $callback ) && ! isset( $query_map[ $index ] ) ) {
+					continue;
+				}
+
 				$query_obj = new QueryLogger(
 					$query_data[0], // SQL query
 					$query_data[1], // Time
-					isset( $query_data[2] ) ? $query_data[2] : '' // Caller
+					isset( $query_data[2] ) ? $query_data[2] : '', // Caller
+					isset( $query_map[ $index ]['hook'] ) ? $query_map[ $index ]['hook'] : null,
+					isset( $query_map[ $index ]['callback'] ) ? $query_map[ $index ]['callback'] : null
 				);
 				$queries[] = $query_obj;
 			}
@@ -568,6 +632,13 @@ class Command {
 
 		// Set up fields for output
 		$fields = array( 'query', 'time', 'caller' );
+		if ( $hook && ! $callback ) {
+			$fields = array( 'query', 'time', 'callback', 'caller' );
+		} elseif ( $callback && ! $hook ) {
+			$fields = array( 'query', 'time', 'hook', 'caller' );
+		} elseif ( $hook && $callback ) {
+			$fields = array( 'query', 'time', 'hook', 'callback', 'caller' );
+		}
 
 		$formatter = new Formatter( $assoc_args, $fields );
 		$formatter->display_items( $queries, true, $order, $orderby );

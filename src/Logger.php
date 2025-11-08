@@ -7,6 +7,7 @@ class Logger {
 	public $time                = 0;
 	public $query_count         = 0;
 	public $query_time          = 0;
+	public $query_indices       = array();
 	public $cache_hits          = 0;
 	public $cache_misses        = 0;
 	public $cache_ratio         = null;
@@ -87,6 +88,7 @@ class Logger {
 			for ( $i = $this->query_offset; $i < $query_total_count; $i++ ) {
 				$this->query_time += $wpdb->queries[ $i ][1];
 				++$this->query_count;
+				$this->query_indices[] = $i;
 			}
 		}
 
