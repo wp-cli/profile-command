@@ -181,6 +181,91 @@ will need to execute during the course of the request.
 
 
 
+### wp profile queries
+
+Profile database queries and their execution time.
+
+~~~
+wp profile queries [--url=<url>] [--hook=<hook>] [--callback=<callback>] [--fields=<fields>] [--format=<format>] [--order=<order>] [--orderby=<fields>]
+~~~
+
+Displays all database queries executed during a WordPress request,
+along with their execution time and caller information. You can filter
+queries to only show those executed during a specific hook or by a
+specific callback.
+
+**OPTIONS**
+
+	[--url=<url>]
+		Execute a request against a specified URL. Defaults to the home URL.
+
+	[--hook=<hook>]
+		Filter queries to only show those executed during a specific hook.
+
+	[--callback=<callback>]
+		Filter queries to only show those executed by a specific callback.
+
+	[--fields=<fields>]
+		Limit the output to specific fields.
+
+	[--format=<format>]
+		Render output in a particular format.
+		---
+		default: table
+		options:
+		  - table
+		  - json
+		  - yaml
+		  - csv
+		---
+
+	[--order=<order>]
+		Ascending or Descending order.
+		---
+		default: ASC
+		options:
+		  - ASC
+		  - DESC
+		---
+
+	[--orderby=<fields>]
+		Set orderby which field.
+
+**EXAMPLES**
+
+    # Show all queries with their execution time
+    $ wp profile queries --fields=query,time
+    +--------------------------------------+---------+
+    | query                                | time    |
+    +--------------------------------------+---------+
+    | SELECT option_value FROM wp_options  | 0.0001s |
+    | SELECT * FROM wp_posts WHERE ID = 1  | 0.0003s |
+    +--------------------------------------+---------+
+    | total (2)                            | 0.0004s |
+    +--------------------------------------+---------+
+
+    # Show queries executed during the 'init' hook
+    $ wp profile queries --hook=init --fields=query,time,callback
+    +--------------------------------------+---------+------------------+
+    | query                                | time    | callback         |
+    +--------------------------------------+---------+------------------+
+    | SELECT * FROM wp_users               | 0.0002s | my_init_func()   |
+    +--------------------------------------+---------+------------------+
+    | total (1)                            | 0.0002s |                  |
+    +--------------------------------------+---------+------------------+
+
+    # Show queries executed by a specific callback
+    $ wp profile queries --callback='WP_Query->get_posts()' --fields=query,time
+    +--------------------------------------+---------+
+    | query                                | time    |
+    +--------------------------------------+---------+
+    | SELECT * FROM wp_posts               | 0.0004s |
+    +--------------------------------------+---------+
+    | total (1)                            | 0.0004s |
+    +--------------------------------------+---------+
+
+
+
 ### wp profile eval
 
 Profile arbitrary code execution.
