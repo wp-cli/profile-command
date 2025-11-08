@@ -3,11 +3,32 @@ Feature: Profile database queries
   @require-wp-4.0
   Scenario: Show all database queries
     Given a WP install
+    And a wp-content/mu-plugins/test-queries.php file:
+      """
+      <?php
+      add_action( 'init', function() {
+        global $wpdb;
+        $wpdb->query( "SELECT 1 as test_query_one" );
+        $wpdb->query( "SELECT 2 as test_query_two" );
+      });
+      """
 
-    When I run `wp profile queries --fields=time`
+    When I run `wp profile queries --fields=query,time`
     Then STDOUT should contain:
       """
+      query
+      """
+    And STDOUT should contain:
+      """
       time
+      """
+    And STDOUT should contain:
+      """
+      SELECT 1 as test_query_one
+      """
+    And STDOUT should contain:
+      """
+      SELECT 2 as test_query_two
       """
     And STDOUT should contain:
       """
