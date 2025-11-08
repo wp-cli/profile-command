@@ -494,6 +494,86 @@ class Command {
 	}
 
 	/**
+	 * Profile database queries and their execution time.
+	 *
+	 * Displays all database queries executed during a WordPress request,
+	 * along with their execution time and caller information.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--url=<url>]
+	 * : Execute a request against a specified URL. Defaults to the home URL.
+	 *
+	 * [--fields=<fields>]
+	 * : Limit the output to specific fields.
+	 *
+	 * [--format=<format>]
+	 * : Render output in a particular format.
+	 * ---
+	 * default: table
+	 * options:
+	 *   - table
+	 *   - json
+	 *   - yaml
+	 *   - csv
+	 * ---
+	 *
+	 * [--order=<order>]
+	 * : Ascending or Descending order.
+	 * ---
+	 * default: ASC
+	 * options:
+	 *   - ASC
+	 *   - DESC
+	 * ---
+	 *
+	 * [--orderby=<fields>]
+	 * : Set orderby which field.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     # Show all queries with their execution time
+	 *     $ wp profile queries --fields=query,time
+	 *
+	 *     # Show all queries with caller information
+	 *     $ wp profile queries --fields=query,time,caller
+	 *
+	 *     # Show queries ordered by execution time
+	 *     $ wp profile queries --fields=query,time --orderby=time --order=DESC
+	 *
+	 * @when before_wp_load
+	 */
+	public function queries( $args, $assoc_args ) {
+		global $wpdb;
+
+		$order   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
+		$orderby = Utils\get_flag_value( $assoc_args, 'orderby', null );
+
+		// Run WordPress profiling
+		$profiler = new Profiler( null, null );
+		$profiler->run();
+
+		// Get all queries
+		$queries = array();
+		if ( ! empty( $wpdb->queries ) ) {
+			foreach ( $wpdb->queries as $query_data ) {
+				$query_obj = new QueryLogger(
+					$query_data[0], // SQL query
+					$query_data[1], // Time
+					isset( $query_data[2] ) ? $query_data[2] : '' // Caller
+				);
+				$queries[] = $query_obj;
+			}
+		}
+
+		// Set up fields for output
+		$fields = array( 'query', 'time', 'caller' );
+
+		$formatter = new Formatter( $assoc_args, $fields );
+		$formatter->display_items( $queries, true, $order, $orderby );
+	}
+
+	/**
 	 * Filter loggers with zero-ish values.
 	 *
 	 * @param array $loggers
