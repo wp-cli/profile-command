@@ -7,6 +7,9 @@ class Logger {
 	public $time                = 0;
 	public $query_count         = 0;
 	public $query_time          = 0;
+	/**
+	 * @var array Array of query indices tracked during this logger's execution.
+	 */
 	public $query_indices       = array();
 	public $cache_hits          = 0;
 	public $cache_misses        = 0;
