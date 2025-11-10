@@ -2,6 +2,20 @@ Feature: Profile HTTP requests
 
   Scenario: Profile HTTP requests during WordPress load
     Given a WP install
+    And that HTTP requests to https://www.apple.com/ will respond with:
+      """
+      HTTP/1.1 200
+      Content-Type: text/plain
+
+      Hello world
+      """
+    And that HTTP requests to https://www.example.com/ will respond with:
+      """
+      HTTP/1.1 201
+      Content-Type: application/json
+
+      {"status":"created"}
+      """
     And a wp-content/mu-plugins/http-requests.php file:
       """
       <?php
