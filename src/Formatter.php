@@ -107,6 +107,7 @@ class Formatter {
 		}
 
 		$location_index = array_search( 'location', $fields, true );
+		$non_numeric_fields = array( 'query', 'caller', 'hook', 'callback' );
 		foreach ( $items as $item ) {
 			$values = array_values( \WP_CLI\Utils\pick_fields( $item, $fields ) );
 			foreach ( $values as $i => $value ) {
@@ -116,6 +117,11 @@ class Formatter {
 
 				// Ignore 'location' for hook profiling
 				if ( false !== $location_index && $location_index === $i ) {
+					continue;
+				}
+
+				// Ignore non-numeric fields (query, caller, hook, callback)
+				if ( in_array( $fields[ $i ], $non_numeric_fields, true ) ) {
 					continue;
 				}
 
@@ -131,7 +137,10 @@ class Formatter {
 						$totals[ $i ][] = $value;
 					}
 				} else {
-					$totals[ $i ] += $value;
+					// Only add numeric values to prevent warnings
+					if ( is_numeric( $value ) ) {
+						$totals[ $i ] += $value;
+					}
 				}
 				if ( stripos( $fields[ $i ], '_time' ) || 'time' === $fields[ $i ] ) {
 					$values[ $i ] = round( $value, 4 ) . 's';
