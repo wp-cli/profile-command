@@ -391,6 +391,11 @@ class Profiler {
 
 		// For request profiling, capture details of each HTTP request
 		if ( 'request' === $this->type ) {
+			// Reset properties first to handle cases where previous request was preempted
+			$this->request_start_time = null;
+			$this->request_args       = null;
+
+			// Now capture the new request details
 			$this->request_start_time = microtime( true );
 			$this->request_args       = array(
 				'url'    => $url,
