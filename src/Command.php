@@ -593,8 +593,8 @@ class Command {
 				// Skip if filtering by callback and this isn't the right one
 				if ( $callback && isset( $logger->callback ) ) {
 					// Normalize callback for comparison
-					$normalized_callback = str_replace( array( '->', '::' ), '', (string) $logger->callback );
-					$normalized_filter   = str_replace( array( '->', '::' ), '', $callback );
+					$normalized_callback = trim((string) $logger->callback);
+					$normalized_filter   = trim($callback);
 					if ( false === stripos( $normalized_callback, $normalized_filter ) ) {
 						continue;
 					}
