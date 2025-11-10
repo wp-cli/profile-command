@@ -4,9 +4,9 @@ namespace WP_CLI\Profile;
 
 class Logger {
 
-	public $time                = 0;
-	public $query_count         = 0;
-	public $query_time          = 0;
+	public $time        = 0;
+	public $query_count = 0;
+	public $query_time  = 0;
 	/**
 	 * @var array Array of query indices tracked during this logger's execution.
 	 */
