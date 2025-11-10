@@ -394,7 +394,7 @@ class Profiler {
 			$this->request_start_time = microtime( true );
 			$this->request_args       = array(
 				'url'    => $url,
-				'method' => isset( $parsed_args['method'] ) ? $parsed_args['method'] : 'GET',
+				'method' => ( is_array( $parsed_args ) && isset( $parsed_args['method'] ) ) ? $parsed_args['method'] : 'GET',
 			);
 		}
 
