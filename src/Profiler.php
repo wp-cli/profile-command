@@ -404,7 +404,7 @@ class Profiler {
 	/**
 	 * Profiling request time for any active Loggers
 	 */
-	public function wp_request_end( $response = null ) {
+	public function wp_request_end( $response = null, $context = null, $class = null, $parsed_args = null, $url = null ) {
 		foreach ( Logger::$active_loggers as $logger ) {
 			$logger->stop_request_timer();
 		}
