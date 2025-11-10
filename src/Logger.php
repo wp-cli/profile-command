@@ -111,6 +111,7 @@ class Logger {
 		$this->query_offset      = null;
 		$this->cache_hit_offset  = null;
 		$this->cache_miss_offset = null;
+		$this->query_indices     = array();
 		$key                     = array_search( $this, self::$active_loggers, true );
 
 		if ( false !== $key ) {

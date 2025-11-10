@@ -565,7 +565,11 @@ class Command {
 		// Set up profiler to track hooks and callbacks
 		$type  = null;
 		$focus = null;
-		if ( $hook ) {
+		if ( $hook && $callback ) {
+			// When both are provided, profile all hooks to find the specific callback
+			$type  = 'hook';
+			$focus = true;
+		} elseif ( $hook ) {
 			$type  = 'hook';
 			$focus = $hook;
 		} elseif ( $callback ) {
@@ -581,6 +585,11 @@ class Command {
 		if ( $hook || $callback ) {
 			$loggers = $profiler->get_loggers();
 			foreach ( $loggers as $logger ) {
+				// Skip if filtering by callback and this logger doesn't have a callback
+				if ( $callback && ! isset( $logger->callback ) ) {
+					continue;
+				}
+
 				// Skip if filtering by callback and this isn't the right one
 				if ( $callback && isset( $logger->callback ) ) {
 					// Normalize callback for comparison
@@ -591,7 +600,7 @@ class Command {
 					}
 				}
 
-				// Skip if filtering by hook and this isn't the right one
+				// Skip if filtering for a specific hook and this isn't the right one
 				if ( $hook && isset( $logger->hook ) && $logger->hook !== $hook ) {
 					continue;
 				}
