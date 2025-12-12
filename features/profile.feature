@@ -9,6 +9,7 @@ Feature: Basic profile usage
       usage: wp profile eval <php-code> [--hook[=<hook>]] [--fields=<fields>] [--format=<format>] [--order=<order>] [--orderby=<fields>]
          or: wp profile eval-file <file> [--hook[=<hook>]] [--fields=<fields>] [--format=<format>] [--order=<order>] [--orderby=<fields>]
          or: wp profile hook [<hook>] [--all] [--spotlight] [--url=<url>] [--fields=<fields>] [--format=<format>] [--order=<order>] [--orderby=<fields>]
+         or: wp profile queries [--url=<url>] [--hook=<hook>] [--callback=<callback>] [--fields=<fields>] [--format=<format>] [--order=<order>] [--orderby=<fields>]
          or: wp profile stage [<stage>] [--all] [--spotlight] [--url=<url>] [--fields=<fields>] [--format=<format>] [--order=<order>] [--orderby=<fields>]
 
       See 'wp help profile <command>' for more information on a specific command.
