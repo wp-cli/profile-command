@@ -401,6 +401,34 @@ class Profiler {
 				'url'    => $url,
 				'method' => ( is_array( $parsed_args ) && isset( $parsed_args['method'] ) ) ? $parsed_args['method'] : 'GET',
 			);
+
+			// If request is preempted (mocked), log it now since http_api_debug won't fire
+			if ( false !== $preempt && ! is_null( $preempt ) ) {
+				$request_time = 0; // Preempted requests happen instantly
+				$status       = '';
+
+				// Extract status code from preempted response
+				if ( is_wp_error( $preempt ) ) {
+					$status = 'Error';
+				} elseif ( is_array( $preempt ) && isset( $preempt['response']['code'] ) ) {
+					$status = $preempt['response']['code'];
+				}
+
+				$logger       = new Logger(
+					array(
+						'method' => $this->request_args['method'],
+						'url'    => $this->request_args['url'],
+						'status' => $status,
+					)
+				);
+				$logger->time = $request_time;
+
+				$this->loggers[] = $logger;
+
+				// Reset for next request
+				$this->request_start_time = null;
+				$this->request_args       = null;
+			}
 		}
 
 		return $preempt;
