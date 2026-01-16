@@ -138,7 +138,7 @@ class Formatter {
 					}
 				} else {
 					// Only add numeric values to prevent warnings
-					if ( is_numeric( $value ) ) {
+					if ( is_numeric( $value ) && is_numeric( $totals[ $i ] ) ) {
 						$totals[ $i ] += $value;
 					}
 				}
