@@ -131,7 +131,7 @@ class Profiler {
 			WP_CLI::add_wp_hook( 'all', array( $this, 'wp_hook_begin' ) );
 		}
 		WP_CLI::add_wp_hook( 'pre_http_request', array( $this, 'wp_request_begin' ), 10, 3 );
-		WP_CLI::add_wp_hook( 'http_api_debug', array( $this, 'wp_request_end' ), 10, 5 );
+		WP_CLI::add_wp_hook( 'http_api_debug', array( $this, 'wp_request_end' ) );
 		$this->load_wordpress_with_template();
 	}
 
@@ -409,7 +409,7 @@ class Profiler {
 	/**
 	 * Profiling request time for any active Loggers
 	 */
-	public function wp_request_end( $response = null, $context = null, $class = null, $parsed_args = null, $url = null ) {
+	public function wp_request_end( $response = null ) {
 		foreach ( Logger::$active_loggers as $logger ) {
 			$logger->stop_request_timer();
 		}
