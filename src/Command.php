@@ -581,6 +581,8 @@ class Command {
 		$profiler->run();
 
 		// Build a map of query indices to hooks/callbacks
+		// This is O(N*Q + M) where N=loggers, Q=queries per logger, M=total queries
+		// For typical WordPress sites, this performs well with the array-based lookups
 		$query_map = array();
 		if ( $hook || $callback ) {
 			$loggers = $profiler->get_loggers();
