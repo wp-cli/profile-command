@@ -608,12 +608,11 @@ class Command {
 				// Get the query indices for this logger
 				if ( isset( $logger->query_indices ) && ! empty( $logger->query_indices ) ) {
 					foreach ( $logger->query_indices as $query_index ) {
-						if ( ! isset( $query_map[ $query_index ] ) ) {
-							$query_map[ $query_index ] = array(
-								'hook'     => isset( $logger->hook ) ? $logger->hook : null,
-								'callback' => isset( $logger->callback ) ? $logger->callback : null,
-							);
-						}
+						// Use last-logger-wins to get the most specific hook/callback
+						$query_map[ $query_index ] = array(
+							'hook'     => isset( $logger->hook ) ? $logger->hook : null,
+							'callback' => isset( $logger->callback ) ? $logger->callback : null,
+						);
 					}
 				}
 			}
