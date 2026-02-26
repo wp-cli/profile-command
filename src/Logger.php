@@ -4,9 +4,13 @@ namespace WP_CLI\Profile;
 
 class Logger {
 
-	public $time                = 0;
-	public $query_count         = 0;
-	public $query_time          = 0;
+	public $time        = 0;
+	public $query_count = 0;
+	public $query_time  = 0;
+	/**
+	 * @var array Array of query indices tracked during this logger's execution.
+	 */
+	public $query_indices       = array();
 	public $cache_hits          = 0;
 	public $cache_misses        = 0;
 	public $cache_ratio         = null;
@@ -87,6 +91,7 @@ class Logger {
 			for ( $i = $this->query_offset; $i < $query_total_count; $i++ ) {
 				$this->query_time += $wpdb->queries[ $i ][1];
 				++$this->query_count;
+				$this->query_indices[] = $i;
 			}
 		}
 
@@ -106,6 +111,7 @@ class Logger {
 		$this->query_offset      = null;
 		$this->cache_hit_offset  = null;
 		$this->cache_miss_offset = null;
+		$this->query_indices     = array();
 		$key                     = array_search( $this, self::$active_loggers, true );
 
 		if ( false !== $key ) {

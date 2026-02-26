@@ -241,10 +241,11 @@ class Profiler {
 		foreach ( $callbacks as $priority => $priority_callbacks ) {
 			foreach ( $priority_callbacks as $i => $the_ ) {
 				$callbacks[ $priority ][ $i ] = array(
-					'function'      => function () use ( $the_, $i ) {
+					'function'      => function () use ( $the_, $i, $current_filter ) {
 						if ( ! isset( $this->loggers[ $i ] ) ) {
 							$this->loggers[ $i ] = new Logger(
 								array(
+									'hook'     => $current_filter,
 									'callback' => $the_['function'],
 								)
 							);
