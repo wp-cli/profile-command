@@ -37,7 +37,8 @@ class Formatter {
 		}
 
 		if ( 'time' !== $fields[0] ) {
-			$this->total_cell_index = array_search( $fields[0], $format_args['fields'], true );
+			$index = array_search( $fields[0], $format_args['fields'], true );
+			$this->total_cell_index = ( false !== $index ) ? $index : null;
 		}
 
 		$this->args      = $format_args;
