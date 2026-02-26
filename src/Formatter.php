@@ -27,9 +27,12 @@ class Formatter {
 			$format_args['fields'] = explode( ',', $format_args['fields'] );
 		}
 
-		$format_args['fields'] = array_map( 'trim', $format_args['fields'] );
+		$format_args['fields'] = array_filter( array_map( 'trim', $format_args['fields'] ) );
 
 		if ( isset( $assoc_args['fields'] ) ) {
+			if ( empty( $format_args['fields'] ) ) {
+				$format_args['fields'] = $fields;
+			}
 			$invalid_fields = array_diff( $format_args['fields'], $fields );
 			if ( ! empty( $invalid_fields ) ) {
 				\WP_CLI::error( 'Invalid field(s): ' . implode( ', ', $invalid_fields ) );
