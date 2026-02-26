@@ -27,11 +27,22 @@ class Formatter {
 			$format_args['fields'] = explode( ',', $format_args['fields'] );
 		}
 
-		if ( 'time' !== $fields[0] ) {
-			$this->total_cell_index = array_search( $fields[0], $format_args['fields'], true );
+		$format_args['fields'] = array_filter( array_map( 'trim', $format_args['fields'] ) );
+
+		if ( isset( $assoc_args['fields'] ) ) {
+			if ( empty( $format_args['fields'] ) ) {
+				$format_args['fields'] = $fields;
+			}
+			$invalid_fields = array_diff( $format_args['fields'], $fields );
+			if ( ! empty( $invalid_fields ) ) {
+				\WP_CLI::error( 'Invalid field(s): ' . implode( ', ', $invalid_fields ) );
+			}
 		}
 
-		$format_args['fields'] = array_map( 'trim', $format_args['fields'] );
+		if ( 'time' !== $fields[0] ) {
+			$index                  = array_search( $fields[0], $format_args['fields'], true );
+			$this->total_cell_index = ( false !== $index ) ? $index : null;
+		}
 
 		$this->args      = $format_args;
 		$this->formatter = new \WP_CLI\Formatter( $assoc_args, $fields, $prefix );
