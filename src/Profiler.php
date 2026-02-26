@@ -48,6 +48,9 @@ class Profiler {
 	private $tick_cache_hit_offset  = null;
 	private $tick_cache_miss_offset = null;
 
+	private $request_start_time = null;
+	private $request_args       = null;
+
 	public function __construct( $type, $focus ) {
 		$this->type  = $type;
 		$this->focus = $focus;
@@ -124,10 +127,10 @@ class Profiler {
 		) {
 			$start_hook = substr( $this->focus, 0, -6 );
 			WP_CLI::add_wp_hook( $start_hook, array( $this, 'wp_tick_profile_begin' ), 9999 );
-		} else {
+		} elseif ( 'request' !== $this->type ) {
 			WP_CLI::add_wp_hook( 'all', array( $this, 'wp_hook_begin' ) );
 		}
-		WP_CLI::add_wp_hook( 'pre_http_request', array( $this, 'wp_request_begin' ) );
+		WP_CLI::add_wp_hook( 'pre_http_request', array( $this, 'wp_request_begin' ), 10, 3 );
 		WP_CLI::add_wp_hook( 'http_api_debug', array( $this, 'wp_request_end' ) );
 		$this->load_wordpress_with_template();
 	}
@@ -381,21 +384,93 @@ class Profiler {
 	/**
 	 * Profiling request time for any active Loggers
 	 */
-	public function wp_request_begin( $filter_value = null ) {
+	public function wp_request_begin( $preempt = null, $parsed_args = null, $url = null ) {
 		foreach ( Logger::$active_loggers as $logger ) {
 			$logger->start_request_timer();
 		}
-		return $filter_value;
+
+		// For request profiling, capture details of each HTTP request
+		if ( 'request' === $this->type ) {
+			// Reset properties first to handle cases where previous request was preempted
+			$this->request_start_time = null;
+			$this->request_args       = null;
+
+			// Now capture the new request details
+			$this->request_start_time = microtime( true );
+			$this->request_args       = array(
+				'url'    => $url,
+				'method' => ( is_array( $parsed_args ) && isset( $parsed_args['method'] ) ) ? $parsed_args['method'] : 'GET',
+			);
+
+			// If request is preempted (mocked), log it now since http_api_debug won't fire
+			if ( false !== $preempt && ! is_null( $preempt ) ) {
+				$request_time = 0; // Preempted requests happen instantly
+				$status       = '';
+
+				// Extract status code from preempted response
+				if ( is_wp_error( $preempt ) ) {
+					$status = 'Error';
+				} elseif ( is_array( $preempt ) && isset( $preempt['response']['code'] ) ) {
+					$status = $preempt['response']['code'];
+				}
+
+				$logger       = new Logger(
+					array(
+						'method' => $this->request_args['method'],
+						'url'    => $this->request_args['url'],
+						'status' => $status,
+					)
+				);
+				$logger->time = $request_time;
+
+				$this->loggers[] = $logger;
+
+				// Reset for next request
+				$this->request_start_time = null;
+				$this->request_args       = null;
+			}
+		}
+
+		return $preempt;
 	}
 
 	/**
 	 * Profiling request time for any active Loggers
 	 */
-	public function wp_request_end( $filter_value = null ) {
+	public function wp_request_end( $response = null ) {
 		foreach ( Logger::$active_loggers as $logger ) {
 			$logger->stop_request_timer();
 		}
-		return $filter_value;
+
+		// For request profiling, log individual request
+		if ( 'request' === $this->type && ! is_null( $this->request_start_time ) ) {
+			$request_time = microtime( true ) - $this->request_start_time;
+			$status       = '';
+
+			// Extract status code from response
+			if ( is_wp_error( $response ) ) {
+				$status = 'Error';
+			} elseif ( is_array( $response ) && isset( $response['response']['code'] ) ) {
+				$status = $response['response']['code'];
+			}
+
+			$logger       = new Logger(
+				array(
+					'method' => $this->request_args['method'],
+					'url'    => $this->request_args['url'],
+					'status' => $status,
+				)
+			);
+			$logger->time = $request_time;
+
+			$this->loggers[] = $logger;
+
+			// Reset for next request
+			$this->request_start_time = null;
+			$this->request_args       = null;
+		}
+
+		return $response;
 	}
 
 	/**
