@@ -597,7 +597,7 @@ class Command {
 					// Normalize callback for comparison
 					$normalized_callback = trim((string) $logger->callback);
 					$normalized_filter   = trim($callback);
-					if ( false === stripos( $normalized_callback, $normalized_filter ) ) {
+					if ( 0 !== strcasecmp( $normalized_callback, $normalized_filter ) ) {
 						continue;
 					}
 				}
