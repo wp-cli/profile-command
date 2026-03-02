@@ -135,6 +135,17 @@ Feature: Profile the template render stage
       """
 
   @require-wp-4.0
+  Scenario: Invalid field name supplied to --fields
+    Given a WP install
+
+    When I try `wp profile stage template --fields=test`
+    Then STDERR should contain:
+      """
+      Invalid field(s): test
+      """
+    And the return code should be 1
+
+  @require-wp-4.0
   Scenario: Identify callback_count for each hook
     Given a WP install
 
