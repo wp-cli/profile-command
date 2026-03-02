@@ -606,6 +606,11 @@ class Command {
 				if ( $hook && isset( $logger->hook ) && $logger->hook !== $hook ) {
 					continue;
 				}
+				
+				// Skip if filtering for a specific hook and the logger has no hook property
+				if ( $hook && ! isset( $logger->hook ) ) {
+					continue;
+				}
 
 				// Get the query indices for this logger
 				if ( isset( $logger->query_indices ) && ! empty( $logger->query_indices ) ) {
