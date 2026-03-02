@@ -233,6 +233,9 @@ class Command {
 	 * [--orderby=<fields>]
 	 * : Set orderby which field.
 	 *
+	 * [--search=<pattern>]
+	 * : Filter callbacks to those matching the given search pattern (case-insensitive).
+	 *
 	 * ## EXAMPLES
 	 *
 	 *     # Profile a hook.
@@ -290,6 +293,10 @@ class Command {
 		$loggers   = $profiler->get_loggers();
 		if ( Utils\get_flag_value( $assoc_args, 'spotlight' ) ) {
 			$loggers = self::shine_spotlight( $loggers, $metrics );
+		}
+		$search = Utils\get_flag_value( $assoc_args, 'search', false );
+		if ( $search ) {
+			$loggers = self::filter_by_callback( $loggers, $search );
 		}
 		$formatter->display_items( $loggers, true, $order, $orderby );
 	}
@@ -532,6 +539,22 @@ class Command {
 			}
 		}
 
+		return $loggers;
+	}
+
+	/**
+	 * Filter loggers to only those whose callback name matches a pattern.
+	 *
+	 * @param array  $loggers
+	 * @param string $pattern
+	 * @return array
+	 */
+	private static function filter_by_callback( $loggers, $pattern ) {
+		foreach ( $loggers as $k => $logger ) {
+			if ( ! isset( $logger->callback ) || false === stripos( $logger->callback, $pattern ) ) {
+				unset( $loggers[ $k ] );
+			}
+		}
 		return $loggers;
 	}
 }
