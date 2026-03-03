@@ -9,6 +9,7 @@ Feature: Basic profile usage
       usage: wp profile eval <php-code> [--hook[=<hook>]] [--fields=<fields>] [--format=<format>] [--order=<order>] [--orderby=<fields>]
          or: wp profile eval-file <file> [--hook[=<hook>]] [--fields=<fields>] [--format=<format>] [--order=<order>] [--orderby=<fields>]
          or: wp profile hook [<hook>] [--all] [--spotlight] [--url=<url>] [--fields=<fields>] [--format=<format>] [--order=<order>] [--orderby=<fields>]
+         or: wp profile queries [--url=<url>] [--hook=<hook>] [--callback=<callback>] [--fields=<fields>] [--format=<format>] [--order=<order>] [--orderby=<fields>]
          or: wp profile stage [<stage>] [--all] [--spotlight] [--url=<url>] [--fields=<fields>] [--format=<format>] [--order=<order>] [--orderby=<fields>]
 
       See 'wp help profile <command>' for more information on a specific command.
@@ -33,7 +34,6 @@ Feature: Basic profile usage
       Error: 'SAVEQUERIES' is defined as false, and must be true. Please check your wp-config.php
       """
 
-  @require-wp-4.0
   Scenario: Profile a hook without any callbacks
     Given a WP install
 
@@ -43,7 +43,6 @@ Feature: Basic profile usage
       | total (0)         |        |
     And STDERR should be empty
 
-  @require-wp-4.0
   Scenario: Trailingslash provided URL to avoid canonical redirect
     Given a WP install
 

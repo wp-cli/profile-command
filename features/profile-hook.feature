@@ -1,6 +1,5 @@
 Feature: Profile a specific hook
 
-  @require-wp-4.0
   Scenario: Profile all hooks when a specific hook isn't specified
     Given a WP install
 
@@ -20,21 +19,6 @@ Feature: Profile a specific hook
       | callback                   | cache_hits | cache_misses |
       | sanitize_comment_cookies() | 0          | 0            |
 
-  @less-than-php-7 @require-wp-4.0
-  Scenario: Profile an intermediate stage hook
-    Given a WP install
-
-    When I run `wp profile hook wp_head:before --fields=callback,cache_hits,cache_misses`
-    Then STDOUT should be a table containing rows:
-      | callback                       | cache_hits | cache_misses |
-      | parse_blocks()                 | 0          | 0            |
-      | _get_wptexturize_split_regex() | 0          | 0            |
-    And STDOUT should not contain:
-      """
-      WP_CLI\Profile\Profiler->wp_tick_profile_begin()
-      """
-
-  @require-wp-4.0
   Scenario: Profile a hook before the template is loaded
     Given a WP install
 
@@ -43,7 +27,6 @@ Feature: Profile a specific hook
       | callback          |
     And STDERR should be empty
 
-  @require-wp-4.0
   Scenario: Profile a hook without any callbacks
     Given a WP install
 
@@ -53,7 +36,6 @@ Feature: Profile a specific hook
       | total (0)         |
     And STDERR should be empty
 
-  @require-wp-4.0
   Scenario: Profile a hook that has actions with output
     Given a WP install
 
@@ -65,7 +47,7 @@ Feature: Profile a specific hook
       <meta name="generator"
       """
 
-  @require-wp-4.0 @less-than-wp-6.9
+  @less-than-wp-6.9
   Scenario: Profile the shutdown hook
     Given a WP install
     And a wp-content/mu-plugins/shutdown.php file:
@@ -107,7 +89,6 @@ Feature: Profile a specific hook
       | total (3)              | 0              | 1                |
     And STDERR should be empty
 
-  @require-wp-4.0
   Scenario: Indicate where a callback is defined with profiling a hook
     Given a WP install
     And a wp-content/mu-plugins/custom-action.php file:
@@ -146,44 +127,4 @@ Feature: Profile a specific hook
     Then STDERR should be:
       """
       Warning: Called 1
-      """
-
-  @less-than-php-7 @require-wp-4.0
-  Scenario: Profile the mu_plugins:before hook
-    Given a WP install
-    And a wp-content/mu-plugins/awesome-file.php file:
-      """
-      <?php
-      function awesome_func() {
-        // does nothing
-      }
-      awesome_func();
-      """
-
-    When I run `wp profile hook muplugins_loaded:before --fields=callback`
-    Then STDOUT should contain:
-      """
-      wp-content/mu-plugins/awesome-file.php
-      """
-
-  @less-than-php-7 @require-wp-4.0
-  Scenario: Profile the :after hooks
-    Given a WP install
-
-    When I run `wp profile hook wp_loaded:after`
-    Then STDOUT should contain:
-      """
-      do_action()
-      """
-
-    When I run `wp profile hook wp:after`
-    Then STDOUT should contain:
-      """
-      do_action_ref_array()
-      """
-
-    When I run `wp profile hook wp_footer:after`
-    Then STDOUT should contain:
-      """
-      do_action()
       """
