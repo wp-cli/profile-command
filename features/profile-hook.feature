@@ -12,7 +12,6 @@ Feature: Profile a specific hook
       | template_redirect |
     And STDERR should be empty
 
-  @require-wp-4.4
   Scenario: Profile all callbacks when --all flag is used
     Given a WP install
 
@@ -128,7 +127,6 @@ Feature: Profile a specific hook
       | total (1)                   |                                           | 0          | 1            |
     And STDERR should be empty
 
-  @require-wp-4.4
   Scenario: Hooks should only be called once
     Given a WP install
     And a wp-content/mu-plugins/action-test.php file:
