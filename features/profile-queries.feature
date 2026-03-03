@@ -1,6 +1,5 @@
 Feature: Profile database queries
 
-  @require-wp-4.0
   Scenario: Show all database queries
     Given a WP install
     And a wp-content/mu-plugins/test-queries.php file:
@@ -36,7 +35,6 @@ Feature: Profile database queries
       """
     And STDERR should be empty
 
-  @require-wp-4.0
   Scenario: Show queries with specific fields
     Given a WP install
 
@@ -55,7 +53,6 @@ Feature: Profile database queries
       """
     And STDERR should be empty
 
-  @require-wp-4.0
   Scenario: Order queries by execution time
     Given a WP install
 
@@ -66,7 +63,6 @@ Feature: Profile database queries
       """
     And STDERR should be empty
 
-  @require-wp-4.0
   Scenario: Display queries in JSON format
     Given a WP install
 
@@ -81,7 +77,6 @@ Feature: Profile database queries
       """
     And STDERR should be empty
 
-  @require-wp-4.0
   Scenario: Filter queries by hook
     Given a WP install
     And a wp-content/mu-plugins/query-test.php file:
@@ -100,7 +95,6 @@ Feature: Profile database queries
       """
     And STDERR should be empty
 
-  @require-wp-4.0
   Scenario: Filter queries by callback
     Given a WP install
     And a wp-content/mu-plugins/callback-test.php file:

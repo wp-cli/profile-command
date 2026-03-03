@@ -34,7 +34,6 @@ Feature: Basic profile usage
       Error: 'SAVEQUERIES' is defined as false, and must be true. Please check your wp-config.php
       """
 
-  @require-wp-4.0
   Scenario: Profile a hook without any callbacks
     Given a WP install
 
@@ -44,7 +43,6 @@ Feature: Basic profile usage
       | total (0)         |        |
     And STDERR should be empty
 
-  @require-wp-4.0
   Scenario: Trailingslash provided URL to avoid canonical redirect
     Given a WP install
 

@@ -1,6 +1,5 @@
 Feature: Profile the template render stage
 
-  @require-wp-4.0
   Scenario: Profiler loads a summary table
     Given a WP install
 
@@ -11,7 +10,6 @@ Feature: Profile the template render stage
       | main_query   |
       | template     |
 
-  @require-wp-4.0
   Scenario: Profiler loads a table with the correct hooks
     Given a WP install
 
@@ -81,7 +79,6 @@ Feature: Profile the template render stage
       | loop_end:before          |
       | loop_end                 |
 
-  @require-wp-4.0
   Scenario: Use --all flag to profile all stages
     Given a WP install
 
@@ -134,7 +131,6 @@ Feature: Profile the template render stage
       Error: Invalid stage. Must be one of bootstrap, main_query, template, or use --all.
       """
 
-  @require-wp-4.0
   Scenario: Invalid field name supplied to --fields
     Given a WP install
 
@@ -145,7 +141,6 @@ Feature: Profile the template render stage
       """
     And the return code should be 1
 
-  @require-wp-4.0
   Scenario: Identify callback_count for each hook
     Given a WP install
 
@@ -154,7 +149,6 @@ Feature: Profile the template render stage
       | hook              | callback_count   |
       | muplugins_loaded  | 2                |
 
-  @require-wp-4.0
   Scenario: Use spotlight mode to filter out the zero-ish values
     Given a WP install
 
