@@ -553,11 +553,11 @@ class Command {
 	 * @return array
 	 */
 	private static function filter_by_callback( $loggers, $pattern ) {
-		foreach ( $loggers as $k => $logger ) {
-			if ( ! isset( $logger->callback ) || false === stripos( $logger->callback, $pattern ) ) {
-				unset( $loggers[ $k ] );
+		return array_filter(
+			$loggers,
+			function ( $logger ) use ( $pattern ) {
+				return isset( $logger->callback ) && false !== stripos( $logger->callback, $pattern );
 			}
-		}
-		return $loggers;
+		);
 	}
 }
