@@ -141,7 +141,7 @@ class Formatter {
 					if ( ! is_null( $value ) ) {
 						$totals[ $i ][] = $value;
 					}
-				} else {
+				} elseif ( is_numeric( $value ) ) {
 					$totals[ $i ] += $value;
 				}
 				if ( stripos( $fields[ $i ], '_time' ) || 'time' === $fields[ $i ] ) {
