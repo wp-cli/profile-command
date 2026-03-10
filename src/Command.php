@@ -296,6 +296,9 @@ class Command {
 		}
 		$search = Utils\get_flag_value( $assoc_args, 'search', false );
 		if ( $search ) {
+			if ( ! $focus ) {
+				WP_CLI::error( '--search requires --all or a specific hook.' );
+			}
 			$loggers = self::filter_by_callback( $loggers, $search );
 		}
 		$formatter->display_items( $loggers, true, $order, $orderby );
