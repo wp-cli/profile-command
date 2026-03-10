@@ -295,7 +295,7 @@ class Command {
 			$loggers = self::shine_spotlight( $loggers, $metrics );
 		}
 		$search = Utils\get_flag_value( $assoc_args, 'search', false );
-		if ( $search ) {
+		if ( false !== $search && '' !== $search ) {
 			if ( ! $focus ) {
 				WP_CLI::error( '--search requires --all or a specific hook.' );
 			}
