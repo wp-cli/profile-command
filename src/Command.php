@@ -127,6 +127,7 @@ class Command {
 	 *     | total (7)                | 1.0335s | 77.42%      |
 	 *     +--------------------------+---------+-------------+
 	 *
+	 * @skipglobalargcheck
 	 * @when before_wp_load
 	 */
 	public function stage( $args, $assoc_args ) {
@@ -254,6 +255,7 @@ class Command {
 	 *     | total (7)                      | 8          | 0            |
 	 *     +--------------------------------+------------+--------------+
 	 *
+	 * @skipglobalargcheck
 	 * @when before_wp_load
 	 */
 	public function hook( $args, $assoc_args ) {

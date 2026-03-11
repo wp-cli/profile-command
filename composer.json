@@ -7,7 +7,7 @@
   "authors": [],
   "require": {
     "php": ">=7.2.24",
-    "wp-cli/wp-cli": "^2.12"
+    "wp-cli/wp-cli": "^2.13"
   },
   "require-dev": {
     "wp-cli/wp-cli-tests": "^5"
