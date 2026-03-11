@@ -255,7 +255,7 @@ class Command {
 	 *     | total (7)                      | 8          | 0            |
 	 *     +--------------------------------+------------+--------------+
 	 *
-   * @skipglobalargcheck
+	 * @skipglobalargcheck
 	 * @when before_wp_load
 	 */
 	public function hook( $args, $assoc_args ) {
