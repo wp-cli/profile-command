@@ -115,7 +115,7 @@ render based on the main query, and renders it.
 Profile key metrics for WordPress hooks (actions and filters).
 
 ~~~
-wp profile hook [<hook>] [--all] [--spotlight] [--url=<url>] [--fields=<fields>] [--format=<format>] [--order=<order>] [--orderby=<fields>]
+wp profile hook [<hook>] [--all] [--spotlight] [--url=<url>] [--fields=<fields>] [--format=<format>] [--order=<order>] [--orderby=<fields>] [--search=<pattern>]
 ~~~
 
 In order to profile callbacks on a specific hook, the action or filter
@@ -160,6 +160,9 @@ will need to execute during the course of the request.
 
 	[--orderby=<fields>]
 		Set orderby which field.
+
+	[--search=<pattern>]
+		Filter callbacks to those matching the given search pattern (case-insensitive).
 
 **EXAMPLES**
 
