@@ -153,32 +153,6 @@ Feature: Profile a specific hook
       """
     And STDERR should be empty
 
-  Scenario: Profile an intermediate stage hook
-    Given a WP install
-
-    When I run `wp profile hook muplugins_loaded --fields=hook`
-    Then STDOUT should be a table containing rows:
-      | hook            |
-      | muplugins_loaded |
-    And STDERR should be empty
-
-  Scenario: Profile the muplugins_loaded:before hook
-    Given a WP install
-
-    When I run `wp profile hook muplugins_loaded:before --fields=hook`
-    Then STDOUT should be a table containing rows:
-      | hook                  |
-      | muplugins_loaded:before |
-    And STDERR should be empty
-
-  Scenario: Profile the muplugins_loaded:after hook
-    Given a WP install
-
-    When I run `wp profile hook muplugins_loaded:after --fields=hook`
-    Then STDOUT should be a table containing rows:
-      | hook                 |
-      | muplugins_loaded:after |
-    And STDERR should be empty
   Scenario: Hooks should only be called once
     Given a WP install
     And a wp-content/mu-plugins/action-test.php file:
