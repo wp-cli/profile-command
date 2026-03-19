@@ -102,9 +102,6 @@ class Profiler {
 				if ( ! defined( 'SAVEQUERIES' ) ) {
 					define( 'SAVEQUERIES', true );
 				}
-				if ( $this->is_admin_request && ! defined( 'WP_ADMIN' ) ) {
-					define( 'WP_ADMIN', true );
-				}
 			}
 		);
 		if (
