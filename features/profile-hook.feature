@@ -11,7 +11,6 @@ Feature: Profile a specific hook
       | template_redirect |
     And STDERR should be empty
 
-  @require-wp-4.4
   Scenario: Profile all callbacks when --all flag is used
     Given a WP install
 
@@ -109,7 +108,50 @@ Feature: Profile a specific hook
       | total (1)                   |                                           | 0          | 1            |
     And STDERR should be empty
 
-  @require-wp-4.4
+  Scenario: Search for callbacks by name pattern on a specific hook
+    Given a WP install
+    And a wp-content/mu-plugins/search-test.php file:
+      """
+      <?php
+      function wp_cli_search_hook_one() {}
+      function wp_cli_search_hook_two() {}
+      function unrelated_callback() {}
+      add_action( 'init', 'wp_cli_search_hook_one' );
+      add_action( 'init', 'wp_cli_search_hook_two' );
+      add_action( 'init', 'unrelated_callback' );
+      """
+
+    When I run `wp profile hook init --fields=callback --search=wp_cli_search_hook`
+    Then STDOUT should contain:
+      """
+      wp_cli_search_hook_one()
+      """
+    And STDOUT should contain:
+      """
+      wp_cli_search_hook_two()
+      """
+    And STDOUT should not contain:
+      """
+      unrelated_callback()
+      """
+    And STDERR should be empty
+
+  Scenario: Search for callbacks by name pattern across all hooks
+    Given a WP install
+    And a wp-content/mu-plugins/search-all-test.php file:
+      """
+      <?php
+      function wp_cli_search_all_hook() {}
+      add_action( 'init', 'wp_cli_search_all_hook' );
+      """
+
+    When I run `wp profile hook --all --fields=callback --search=wp_cli_search_all_hook`
+    Then STDOUT should contain:
+      """
+      wp_cli_search_all_hook()
+      """
+    And STDERR should be empty
+
   Scenario: Hooks should only be called once
     Given a WP install
     And a wp-content/mu-plugins/action-test.php file:
