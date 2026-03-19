@@ -48,6 +48,8 @@ class Profiler {
 	private $tick_cache_hit_offset  = null;
 	private $tick_cache_miss_offset = null;
 
+	private $is_admin_request = false;
+
 	public function __construct( $type, $focus ) {
 		$this->type  = $type;
 		$this->focus = $focus;
@@ -77,6 +79,9 @@ class Profiler {
 	 * Run the profiler against WordPress
 	 */
 	public function run() {
+		$url                    = WP_CLI::get_runner()->config['url'];
+		$this->is_admin_request = ! empty( $url ) && (bool) preg_match( '#/wp-admin(/|$)#i', $url );
+
 		WP_CLI::add_wp_hook(
 			'muplugins_loaded',
 			function () {
@@ -96,6 +101,9 @@ class Profiler {
 				}
 				if ( ! defined( 'SAVEQUERIES' ) ) {
 					define( 'SAVEQUERIES', true );
+				}
+				if ( $this->is_admin_request && ! defined( 'WP_ADMIN' ) ) {
+					define( 'WP_ADMIN', true );
 				}
 			}
 		);
@@ -435,6 +443,11 @@ class Profiler {
 		if ( 'stage' === $this->type && ! $this->focus ) {
 			$logger->stop();
 			$this->loggers[] = $logger;
+		}
+
+		// Skip main_query and template stages for admin requests.
+		if ( $this->is_admin_request ) {
+			return;
 		}
 
 		// Set up main_query main WordPress query.

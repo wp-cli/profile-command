@@ -171,3 +171,21 @@ Feature: Profile the template render stage
       | hook              |
       | init              |
       | wp_loaded:after   |
+
+  @require-wp-4.0
+  Scenario: Admin URL runs as a backend request and skips frontend stages
+    Given a WP install
+
+    When I run `wp profile stage --url=example.com/wp-admin/ --fields=stage`
+    Then STDOUT should be a table containing rows:
+      | stage     |
+      | bootstrap |
+    And STDOUT should not contain:
+      """
+      main_query
+      """
+    And STDOUT should not contain:
+      """
+      template
+      """
+    And STDERR should be empty
