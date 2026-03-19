@@ -564,6 +564,7 @@ class Command {
 	 *     # Show queries ordered by execution time
 	 *     $ wp profile queries --fields=query,time --orderby=time --order=DESC
 	 *
+	 * @skipglobalargcheck
 	 * @when before_wp_load
 	 */
 	public function queries( $args, $assoc_args ) {
