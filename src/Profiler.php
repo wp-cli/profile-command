@@ -82,6 +82,10 @@ class Profiler {
 		$url                    = WP_CLI::get_runner()->config['url'];
 		$this->is_admin_request = ! empty( $url ) && (bool) preg_match( '#/wp-admin(/|$)#i', $url );
 
+		if ( $this->is_admin_request && 'admin' !== WP_CLI::get_runner()->config['context'] ) {
+			WP_CLI::error( 'Profiling an admin URL requires --context=admin.' );
+		}
+
 		WP_CLI::add_wp_hook(
 			'muplugins_loaded',
 			function () {

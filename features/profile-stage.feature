@@ -176,7 +176,7 @@ Feature: Profile the template render stage
   Scenario: Admin URL runs as a backend request and skips frontend stages
     Given a WP install
 
-    When I run `wp profile stage --url=example.com/wp-admin/ --fields=stage`
+    When I run `wp profile stage --url=example.com/wp-admin/ --context=admin --fields=stage`
     Then STDOUT should be a table containing rows:
       | stage     |
       | bootstrap |
@@ -189,3 +189,14 @@ Feature: Profile the template render stage
       template
       """
     And STDERR should be empty
+
+  @require-wp-4.0
+  Scenario: Admin URL without --context=admin emits an error
+    Given a WP install
+
+    When I try `wp profile stage --url=example.com/wp-admin/ --fields=stage`
+    Then STDERR should contain:
+      """
+      Profiling an admin URL requires --context=admin.
+      """
+    And the return code should be 1
