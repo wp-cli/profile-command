@@ -79,8 +79,18 @@ class Profiler {
 	 * Run the profiler against WordPress
 	 */
 	public function run() {
-		$url                    = WP_CLI::get_runner()->config['url'];
-		$this->is_admin_request = ! empty( $url ) && (bool) preg_match( '#/wp-admin(/|$)#i', $url );
+		$url       = WP_CLI::get_runner()->config['url'];
+		$path      = '';
+		if ( ! empty( $url ) ) {
+			$parsed_url = @parse_url( $url );
+			if ( false !== $parsed_url && isset( $parsed_url['path'] ) ) {
+				$path = $parsed_url['path'];
+			} else {
+				// Fallback for cases where $url is just a path.
+				$path = $url;
+			}
+		}
+		$this->is_admin_request = ! empty( $path ) && (bool) preg_match( '#/wp-admin(/|$|\?)#i', $path );
 
 		if ( $this->is_admin_request && 'admin' !== WP_CLI::get_runner()->config['context'] ) {
 			WP_CLI::error( 'Profiling an admin URL requires --context=admin.' );
