@@ -79,10 +79,10 @@ class Profiler {
 	 * Run the profiler against WordPress
 	 */
 	public function run() {
-		$url       = WP_CLI::get_runner()->config['url'];
-		$path      = '';
+		$url  = WP_CLI::get_runner()->config['url'];
+		$path = '';
 		if ( ! empty( $url ) ) {
-			$parsed_url = @parse_url( $url );
+			$parsed_url = wp_parse_url( $url );
 			if ( false !== $parsed_url && isset( $parsed_url['path'] ) ) {
 				$path = $parsed_url['path'];
 			} else {
