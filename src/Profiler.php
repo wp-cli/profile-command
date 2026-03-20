@@ -82,7 +82,7 @@ class Profiler {
 		$url  = WP_CLI::get_runner()->config['url'];
 		$path = '';
 		if ( ! empty( $url ) ) {
-			$parsed_url = wp_parse_url( $url );
+			$parsed_url = WP_CLI\Utils\parse_url( $url );
 			if ( false !== $parsed_url && isset( $parsed_url['path'] ) ) {
 				$path = $parsed_url['path'];
 			} else {
