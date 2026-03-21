@@ -147,11 +147,9 @@ class Formatter {
 					if ( ! is_null( $value ) ) {
 						$totals[ $i ][] = $value;
 					}
-				} else {
+				} elseif ( is_numeric( $value ) && is_numeric( $totals[ $i ] ) ) {
 					// Only add numeric values to prevent warnings
-					if ( is_numeric( $value ) && is_numeric( $totals[ $i ] ) ) {
-						$totals[ $i ] += $value;
-					}
+					$totals[ $i ] += $value;
 				}
 				if ( stripos( $fields[ $i ], '_time' ) || 'time' === $fields[ $i ] ) {
 					$values[ $i ] = round( $value, 4 ) . 's';
