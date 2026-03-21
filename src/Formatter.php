@@ -117,7 +117,7 @@ class Formatter {
 			);
 		}
 
-		$location_index = array_search( 'location', $fields, true );
+		$location_index     = array_search( 'location', $fields, true );
 		$non_numeric_fields = array( 'query', 'caller', 'hook', 'callback' );
 		foreach ( $items as $item ) {
 			$values = array_values( \WP_CLI\Utils\pick_fields( $item, $fields ) );

@@ -608,8 +608,8 @@ class Command {
 				// Skip if filtering by callback and this isn't the right one
 				if ( $callback && isset( $logger->callback ) ) {
 					// Normalize callback for comparison
-					$normalized_callback = trim((string) $logger->callback);
-					$normalized_filter   = trim($callback);
+					$normalized_callback = trim( (string) $logger->callback );
+					$normalized_filter   = trim( $callback );
 					if ( false === stripos( $normalized_callback, $normalized_filter ) ) {
 						continue;
 					}
@@ -619,7 +619,7 @@ class Command {
 				if ( $hook && isset( $logger->hook ) && $logger->hook !== $hook ) {
 					continue;
 				}
-				
+
 				// Skip if filtering for a specific hook and the logger has no hook property
 				if ( $hook && ! isset( $logger->hook ) ) {
 					continue;
