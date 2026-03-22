@@ -127,6 +127,7 @@ class Command {
 	 *     | total (7)                | 1.0335s | 77.42%      |
 	 *     +--------------------------+---------+-------------+
 	 *
+	 * @skipglobalargcheck
 	 * @when before_wp_load
 	 */
 	public function stage( $args, $assoc_args ) {
@@ -233,6 +234,9 @@ class Command {
 	 * [--orderby=<fields>]
 	 * : Set orderby which field.
 	 *
+	 * [--search=<pattern>]
+	 * : Filter callbacks to those matching the given search pattern (case-insensitive).
+	 *
 	 * ## EXAMPLES
 	 *
 	 *     # Profile a hook.
@@ -251,6 +255,7 @@ class Command {
 	 *     | total (7)                      | 8          | 0            |
 	 *     +--------------------------------+------------+--------------+
 	 *
+	 * @skipglobalargcheck
 	 * @when before_wp_load
 	 */
 	public function hook( $args, $assoc_args ) {
@@ -290,6 +295,13 @@ class Command {
 		$loggers   = $profiler->get_loggers();
 		if ( Utils\get_flag_value( $assoc_args, 'spotlight' ) ) {
 			$loggers = self::shine_spotlight( $loggers, $metrics );
+		}
+		$search = Utils\get_flag_value( $assoc_args, 'search', false );
+		if ( false !== $search && '' !== $search ) {
+			if ( ! $focus ) {
+				WP_CLI::error( '--search requires --all or a specific hook.' );
+			}
+			$loggers = self::filter_by_callback( $loggers, $search );
 		}
 		$formatter->display_items( $loggers, true, $order, $orderby );
 	}
@@ -605,5 +617,21 @@ class Command {
 		}
 
 		return $loggers;
+	}
+
+	/**
+	 * Filter loggers to only those whose callback name matches a pattern.
+	 *
+	 * @param array  $loggers
+	 * @param string $pattern
+	 * @return array
+	 */
+	private static function filter_by_callback( $loggers, $pattern ) {
+		return array_filter(
+			$loggers,
+			function ( $logger ) use ( $pattern ) {
+				return isset( $logger->callback ) && false !== stripos( $logger->callback, $pattern );
+			}
+		);
 	}
 }

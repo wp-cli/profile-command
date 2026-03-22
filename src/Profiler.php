@@ -50,6 +50,7 @@ class Profiler {
 
 	private $request_start_time = null;
 	private $request_args       = null;
+	private $is_admin_request = false;
 
 	public function __construct( $type, $focus ) {
 		$this->type  = $type;
@@ -80,6 +81,23 @@ class Profiler {
 	 * Run the profiler against WordPress
 	 */
 	public function run() {
+		$url  = WP_CLI::get_runner()->config['url'];
+		$path = '';
+		if ( ! empty( $url ) ) {
+			$parsed_url = WP_CLI\Utils\parse_url( $url );
+			if ( false !== $parsed_url && isset( $parsed_url['path'] ) ) {
+				$path = $parsed_url['path'];
+			} else {
+				// Fallback for cases where $url is just a path.
+				$path = $url;
+			}
+		}
+		$this->is_admin_request = ! empty( $path ) && (bool) preg_match( '#/wp-admin(/|$|\?)#i', $path );
+
+		if ( $this->is_admin_request && 'admin' !== WP_CLI::get_runner()->config['context'] ) {
+			WP_CLI::error( 'Profiling an admin URL requires --context=admin.' );
+		}
+
 		WP_CLI::add_wp_hook(
 			'muplugins_loaded',
 			function () {
@@ -510,6 +528,11 @@ class Profiler {
 		if ( 'stage' === $this->type && ! $this->focus ) {
 			$logger->stop();
 			$this->loggers[] = $logger;
+		}
+
+		// Skip main_query and template stages for admin requests.
+		if ( $this->is_admin_request ) {
+			return;
 		}
 
 		// Set up main_query main WordPress query.

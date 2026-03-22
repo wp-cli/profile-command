@@ -135,6 +135,17 @@ Feature: Profile the template render stage
       """
 
   @require-wp-4.0
+  Scenario: Invalid field name supplied to --fields
+    Given a WP install
+
+    When I try `wp profile stage template --fields=test`
+    Then STDERR should contain:
+      """
+      Invalid field(s): test
+      """
+    And the return code should be 1
+
+  @require-wp-4.0
   Scenario: Identify callback_count for each hook
     Given a WP install
 
@@ -160,3 +171,32 @@ Feature: Profile the template render stage
       | hook              |
       | init              |
       | wp_loaded:after   |
+
+  @require-wp-4.0
+  Scenario: Admin URL runs as a backend request and skips frontend stages
+    Given a WP install
+
+    When I run `wp profile stage --url=example.com/wp-admin/ --context=admin --fields=stage`
+    Then STDOUT should be a table containing rows:
+      | stage     |
+      | bootstrap |
+    And STDOUT should not contain:
+      """
+      main_query
+      """
+    And STDOUT should not contain:
+      """
+      template
+      """
+    And STDERR should be empty
+
+  @require-wp-4.0
+  Scenario: Admin URL without --context=admin emits an error
+    Given a WP install
+
+    When I try `wp profile stage --url=example.com/wp-admin/ --fields=stage`
+    Then STDERR should contain:
+      """
+      Profiling an admin URL requires --context=admin.
+      """
+    And the return code should be 1
