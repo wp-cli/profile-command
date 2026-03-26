@@ -36,7 +36,6 @@ Feature: Profile a specific hook
       | total (0)         |
     And STDERR should be empty
 
-  @require-wp-4.0
   Scenario: Profile a hook that has actions with output
     Given a WP install
 
