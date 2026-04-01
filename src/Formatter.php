@@ -68,8 +68,8 @@ class Formatter {
 	 * @param double $b Floating number.
 	 */
 	private function compare_float( $a, $b ) {
-		$a = number_format( $a, 4 );
-		$b = number_format( $b, 4 );
+		$a = round( $a, 4 );
+		$b = round( $b, 4 );
 		if ( 0 === $a - $b ) {
 			return 0;
 		} elseif ( $a - $b < 0 ) {

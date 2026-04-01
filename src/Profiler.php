@@ -439,8 +439,8 @@ class Profiler {
 			if ( 'bootstrap' === $this->focus ) {
 				$this->set_stage_hooks( $this->stage_hooks['bootstrap'] );
 			} elseif ( ! $this->focus ) {
-				$logger = new Logger( array( 'stage' => 'bootstrap' ) );
-				$logger->start();
+				$bootstrap_logger = new Logger( array( 'stage' => 'bootstrap' ) );
+				$bootstrap_logger->start();
 			}
 		}
 		WP_CLI::get_runner()->load_wordpress();
@@ -451,9 +451,9 @@ class Profiler {
 		if ( 'hook' === $this->type && 'wp_loaded:after' === $this->focus ) {
 			$this->wp_tick_profile_end();
 		}
-		if ( 'stage' === $this->type && ! $this->focus ) {
-			$logger->stop();
-			$this->loggers[] = $logger;
+		if ( 'stage' === $this->type && ! $this->focus && isset( $bootstrap_logger ) ) {
+			$bootstrap_logger->stop();
+			$this->loggers[] = $bootstrap_logger;
 		}
 
 		// Skip main_query and template stages for admin requests.
@@ -466,8 +466,8 @@ class Profiler {
 			if ( 'main_query' === $this->focus ) {
 				$this->set_stage_hooks( $this->stage_hooks['main_query'] );
 			} elseif ( ! $this->focus ) {
-				$logger = new Logger( array( 'stage' => 'main_query' ) );
-				$logger->start();
+				$main_query_logger = new Logger( array( 'stage' => 'main_query' ) );
+				$main_query_logger->start();
 			}
 		}
 		wp();
@@ -478,9 +478,9 @@ class Profiler {
 		if ( 'hook' === $this->type && 'wp:after' === $this->focus ) {
 			$this->wp_tick_profile_end();
 		}
-		if ( 'stage' === $this->type && ! $this->focus ) {
-			$logger->stop();
-			$this->loggers[] = $logger;
+		if ( 'stage' === $this->type && ! $this->focus && isset( $main_query_logger ) ) {
+			$main_query_logger->stop();
+			$this->loggers[] = $main_query_logger;
 		}
 
 		define( 'WP_USE_THEMES', true );
@@ -496,8 +496,8 @@ class Profiler {
 			if ( 'template' === $this->focus ) {
 				$this->set_stage_hooks( $this->stage_hooks['template'] );
 			} elseif ( ! $this->focus ) {
-				$logger = new Logger( array( 'stage' => 'template' ) );
-				$logger->start();
+				$template_logger = new Logger( array( 'stage' => 'template' ) );
+				$template_logger->start();
 			}
 		}
 		ob_start();
@@ -510,9 +510,9 @@ class Profiler {
 		if ( 'hook' === $this->type && 'wp_footer:after' === $this->focus ) {
 			$this->wp_tick_profile_end();
 		}
-		if ( 'stage' === $this->type && ! $this->focus ) {
-			$logger->stop();
-			$this->loggers[] = $logger;
+		if ( 'stage' === $this->type && ! $this->focus && isset( $template_logger ) ) {
+			$template_logger->stop();
+			$this->loggers[] = $template_logger;
 		}
 	}
 
@@ -577,7 +577,7 @@ class Profiler {
 	/**
 	 * Get the callbacks for a given filter
 	 *
-	 * @param string
+	 * @param string $filter
 	 * @return array|false
 	 */
 	private static function get_filter_callbacks( $filter ) {
