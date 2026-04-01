@@ -70,7 +70,7 @@ class Formatter {
 	private function compare_float( $a, $b ) {
 		$a = round( $a, 4 );
 		$b = round( $b, 4 );
-		if ( 0 === $a - $b ) {
+		if ( 0.0 === $a - $b ) {
 			return 0;
 		} elseif ( $a - $b < 0 ) {
 			return -1;

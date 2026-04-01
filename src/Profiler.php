@@ -471,6 +471,7 @@ class Profiler {
 			}
 		}
 		wp();
+		// @phpstan-ignore-next-line
 		if ( $this->running_hook ) {
 			$this->loggers[ $this->running_hook ]->stop();
 			$this->running_hook = null;
@@ -503,6 +504,7 @@ class Profiler {
 		ob_start();
 		require_once ABSPATH . WPINC . '/template-loader.php';
 		ob_get_clean();
+		// @phpstan-ignore-next-line
 		if ( $this->running_hook ) {
 			$this->loggers[ $this->running_hook ]->stop();
 			$this->running_hook = null;
