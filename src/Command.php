@@ -129,6 +129,10 @@ class Command {
 	 *
 	 * @skipglobalargcheck
 	 * @when before_wp_load
+	 *
+	 * @param array<string>       $args
+	 * @param array<string, mixed> $assoc_args
+	 * @return void
 	 */
 	public function stage( $args, $assoc_args ) {
 		global $wpdb;
@@ -257,6 +261,10 @@ class Command {
 	 *
 	 * @skipglobalargcheck
 	 * @when before_wp_load
+	 *
+	 * @param array<string>       $args
+	 * @param array<string, mixed> $assoc_args
+	 * @return void
 	 */
 	public function hook( $args, $assoc_args ) {
 
@@ -357,6 +365,10 @@ class Command {
 	 *     | 0.1009s | 100%        | 1             |
 	 *     +---------+-------------+---------------+
 	 *
+	 * @param array<string>       $args
+	 * @param array<string, mixed> $assoc_args
+	 * @return void
+	 *
 	 * @subcommand eval
 	 */
 	public function eval_( $args, $assoc_args ) {
@@ -426,6 +438,10 @@ class Command {
 	 *     | 0.1009s | 100%        | 1             |
 	 *     +---------+-------------+---------------+
 	 *
+	 * @param array<string>       $args
+	 * @param array<string, mixed> $assoc_args
+	 * @return void
+	 *
 	 * @subcommand eval-file
 	 */
 	public function eval_file( $args, $assoc_args ) {
@@ -451,6 +467,12 @@ class Command {
 
 	/**
 	 * Profile an eval or eval-file statement.
+	 *
+	 * @param array<string, mixed> $assoc_args
+	 * @param callable             $profile_callback
+	 * @param string               $order
+	 * @param string|null          $orderby
+	 * @return void
 	 */
 	private static function profile_eval_ish( $assoc_args, $profile_callback, $order = 'ASC', $orderby = null ) {
 		$hook   = Utils\get_flag_value( $assoc_args, 'hook' );
@@ -500,6 +522,7 @@ class Command {
 	 * Include a file without exposing it to current scope
 	 *
 	 * @param string $file
+	 * @return void
 	 */
 	private static function include_file( $file ) {
 		include $file;
@@ -508,9 +531,9 @@ class Command {
 	/**
 	 * Filter loggers with zero-ish values.
 	 *
-	 * @param array $loggers
-	 * @param array $metrics
-	 * @return array
+	 * @param array<\WP_CLI\Profile\Logger> $loggers
+	 * @param array<string>                 $metrics
+	 * @return array<\WP_CLI\Profile\Logger>
 	 */
 	private static function shine_spotlight( $loggers, $metrics ) {
 
@@ -550,9 +573,9 @@ class Command {
 	/**
 	 * Filter loggers to only those whose callback name matches a pattern.
 	 *
-	 * @param array  $loggers
-	 * @param string $pattern
-	 * @return array
+	 * @param array<\WP_CLI\Profile\Logger> $loggers
+	 * @param string                        $pattern
+	 * @return array<\WP_CLI\Profile\Logger>
 	 */
 	private static function filter_by_callback( $loggers, $pattern ) {
 		return array_filter(

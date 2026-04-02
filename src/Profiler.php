@@ -6,9 +6,13 @@ use WP_CLI;
 
 class Profiler {
 
+	/** @var string */
 	private $type;
+	/** @var string|bool|null */
 	private $focus;
+	/** @var array<string, \WP_CLI\Profile\Logger|array<string, mixed>> */
 	private $loggers     = array();
+	/** @var array<string, array<string>> */
 	private $stage_hooks = array(
 		'bootstrap'  => array(
 			'muplugins_loaded',
@@ -35,26 +39,49 @@ class Profiler {
 		),
 	);
 
+	/** @var array<string> */
 	private $current_stage_hooks       = array();
+	/** @var string|null */
 	private $running_hook              = null;
+	/** @var string|null */
 	private $previous_filter           = null;
+	/** @var array<mixed>|null */
 	private $previous_filter_callbacks = null;
+	/** @var int */
 	private $filter_depth              = 0;
 
+	/** @var string|null */
 	private $tick_callback          = null;
+	/** @var string|null */
 	private $tick_location          = null;
+	/** @var float|null */
 	private $tick_start_time        = null;
+	/** @var int|null */
 	private $tick_query_offset      = null;
+	/** @var int|null */
 	private $tick_cache_hit_offset  = null;
+	/** @var int|null */
 	private $tick_cache_miss_offset = null;
 
+	/** @var bool */
 	private $is_admin_request = false;
 
+	/**
+	 * Profiler constructor.
+	 *
+	 * @param string           $type
+	 * @param string|bool|null $focus
+	 */
 	public function __construct( $type, $focus ) {
 		$this->type  = $type;
 		$this->focus = $focus;
 	}
 
+	/**
+	 * Get the loggers.
+	 *
+	 * @return array<\WP_CLI\Profile\Logger>
+	 */
 	public function get_loggers() {
 		foreach ( $this->loggers as $i => $logger ) {
 			if ( is_array( $logger ) ) {
@@ -77,6 +104,8 @@ class Profiler {
 
 	/**
 	 * Run the profiler against WordPress
+	 *
+	 * @return void
 	 */
 	public function run() {
 		$url  = WP_CLI::get_runner()->config['url'];
@@ -153,6 +182,9 @@ class Profiler {
 
 	/**
 	 * Start profiling function calls on the end of this filter
+	 *
+	 * @param mixed $value
+	 * @return mixed
 	 */
 	public function wp_tick_profile_begin( $value = null ) {
 
@@ -189,6 +221,9 @@ class Profiler {
 
 	/**
 	 * Stop profiling function calls at the beginning of this filter
+	 *
+	 * @param mixed $value
+	 * @return mixed
 	 */
 	public function wp_tick_profile_end( $value = null ) {
 		unregister_tick_function( array( $this, 'handle_function_tick' ) );
@@ -198,6 +233,8 @@ class Profiler {
 
 	/**
 	 * Profiling verbosity at the beginning of every action and filter
+	 *
+	 * @return void
 	 */
 	public function wp_hook_begin() {
 
@@ -247,6 +284,9 @@ class Profiler {
 
 	/**
 	 * Wrap current filter callbacks with a timer
+	 *
+	 * @param string $current_filter
+	 * @return void
 	 */
 	private function wrap_current_filter_callbacks( $current_filter ) {
 
@@ -282,6 +322,9 @@ class Profiler {
 
 	/**
 	 * Profiling verbosity at the end of every action and filter
+	 *
+	 * @param mixed $filter_value
+	 * @return mixed
 	 */
 	public function wp_hook_end( $filter_value = null ) {
 
@@ -313,6 +356,8 @@ class Profiler {
 
 	/**
 	 * Handle the tick of a function
+	 *
+	 * @return void
 	 */
 	public function handle_function_tick() {
 		global $wpdb, $wp_object_cache;
@@ -399,6 +444,9 @@ class Profiler {
 
 	/**
 	 * Profiling request time for any active Loggers
+	 *
+	 * @param mixed $filter_value
+	 * @return mixed
 	 */
 	public function wp_request_begin( $filter_value = null ) {
 		foreach ( Logger::$active_loggers as $logger ) {
@@ -409,6 +457,9 @@ class Profiler {
 
 	/**
 	 * Profiling request time for any active Loggers
+	 *
+	 * @param mixed $filter_value
+	 * @return mixed
 	 */
 	public function wp_request_end( $filter_value = null ) {
 		foreach ( Logger::$active_loggers as $logger ) {
@@ -419,6 +470,8 @@ class Profiler {
 
 	/**
 	 * Runs through the entirety of the WP bootstrap process
+	 *
+	 * @return void
 	 */
 	private function load_wordpress_with_template() {
 
@@ -471,7 +524,6 @@ class Profiler {
 			}
 		}
 		wp();
-		// @phpstan-ignore-next-line
 		if ( $this->running_hook ) {
 			$this->loggers[ $this->running_hook ]->stop();
 			$this->running_hook = null;
@@ -504,7 +556,6 @@ class Profiler {
 		ob_start();
 		require_once ABSPATH . WPINC . '/template-loader.php';
 		ob_get_clean();
-		// @phpstan-ignore-next-line
 		if ( $this->running_hook ) {
 			$this->loggers[ $this->running_hook ]->stop();
 			$this->running_hook = null;
@@ -520,6 +571,9 @@ class Profiler {
 
 	/**
 	 * Get a human-readable name from a callback
+	 *
+	 * @param mixed $callback
+	 * @return array{0: string, 1: string}
 	 */
 	private static function get_name_location_from_callback( $callback ) {
 		$location   = '';
@@ -568,6 +622,9 @@ class Profiler {
 
 	/**
 	 * Set the hooks for the current stage
+	 *
+	 * @param array<string> $hooks
+	 * @return void
 	 */
 	private function set_stage_hooks( $hooks ) {
 		$this->current_stage_hooks     = $hooks;
@@ -580,7 +637,7 @@ class Profiler {
 	 * Get the callbacks for a given filter
 	 *
 	 * @param string $filter
-	 * @return array|false
+	 * @return array<mixed>|false
 	 */
 	private static function get_filter_callbacks( $filter ) {
 		global $wp_filter;
@@ -604,7 +661,8 @@ class Profiler {
 	 * Set the callbacks for a given filter
 	 *
 	 * @param string $filter
-	 * @param mixed $callbacks
+	 * @param mixed  $callbacks
+	 * @return void
 	 */
 	private static function set_filter_callbacks( $filter, $callbacks ) {
 		global $wp_filter;

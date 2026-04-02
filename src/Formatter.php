@@ -4,12 +4,28 @@ namespace WP_CLI\Profile;
 
 class Formatter {
 
+	/**
+	 * @var \WP_CLI\Formatter
+	 */
 	private $formatter;
 
+	/**
+	 * @var array<string, mixed>
+	 */
 	private $args;
 
+	/**
+	 * @var int|null
+	 */
 	private $total_cell_index;
 
+	/**
+	 * Formatter constructor.
+	 *
+	 * @param array<mixed>         $assoc_args
+	 * @param array<string>|null   $fields
+	 * @param string|bool          $prefix
+	 */
 	public function __construct( &$assoc_args, $fields = null, $prefix = false ) {
 		$format_args = array(
 			'format' => 'table',
@@ -51,7 +67,11 @@ class Formatter {
 	/**
 	 * Display multiple items according to the output arguments.
 	 *
-	 * @param array $items
+	 * @param array<\WP_CLI\Profile\Logger> $items
+	 * @param bool                         $include_total
+	 * @param string                       $order
+	 * @param string|null                  $orderby
+	 * @return void
 	 */
 	public function display_items( $items, $include_total, $order, $orderby ) {
 		if ( 'table' === $this->args['format'] && empty( $this->args['field'] ) ) {
@@ -64,8 +84,9 @@ class Formatter {
 	/**
 	 * Function to compare floats.
 	 *
-	 * @param double $a Floating number.
-	 * @param double $b Floating number.
+	 * @param float $a Floating number.
+	 * @param float $b Floating number.
+	 * @return int
 	 */
 	private function compare_float( $a, $b ) {
 		$a = round( $a, 4 );
@@ -82,8 +103,12 @@ class Formatter {
 	/**
 	 * Show items in a \cli\Table.
 	 *
-	 * @param array $items
-	 * @param array $fields
+	 * @param string                       $order
+	 * @param string|null                  $orderby
+	 * @param array<\WP_CLI\Profile\Logger> $items
+	 * @param array<string>                $fields
+	 * @param bool                         $include_total
+	 * @return void
 	 */
 	private function show_table( $order, $orderby, $items, $fields, $include_total ) {
 		$table = new \cli\Table();
