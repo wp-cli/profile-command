@@ -11,37 +11,37 @@ namespace WP_CLI\Profile;
 class Logger {
 
 	/** @var float */
-	public $time                = 0;
+	public $time = 0;
 	/** @var int */
-	public $query_count         = 0;
+	public $query_count = 0;
 	/** @var float */
-	public $query_time          = 0;
+	public $query_time = 0;
 	/** @var int */
-	public $cache_hits          = 0;
+	public $cache_hits = 0;
 	/** @var int */
-	public $cache_misses        = 0;
+	public $cache_misses = 0;
 	/** @var string|null */
-	public $cache_ratio         = null;
+	public $cache_ratio = null;
 	/** @var int */
-	public $hook_count          = 0;
+	public $hook_count = 0;
 	/** @var float */
-	public $hook_time           = 0;
+	public $hook_time = 0;
 	/** @var int */
-	public $request_count       = 0;
+	public $request_count = 0;
 	/** @var float */
-	public $request_time        = 0;
+	public $request_time = 0;
 	/** @var float|null */
-	private $start_time         = null;
+	private $start_time = null;
 	/** @var int|null */
-	private $query_offset       = null;
+	private $query_offset = null;
 	/** @var int|null */
-	private $cache_hit_offset   = null;
+	private $cache_hit_offset = null;
 	/** @var int|null */
-	private $cache_miss_offset  = null;
+	private $cache_miss_offset = null;
 	/** @var float|null */
-	private $hook_start_time    = null;
+	private $hook_start_time = null;
 	/** @var int */
-	private $hook_depth         = 0;
+	private $hook_depth = 0;
 	/** @var float|null */
 	private $request_start_time = null;
 

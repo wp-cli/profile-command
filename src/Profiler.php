@@ -11,7 +11,7 @@ class Profiler {
 	/** @var string|bool|null */
 	private $focus;
 	/** @var array<string, \WP_CLI\Profile\Logger|array<string, mixed>> */
-	private $loggers     = array();
+	private $loggers = array();
 	/** @var array<string, array<string>> */
 	private $stage_hooks = array(
 		'bootstrap'  => array(
@@ -40,26 +40,26 @@ class Profiler {
 	);
 
 	/** @var array<string> */
-	private $current_stage_hooks       = array();
+	private $current_stage_hooks = array();
 	/** @var string|null */
-	private $running_hook              = null;
+	private $running_hook = null;
 	/** @var string|null */
-	private $previous_filter           = null;
+	private $previous_filter = null;
 	/** @var array<mixed>|null */
 	private $previous_filter_callbacks = null;
 	/** @var int */
-	private $filter_depth              = 0;
+	private $filter_depth = 0;
 
 	/** @var string|null */
-	private $tick_callback          = null;
+	private $tick_callback = null;
 	/** @var string|null */
-	private $tick_location          = null;
+	private $tick_location = null;
 	/** @var float|null */
-	private $tick_start_time        = null;
+	private $tick_start_time = null;
 	/** @var int|null */
-	private $tick_query_offset      = null;
+	private $tick_query_offset = null;
 	/** @var int|null */
-	private $tick_cache_hit_offset  = null;
+	private $tick_cache_hit_offset = null;
 	/** @var int|null */
 	private $tick_cache_miss_offset = null;
 
