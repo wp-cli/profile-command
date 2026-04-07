@@ -272,7 +272,8 @@ class Profiler {
 		}
 
 		if ( 0 === $this->filter_depth
-			&& ! is_null( $this->previous_filter_callbacks ) ) {
+			&& ! is_null( $this->previous_filter_callbacks )
+			&& ! is_null( $this->previous_filter ) ) {
 			self::set_filter_callbacks( $this->previous_filter, $this->previous_filter_callbacks );
 			$this->previous_filter_callbacks = null;
 		}

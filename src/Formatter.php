@@ -27,6 +27,9 @@ class Formatter {
 	 * @param string|false          $prefix
 	 */
 	public function __construct( &$assoc_args, $fields = null, $prefix = false ) {
+		if ( null === $fields ) {
+			$fields = [];
+		}
 		$format_args = array(
 			'format' => 'table',
 			'fields' => $fields,
@@ -55,9 +58,9 @@ class Formatter {
 			}
 		}
 
-		if ( 'time' !== $fields[0] ) {
+		if ( ! empty( $fields ) && 'time' !== $fields[0] ) {
 			$index                  = array_search( $fields[0], $format_args['fields'], true );
-			$this->total_cell_index = ( false !== $index ) ? $index : null;
+			$this->total_cell_index = ( false !== $index ) ? (int) $index : null;
 		}
 
 		$this->args      = $format_args;
