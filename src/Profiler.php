@@ -6,11 +6,11 @@ use WP_CLI;
 
 class Profiler {
 
-	/** @var string */
+	/** @var string|false */
 	private $type;
 	/** @var string|bool|null */
 	private $focus;
-	/** @var array<string, \WP_CLI\Profile\Logger|array<string, mixed>> */
+	/** @var array<string|int, \WP_CLI\Profile\Logger|array<string, mixed>> */
 	private $loggers = array();
 	/** @var array<string, array<string>> */
 	private $stage_hooks = array(
@@ -69,7 +69,7 @@ class Profiler {
 	/**
 	 * Profiler constructor.
 	 *
-	 * @param string           $type
+	 * @param string|false     $type
 	 * @param string|bool|null $focus
 	 */
 	public function __construct( $type, $focus ) {
@@ -99,7 +99,9 @@ class Profiler {
 			$logger->location    = self::get_short_location( $logger->location );
 			$this->loggers[ $i ] = $logger;
 		}
-		return $this->loggers;
+		/** @var array<\WP_CLI\Profile\Logger> $loggers */
+		$loggers = $this->loggers;
+		return $loggers;
 	}
 
 	/**
@@ -149,7 +151,7 @@ class Profiler {
 		);
 		if (
 			'hook' === $this->type &&
-			$this->focus &&
+			is_string( $this->focus ) &&
 			':before' === substr( $this->focus, -7, 7 )
 		) {
 			$stage_hooks = array();
@@ -158,7 +160,7 @@ class Profiler {
 			}
 			$end_hook = substr( $this->focus, 0, -7 );
 			$key      = array_search( $end_hook, $stage_hooks, true );
-			if ( isset( $stage_hooks[ $key - 1 ] ) ) {
+			if ( is_int( $key ) && isset( $stage_hooks[ $key - 1 ] ) ) {
 				$start_hook = $stage_hooks[ $key - 1 ];
 				WP_CLI::add_wp_hook( $start_hook, array( $this, 'wp_tick_profile_begin' ), 9999 );
 			} else {
@@ -167,7 +169,7 @@ class Profiler {
 			WP_CLI::add_wp_hook( $end_hook, array( $this, 'wp_tick_profile_end' ), -9999 );
 		} elseif (
 			'hook' === $this->type &&
-			$this->focus &&
+			is_string( $this->focus ) &&
 			':after' === substr( $this->focus, -6, 6 )
 		) {
 			$start_hook = substr( $this->focus, 0, -6 );
@@ -243,10 +245,14 @@ class Profiler {
 		}
 
 		$current_filter = current_filter();
+		if ( ! is_string( $current_filter ) ) {
+			return;
+		}
 		if ( ( 'stage' === $this->type && in_array( $current_filter, $this->current_stage_hooks, true ) )
 			|| ( 'hook' === $this->type && ! $this->focus ) ) {
 			$pseudo_hook = "{$current_filter}:before";
 			if ( isset( $this->loggers[ $pseudo_hook ] ) ) {
+				assert( $this->loggers[ $pseudo_hook ] instanceof Logger );
 				$this->loggers[ $pseudo_hook ]->stop();
 			}
 			$callback_count = 0;
@@ -308,6 +314,7 @@ class Profiler {
 								)
 							);
 						}
+						assert( $this->loggers[ $i ] instanceof Logger );
 						$this->loggers[ $i ]->start();
 						$value = call_user_func_array( $the_['function'], func_get_args() );
 						$this->loggers[ $i ]->stop();
@@ -335,10 +342,11 @@ class Profiler {
 		$current_filter = current_filter();
 		if ( ( 'stage' === $this->type && in_array( $current_filter, $this->current_stage_hooks, true ) )
 			|| ( 'hook' === $this->type && ! $this->focus ) ) {
+			assert( $this->loggers[ $current_filter ] instanceof Logger );
 			$this->loggers[ $current_filter ]->stop();
 			if ( 'stage' === $this->type ) {
 				$key = array_search( $current_filter, $this->current_stage_hooks, true );
-				if ( false !== $key && isset( $this->current_stage_hooks[ $key + 1 ] ) ) {
+				if ( is_int( $key ) && isset( $this->current_stage_hooks[ $key + 1 ] ) ) {
 					$pseudo_hook = "{$this->current_stage_hooks[$key+1]}:before";
 				} else {
 					$pseudo_hook        = "{$this->current_stage_hooks[$key]}:after";
@@ -379,6 +387,7 @@ class Profiler {
 				);
 			}
 
+			assert( is_array( $this->loggers[ $callback_hash ] ) );
 			$this->loggers[ $callback_hash ]['time'] += $time;
 
 			if ( isset( $wpdb ) ) {
@@ -411,7 +420,10 @@ class Profiler {
 		$location = '';
 		$callback = '';
 		if ( in_array( strtolower( $frame['function'] ), array( 'include', 'require', 'include_once', 'require_once' ), true ) ) {
-			$callback = $frame['function'] . " '" . $frame['args'][0] . "'";
+			$callback = $frame['function'];
+			if ( isset( $frame['args'][0] ) ) {
+				$callback .= " '" . $frame['args'][0] . "'";
+			}
 		} elseif ( isset( $frame['object'] ) && method_exists( $frame['object'], $frame['function'] ) ) {
 			$callback = get_class( $frame['object'] ) . '->' . $frame['function'] . '()';
 		} elseif ( isset( $frame['class'] ) && method_exists( $frame['class'], $frame['function'] ) ) {
@@ -498,6 +510,7 @@ class Profiler {
 		}
 		WP_CLI::get_runner()->load_wordpress();
 		if ( $this->running_hook ) {
+			assert( $this->loggers[ $this->running_hook ] instanceof Logger );
 			$this->loggers[ $this->running_hook ]->stop();
 			$this->running_hook = null;
 		}
@@ -525,6 +538,7 @@ class Profiler {
 		}
 		wp();
 		if ( $this->running_hook ) {
+			assert( $this->loggers[ $this->running_hook ] instanceof Logger );
 			$this->loggers[ $this->running_hook ]->stop();
 			$this->running_hook = null;
 		}
@@ -557,6 +571,7 @@ class Profiler {
 		require_once ABSPATH . WPINC . '/template-loader.php';
 		ob_get_clean();
 		if ( $this->running_hook ) {
+			assert( $this->loggers[ $this->running_hook ] instanceof Logger );
 			$this->loggers[ $this->running_hook ]->stop();
 			$this->running_hook = null;
 		}
@@ -605,7 +620,8 @@ class Profiler {
 	 * @return string
 	 */
 	private static function get_short_location( $location ) {
-		$abspath = rtrim( realpath( ABSPATH ), '/' ) . '/';
+		$real_abspath = realpath( ABSPATH );
+		$abspath      = rtrim( false !== $real_abspath ? $real_abspath : ABSPATH, '/' ) . '/';
 		if ( defined( 'WP_PLUGIN_DIR' ) && 0 === stripos( $location, WP_PLUGIN_DIR ) ) {
 			$location = str_replace( trailingslashit( WP_PLUGIN_DIR ), '', $location );
 		} elseif ( defined( 'WPMU_PLUGIN_DIR' ) && 0 === stripos( $location, WPMU_PLUGIN_DIR ) ) {

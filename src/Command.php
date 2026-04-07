@@ -147,6 +147,7 @@ class Command {
 			WP_CLI::error( 'Invalid stage. Must be one of ' . implode( ', ', $valid_stages ) . ', or use --all.' );
 		}
 
+		assert( is_bool( $focus ) || is_string( $focus ) || is_null( $focus ) );
 		$profiler = new Profiler( 'stage', $focus );
 		$profiler->run();
 

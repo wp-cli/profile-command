@@ -24,7 +24,7 @@ class Formatter {
 	 *
 	 * @param array<mixed>         $assoc_args
 	 * @param array<string>|null   $fields
-	 * @param string|bool          $prefix
+	 * @param string|false          $prefix
 	 */
 	public function __construct( &$assoc_args, $fields = null, $prefix = false ) {
 		$format_args = array(
@@ -134,7 +134,7 @@ class Formatter {
 					list( $first, $second ) = $orderby_array;
 
 					if ( is_numeric( $first->$orderby ) && is_numeric( $second->$orderby ) ) {
-						return $this->compare_float( $first->$orderby, $second->$orderby );
+						return $this->compare_float( (float) $first->$orderby, (float) $second->$orderby );
 					}
 
 					return strcmp( $first->$orderby, $second->$orderby );
@@ -164,6 +164,7 @@ class Formatter {
 				}
 				if ( stripos( $fields[ $i ], '_ratio' ) ) {
 					if ( ! is_null( $value ) ) {
+						assert( is_array( $totals[ $i ] ) );
 						$totals[ $i ][] = $value;
 					}
 				} else {
@@ -181,7 +182,8 @@ class Formatter {
 					continue;
 				}
 				if ( stripos( $fields[ $i ], '_time' ) || 'time' === $fields[ $i ] ) {
-					$totals[ $i ] = round( $value, 4 ) . 's';
+					assert( is_numeric( $value ) );
+					$totals[ $i ] = round( (float) $value, 4 ) . 's';
 				}
 				if ( is_array( $value ) ) {
 					if ( ! empty( $value ) ) {
