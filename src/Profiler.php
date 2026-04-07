@@ -625,7 +625,7 @@ class Profiler {
 		$location   = '';
 		$name       = '';
 		$reflection = false;
-		if ( is_array( $callback ) && is_object( $callback[0] ) ) {
+		if ( is_array( $callback ) && isset( $callback[0] ) && is_object( $callback[0] ) && isset( $callback[1] ) && is_string( $callback[1] ) ) {
 			$reflection = new \ReflectionMethod( $callback[0], $callback[1] );
 			$name       = get_class( $callback[0] ) . '->' . $callback[1] . '()';
 		} elseif ( is_array( $callback ) && isset( $callback[0] ) && isset( $callback[1] ) && ( is_object( $callback[0] ) || is_string( $callback[0] ) ) && is_string( $callback[1] ) && method_exists( $callback[0], $callback[1] ) ) {
