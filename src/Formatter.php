@@ -43,10 +43,19 @@ class Formatter {
 		}
 
 		if ( ! is_array( $format_args['fields'] ) ) {
-			$format_args['fields'] = explode( ',', $format_args['fields'] );
+			$fields_val            = $format_args['fields'];
+			$fields_str            = is_scalar( $fields_val ) ? (string) $fields_val : '';
+			$format_args['fields'] = explode( ',', $fields_str );
 		}
 
-		$format_args['fields'] = array_filter( array_map( 'trim', $format_args['fields'] ) );
+		$format_args['fields'] = array_filter(
+			array_map(
+				function ( $val ) {
+					return trim( is_scalar( $val ) ? (string) $val : '' );
+				},
+				$format_args['fields']
+			)
+		);
 
 		if ( isset( $assoc_args['fields'] ) ) {
 			if ( empty( $format_args['fields'] ) ) {
@@ -78,7 +87,9 @@ class Formatter {
 	 */
 	public function display_items( $items, $include_total, $order, $orderby ) {
 		if ( 'table' === $this->args['format'] && empty( $this->args['field'] ) ) {
-			$this->show_table( $order, $orderby, $items, $this->args['fields'], $include_total );
+			/** @var array<string> $fields */
+			$fields = $this->args['fields'];
+			$this->show_table( $order, $orderby, $items, $fields, $include_total );
 		} else {
 			$this->formatter->display_items( $items );
 		}
@@ -171,10 +182,13 @@ class Formatter {
 						$totals[ $i ][] = $value;
 					}
 				} else {
-					$totals[ $i ] += $value;
+					$current_total = is_numeric( $totals[ $i ] ) ? $totals[ $i ] : 0;
+					$add_value     = is_numeric( $value ) ? $value : 0;
+					$totals[ $i ]  = $current_total + $add_value;
 				}
 				if ( stripos( $fields[ $i ], '_time' ) || 'time' === $fields[ $i ] ) {
-					$values[ $i ] = round( $value, 4 ) . 's';
+					$value_num    = is_numeric( $value ) ? (float) $value : 0.0;
+					$values[ $i ] = round( $value_num, 4 ) . 's';
 				}
 			}
 			$table->addRow( $values );
@@ -190,7 +204,13 @@ class Formatter {
 				}
 				if ( is_array( $value ) ) {
 					if ( ! empty( $value ) ) {
-						$totals[ $i ] = round( ( array_sum( array_map( 'floatval', $value ) ) / count( $value ) ), 2 ) . '%';
+						$float_values = array_map(
+							function ( $val ) {
+								return floatval( is_scalar( $val ) ? $val : 0 );
+							},
+							$value
+						);
+						$totals[ $i ] = round( ( array_sum( $float_values ) / count( $value ) ), 2 ) . '%';
 					} else {
 						$totals[ $i ] = null;
 					}

@@ -137,17 +137,20 @@ class Command {
 	public function stage( $args, $assoc_args ) {
 		global $wpdb;
 
-		$focus = Utils\get_flag_value( $assoc_args, 'all', isset( $args[0] ) ? $args[0] : null );
+		/** @var array<string, bool|string> $typed_assoc_args */
+		$typed_assoc_args = self::get_typed_assoc_args( $assoc_args );
+		$focus            = Utils\get_flag_value( $typed_assoc_args, 'all', isset( $args[0] ) ? $args[0] : null );
 
-		$order   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
-		$orderby = Utils\get_flag_value( $assoc_args, 'orderby', null );
+		$order_val   = Utils\get_flag_value( $typed_assoc_args, 'order', 'ASC' );
+		$order       = is_string( $order_val ) ? $order_val : 'ASC';
+		$orderby_val = Utils\get_flag_value( $typed_assoc_args, 'orderby', null );
+		$orderby     = ( is_string( $orderby_val ) || is_null( $orderby_val ) ) ? $orderby_val : null;
 
 		$valid_stages = array( 'bootstrap', 'main_query', 'template' );
 		if ( $focus && ( true !== $focus && ! in_array( $focus, $valid_stages, true ) ) ) {
 			WP_CLI::error( 'Invalid stage. Must be one of ' . implode( ', ', $valid_stages ) . ', or use --all.' );
 		}
 
-		assert( is_bool( $focus ) || is_string( $focus ) || is_null( $focus ) );
 		$profiler = new Profiler( 'stage', $focus );
 		$profiler->run();
 
@@ -184,9 +187,10 @@ class Command {
 			);
 		}
 		$fields    = array_merge( $base, $metrics );
-		$formatter = new Formatter( $assoc_args, $fields );
+		$formatter = new Formatter( $typed_assoc_args, $fields );
 		$loggers   = $profiler->get_loggers();
-		if ( Utils\get_flag_value( $assoc_args, 'spotlight' ) ) {
+		/** @var array<string, bool|string> $typed_assoc_args */
+		if ( Utils\get_flag_value( $typed_assoc_args, 'spotlight' ) ) {
 			$loggers = self::shine_spotlight( $loggers, $metrics );
 		}
 
@@ -269,10 +273,14 @@ class Command {
 	 */
 	public function hook( $args, $assoc_args ) {
 
-		$focus = Utils\get_flag_value( $assoc_args, 'all', isset( $args[0] ) ? $args[0] : null );
+		/** @var array<string, bool|string> $typed_assoc_args */
+		$typed_assoc_args = self::get_typed_assoc_args( $assoc_args );
+		$focus            = Utils\get_flag_value( $typed_assoc_args, 'all', isset( $args[0] ) ? $args[0] : null );
 
-		$order   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
-		$orderby = Utils\get_flag_value( $assoc_args, 'orderby', null );
+		$order_val   = Utils\get_flag_value( $typed_assoc_args, 'order', 'ASC' );
+		$order       = is_string( $order_val ) ? $order_val : 'ASC';
+		$orderby_val = Utils\get_flag_value( $typed_assoc_args, 'orderby', null );
+		$orderby     = ( is_string( $orderby_val ) || is_null( $orderby_val ) ) ? $orderby_val : null;
 
 		$profiler = new Profiler( 'hook', $focus );
 		$profiler->run();
@@ -300,13 +308,16 @@ class Command {
 			'request_count',
 		);
 		$fields    = array_merge( $base, $metrics );
-		$formatter = new Formatter( $assoc_args, $fields );
+		$formatter = new Formatter( $typed_assoc_args, $fields );
 		$loggers   = $profiler->get_loggers();
-		if ( Utils\get_flag_value( $assoc_args, 'spotlight' ) ) {
+		/** @var array<string, bool|string> $typed_assoc_args */
+		if ( Utils\get_flag_value( $typed_assoc_args, 'spotlight' ) ) {
 			$loggers = self::shine_spotlight( $loggers, $metrics );
 		}
-		$search = Utils\get_flag_value( $assoc_args, 'search', false );
-		if ( false !== $search && '' !== $search ) {
+		/** @var array<string, bool|string> $typed_assoc_args */
+		$search_val = Utils\get_flag_value( $typed_assoc_args, 'search', '' );
+		$search     = is_string( $search_val ) ? $search_val : '';
+		if ( '' !== $search ) {
 			if ( ! $focus ) {
 				WP_CLI::error( '--search requires --all or a specific hook.' );
 			}
@@ -375,11 +386,15 @@ class Command {
 	public function eval_( $args, $assoc_args ) {
 		$statement = $args[0];
 
-		$order   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
-		$orderby = Utils\get_flag_value( $assoc_args, 'orderby', null );
+		/** @var array<string, bool|string> $typed_assoc_args */
+		$typed_assoc_args = self::get_typed_assoc_args( $assoc_args );
+		$order_val        = Utils\get_flag_value( $typed_assoc_args, 'order', 'ASC' );
+		$order            = is_string( $order_val ) ? $order_val : 'ASC';
+		$orderby_val      = Utils\get_flag_value( $typed_assoc_args, 'orderby', null );
+		$orderby          = ( is_string( $orderby_val ) || is_null( $orderby_val ) ) ? $orderby_val : null;
 
 		self::profile_eval_ish(
-			$assoc_args,
+			$typed_assoc_args,
 			function () use ( $statement ) {
 				eval( $statement ); // phpcs:ignore Squiz.PHP.Eval.Discouraged -- no other way around here
 			},
@@ -449,15 +464,20 @@ class Command {
 
 		$file = $args[0];
 
-		$order   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
-		$orderby = Utils\get_flag_value( $assoc_args, 'orderby', null );
+		/** @var array<string, bool|string> $typed_assoc_args */
+		/** @var array<string, bool|string> $typed_assoc_args */
+		$typed_assoc_args = self::get_typed_assoc_args( $assoc_args );
+		$order_val        = Utils\get_flag_value( $typed_assoc_args, 'order', 'ASC' );
+		$order            = is_string( $order_val ) ? $order_val : 'ASC';
+		$orderby_val      = Utils\get_flag_value( $typed_assoc_args, 'orderby', null );
+		$orderby          = ( is_string( $orderby_val ) || is_null( $orderby_val ) ) ? $orderby_val : null;
 
 		if ( ! file_exists( $file ) ) {
 			WP_CLI::error( "'$file' does not exist." );
 		}
 
 		self::profile_eval_ish(
-			$assoc_args,
+			$typed_assoc_args,
 			function () use ( $file ) {
 				self::include_file( $file );
 			},
@@ -476,10 +496,12 @@ class Command {
 	 * @return void
 	 */
 	private static function profile_eval_ish( $assoc_args, $profile_callback, $order = 'ASC', $orderby = null ) {
-		$hook   = Utils\get_flag_value( $assoc_args, 'hook' );
-		$focus  = false;
-		$type   = false;
-		$fields = array();
+		/** @var array<string, bool|string> $typed_assoc_args */
+		$typed_assoc_args = self::get_typed_assoc_args( $assoc_args );
+		$hook             = Utils\get_flag_value( $typed_assoc_args, 'hook' );
+		$focus            = false;
+		$type             = false;
+		$fields           = array();
 		if ( $hook ) {
 			$type = 'hook';
 			if ( true !== $hook ) {
@@ -515,7 +537,7 @@ class Command {
 				'request_count',
 			)
 		);
-		$formatter = new Formatter( $assoc_args, $fields );
+		$formatter = new Formatter( $typed_assoc_args, $fields );
 		$formatter->display_items( $loggers, false, $order, $orderby );
 	}
 
@@ -585,5 +607,21 @@ class Command {
 				return isset( $logger->callback ) && false !== stripos( $logger->callback, $pattern );
 			}
 		);
+	}
+
+	/**
+	 * Get typed assoc args for get_flag_value.
+	 *
+	 * @param array<string, mixed> $assoc_args
+	 * @return array<string, bool|string>
+	 */
+	private static function get_typed_assoc_args( $assoc_args ) {
+		$typed = array();
+		foreach ( $assoc_args as $k => $v ) {
+			if ( is_bool( $v ) || is_string( $v ) ) {
+				$typed[ $k ] = $v;
+			}
+		}
+		return $typed;
 	}
 }

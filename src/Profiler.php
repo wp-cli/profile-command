@@ -259,7 +259,9 @@ class Profiler {
 			$callbacks      = self::get_filter_callbacks( $current_filter );
 			if ( false !== $callbacks ) {
 				foreach ( $callbacks as $priority => $cbs ) {
-					$callback_count += count( $cbs );
+					if ( is_array( $cbs ) ) {
+						$callback_count += count( $cbs );
+					}
 				}
 			}
 			$this->loggers[ $current_filter ] = new Logger(
@@ -305,24 +307,38 @@ class Profiler {
 		$this->previous_filter_callbacks = $callbacks;
 
 		foreach ( $callbacks as $priority => $priority_callbacks ) {
-			foreach ( $priority_callbacks as $i => $the_ ) {
-				$callbacks[ $priority ][ $i ] = array(
-					'function'      => function () use ( $the_, $i ) {
-						if ( ! isset( $this->loggers[ $i ] ) ) {
-							$this->loggers[ $i ] = new Logger(
-								array(
-									'callback' => $the_['function'],
-								)
-							);
-						}
-						assert( $this->loggers[ $i ] instanceof Logger );
-						$this->loggers[ $i ]->start();
-						$value = call_user_func_array( $the_['function'], func_get_args() );
-						$this->loggers[ $i ]->stop();
-						return $value;
-					},
-					'accepted_args' => $the_['accepted_args'],
-				);
+			if ( is_array( $priority_callbacks ) ) {
+				$new_priority_callbacks = $priority_callbacks;
+				foreach ( $priority_callbacks as $i => $the_ ) {
+					if ( is_array( $the_ ) && isset( $the_['function'] ) && isset( $the_['accepted_args'] ) ) {
+						$func                         = $the_['function'];
+						$new_priority_callbacks[ $i ] = array(
+							'function'      => function () use ( $func, $i ) {
+								if ( ! isset( $this->loggers[ $i ] ) ) {
+									$this->loggers[ $i ] = new Logger(
+										array(
+											'callback' => $func,
+										)
+									);
+								}
+								assert( $this->loggers[ $i ] instanceof Logger );
+								$this->loggers[ $i ]->start();
+
+								$args = func_get_args();
+								if ( is_callable( $func ) ) {
+									$value = call_user_func_array( $func, $args );
+								} else {
+									$value = null;
+								}
+
+								$this->loggers[ $i ]->stop();
+								return $value;
+							},
+							'accepted_args' => $the_['accepted_args'],
+						);
+					}
+				}
+				$callbacks[ $priority ] = $new_priority_callbacks;
 			}
 		}
 		self::set_filter_callbacks( $current_filter, $callbacks );
@@ -388,27 +404,41 @@ class Profiler {
 				);
 			}
 
-			assert( is_array( $this->loggers[ $callback_hash ] ) );
-			$this->loggers[ $callback_hash ]['time'] += $time;
+			$logger_data = $this->loggers[ $callback_hash ];
+			if ( is_array( $logger_data ) ) {
+				$current_time        = isset( $logger_data['time'] ) && is_numeric( $logger_data['time'] ) ? $logger_data['time'] : 0.0;
+				$logger_data['time'] = (float) $current_time + $time;
 
-			if ( isset( $wpdb ) ) {
-				$total_queries = count( $wpdb->queries );
-				for ( $i = $this->tick_query_offset; $i < $total_queries; $i++ ) {
-					$this->loggers[ $callback_hash ]['query_time'] += $wpdb->queries[ $i ][1];
-					++$this->loggers[ $callback_hash ]['query_count'];
-				}
-			}
+				if ( isset( $wpdb ) ) {
+					$total_queries = count( $wpdb->queries );
+					for ( $i = $this->tick_query_offset; $i < $total_queries; $i++ ) {
+						$q_time                    = isset( $wpdb->queries[ $i ][1] ) ? $wpdb->queries[ $i ][1] : 0.0;
+						$current_q_time            = isset( $logger_data['query_time'] ) && is_numeric( $logger_data['query_time'] ) ? $logger_data['query_time'] : 0.0;
+						$q_time_val                = is_numeric( $q_time ) ? $q_time : 0.0;
+						$logger_data['query_time'] = (float) $current_q_time + (float) $q_time_val;
 
-			if ( isset( $wp_object_cache ) ) {
-				$hits   = ! empty( $wp_object_cache->cache_hits ) ? $wp_object_cache->cache_hits : 0;
-				$misses = ! empty( $wp_object_cache->cache_misses ) ? $wp_object_cache->cache_misses : 0;
-				$this->loggers[ $callback_hash ]['cache_hits']   = ( $hits - $this->tick_cache_hit_offset ) + $this->loggers[ $callback_hash ]['cache_hits'];
-				$this->loggers[ $callback_hash ]['cache_misses'] = ( $misses - $this->tick_cache_miss_offset ) + $this->loggers[ $callback_hash ]['cache_misses'];
-				$total = $this->loggers[ $callback_hash ]['cache_hits'] + $this->loggers[ $callback_hash ]['cache_misses'];
-				if ( $total ) {
-					$ratio = ( $this->loggers[ $callback_hash ]['cache_hits'] / $total ) * 100;
-					$this->loggers[ $callback_hash ]['cache_ratio'] = round( $ratio, 2 ) . '%';
+						$current_q_count            = isset( $logger_data['query_count'] ) && is_numeric( $logger_data['query_count'] ) ? $logger_data['query_count'] : 0;
+						$logger_data['query_count'] = (int) $current_q_count + 1;
+					}
 				}
+
+				if ( isset( $wp_object_cache ) ) {
+					$hits   = ! empty( $wp_object_cache->cache_hits ) ? $wp_object_cache->cache_hits : 0;
+					$misses = ! empty( $wp_object_cache->cache_misses ) ? $wp_object_cache->cache_misses : 0;
+
+					$current_hits              = isset( $logger_data['cache_hits'] ) && is_numeric( $logger_data['cache_hits'] ) ? $logger_data['cache_hits'] : 0;
+					$logger_data['cache_hits'] = ( $hits - $this->tick_cache_hit_offset ) + (int) $current_hits;
+
+					$current_misses              = isset( $logger_data['cache_misses'] ) && is_numeric( $logger_data['cache_misses'] ) ? $logger_data['cache_misses'] : 0;
+					$logger_data['cache_misses'] = ( $misses - $this->tick_cache_miss_offset ) + (int) $current_misses;
+
+					$total = $logger_data['cache_hits'] + $logger_data['cache_misses'];
+					if ( $total ) {
+						$ratio                      = ( $logger_data['cache_hits'] / $total ) * 100;
+						$logger_data['cache_ratio'] = round( $ratio, 2 ) . '%';
+					}
+				}
+				$this->loggers[ $callback_hash ] = $logger_data;
 			}
 		}
 
@@ -422,8 +452,8 @@ class Profiler {
 		$callback = '';
 		if ( in_array( strtolower( $frame['function'] ), array( 'include', 'require', 'include_once', 'require_once' ), true ) ) {
 			$callback = $frame['function'];
-			if ( isset( $frame['args'][0] ) ) {
-				$callback .= " '" . $frame['args'][0] . "'";
+			if ( isset( $frame['args'] ) && is_array( $frame['args'] ) && isset( $frame['args'][0] ) && is_scalar( $frame['args'][0] ) ) {
+				$callback .= " '" . (string) $frame['args'][0] . "'";
 			}
 		} elseif ( isset( $frame['object'] ) && method_exists( $frame['object'], $frame['function'] ) ) {
 			$callback = get_class( $frame['object'] ) . '->' . $frame['function'] . '()';
@@ -598,9 +628,11 @@ class Profiler {
 		if ( is_array( $callback ) && is_object( $callback[0] ) ) {
 			$reflection = new \ReflectionMethod( $callback[0], $callback[1] );
 			$name       = get_class( $callback[0] ) . '->' . $callback[1] . '()';
-		} elseif ( is_array( $callback ) && method_exists( $callback[0], $callback[1] ) ) {
+		} elseif ( is_array( $callback ) && isset( $callback[0] ) && isset( $callback[1] ) && ( is_object( $callback[0] ) || is_string( $callback[0] ) ) && is_string( $callback[1] ) && method_exists( $callback[0], $callback[1] ) ) {
 			$reflection = new \ReflectionMethod( $callback[0], $callback[1] );
-			$name       = $callback[0] . '::' . $callback[1] . '()';
+			/** @var string $class_name */
+			$class_name = $callback[0];
+			$name       = $class_name . '::' . $callback[1] . '()';
 		} elseif ( is_object( $callback ) && is_a( $callback, 'Closure' ) ) {
 			$reflection = new \ReflectionFunction( $callback );
 			$name       = 'function(){}';
@@ -689,6 +721,7 @@ class Profiler {
 		}
 
 		if ( is_a( $wp_filter[ $filter ], 'WP_Hook' ) ) {
+			/** @var array<mixed> $callbacks */
 			$wp_filter[ $filter ]->callbacks = $callbacks;
 		} else {
 			$wp_filter[ $filter ] = $callbacks; // phpcs:ignore
