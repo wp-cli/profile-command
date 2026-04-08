@@ -465,7 +465,6 @@ class Command {
 		$file = $args[0];
 
 		/** @var array<string, bool|string> $typed_assoc_args */
-		/** @var array<string, bool|string> $typed_assoc_args */
 		$typed_assoc_args = self::get_typed_assoc_args( $assoc_args );
 		$order_val        = Utils\get_flag_value( $typed_assoc_args, 'order', 'ASC' );
 		$order            = is_string( $order_val ) ? $order_val : 'ASC';
