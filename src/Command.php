@@ -130,20 +130,18 @@ class Command {
 	 * @skipglobalargcheck
 	 * @when before_wp_load
 	 *
-	 * @param array<string>       $args
-	 * @param array<string, mixed> $assoc_args
+	 * @param array{0?: string} $args Positional arguments.
+	 * @param array{all?: bool, spotlight?: bool, url?: string, fields?: string, format: string, order: string, orderby?: string} $assoc_args Associative arguments.
 	 * @return void
 	 */
 	public function stage( $args, $assoc_args ) {
 		global $wpdb;
 
-		/** @var array<string, bool|string> $typed_assoc_args */
-		$typed_assoc_args = self::get_typed_assoc_args( $assoc_args );
-		$focus            = Utils\get_flag_value( $typed_assoc_args, 'all', isset( $args[0] ) ? $args[0] : null );
+		$focus = Utils\get_flag_value( $assoc_args, 'all', isset( $args[0] ) ? $args[0] : null );
 
-		$order_val   = Utils\get_flag_value( $typed_assoc_args, 'order', 'ASC' );
+		$order_val   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
 		$order       = is_string( $order_val ) ? $order_val : 'ASC';
-		$orderby_val = Utils\get_flag_value( $typed_assoc_args, 'orderby', null );
+		$orderby_val = Utils\get_flag_value( $assoc_args, 'orderby', null );
 		$orderby     = ( is_string( $orderby_val ) || is_null( $orderby_val ) ) ? $orderby_val : null;
 
 		$valid_stages = array( 'bootstrap', 'main_query', 'template' );
@@ -187,10 +185,10 @@ class Command {
 			);
 		}
 		$fields    = array_merge( $base, $metrics );
-		$formatter = new Formatter( $typed_assoc_args, $fields );
+		$formatter = new Formatter( $assoc_args, $fields );
 		$loggers   = $profiler->get_loggers();
-		/** @var array<string, bool|string> $typed_assoc_args */
-		if ( Utils\get_flag_value( $typed_assoc_args, 'spotlight' ) ) {
+		/** @var array<string, bool|string> $assoc_args */
+		if ( Utils\get_flag_value( $assoc_args, 'spotlight' ) ) {
 			$loggers = self::shine_spotlight( $loggers, $metrics );
 		}
 
@@ -267,19 +265,17 @@ class Command {
 	 * @skipglobalargcheck
 	 * @when before_wp_load
 	 *
-	 * @param array<string>       $args
-	 * @param array<string, mixed> $assoc_args
+	 * @param array{0?: string} $args Positional arguments.
+	 * @param array{all?: bool, spotlight?: bool, url?: string, fields?: string, format: string, order: string, orderby?: string} $assoc_args
 	 * @return void
 	 */
 	public function hook( $args, $assoc_args ) {
 
-		/** @var array<string, bool|string> $typed_assoc_args */
-		$typed_assoc_args = self::get_typed_assoc_args( $assoc_args );
-		$focus            = Utils\get_flag_value( $typed_assoc_args, 'all', isset( $args[0] ) ? $args[0] : null );
+		$focus = Utils\get_flag_value( $assoc_args, 'all', isset( $args[0] ) ? $args[0] : null );
 
-		$order_val   = Utils\get_flag_value( $typed_assoc_args, 'order', 'ASC' );
+		$order_val   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
 		$order       = is_string( $order_val ) ? $order_val : 'ASC';
-		$orderby_val = Utils\get_flag_value( $typed_assoc_args, 'orderby', null );
+		$orderby_val = Utils\get_flag_value( $assoc_args, 'orderby', null );
 		$orderby     = ( is_string( $orderby_val ) || is_null( $orderby_val ) ) ? $orderby_val : null;
 
 		$profiler = new Profiler( 'hook', $focus );
@@ -308,14 +304,14 @@ class Command {
 			'request_count',
 		);
 		$fields    = array_merge( $base, $metrics );
-		$formatter = new Formatter( $typed_assoc_args, $fields );
+		$formatter = new Formatter( $assoc_args, $fields );
 		$loggers   = $profiler->get_loggers();
-		/** @var array<string, bool|string> $typed_assoc_args */
-		if ( Utils\get_flag_value( $typed_assoc_args, 'spotlight' ) ) {
+		/** @var array<string, bool|string> $assoc_args */
+		if ( Utils\get_flag_value( $assoc_args, 'spotlight' ) ) {
 			$loggers = self::shine_spotlight( $loggers, $metrics );
 		}
-		/** @var array<string, bool|string> $typed_assoc_args */
-		$search_val = Utils\get_flag_value( $typed_assoc_args, 'search', '' );
+		/** @var array<string, bool|string> $assoc_args */
+		$search_val = Utils\get_flag_value( $assoc_args, 'search', '' );
 		$search     = is_string( $search_val ) ? $search_val : '';
 		if ( '' !== $search ) {
 			if ( ! $focus ) {
@@ -377,8 +373,8 @@ class Command {
 	 *     | 0.1009s | 100%        | 1             |
 	 *     +---------+-------------+---------------+
 	 *
-	 * @param array<string>       $args
-	 * @param array<string, mixed> $assoc_args
+	 * @param array{0: string} $args Positional arguments.
+	 * @param array{hook?: bool|string, fields: string, format: string, order: string, orderby?: string} $assoc_args Associative arguments.
 	 * @return void
 	 *
 	 * @subcommand eval
@@ -386,15 +382,13 @@ class Command {
 	public function eval_( $args, $assoc_args ) {
 		$statement = $args[0];
 
-		/** @var array<string, bool|string> $typed_assoc_args */
-		$typed_assoc_args = self::get_typed_assoc_args( $assoc_args );
-		$order_val        = Utils\get_flag_value( $typed_assoc_args, 'order', 'ASC' );
-		$order            = is_string( $order_val ) ? $order_val : 'ASC';
-		$orderby_val      = Utils\get_flag_value( $typed_assoc_args, 'orderby', null );
-		$orderby          = ( is_string( $orderby_val ) || is_null( $orderby_val ) ) ? $orderby_val : null;
+		$order_val   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
+		$order       = is_string( $order_val ) ? $order_val : 'ASC';
+		$orderby_val = Utils\get_flag_value( $assoc_args, 'orderby', null );
+		$orderby     = ( is_string( $orderby_val ) || is_null( $orderby_val ) ) ? $orderby_val : null;
 
 		self::profile_eval_ish(
-			$typed_assoc_args,
+			$assoc_args,
 			function () use ( $statement ) {
 				eval( $statement ); // phpcs:ignore Squiz.PHP.Eval.Discouraged -- no other way around here
 			},
@@ -454,8 +448,8 @@ class Command {
 	 *     | 0.1009s | 100%        | 1             |
 	 *     +---------+-------------+---------------+
 	 *
-	 * @param array<string>       $args
-	 * @param array<string, mixed> $assoc_args
+	 * @param array{0: string} $args Positional arguments.
+	 * @param array{hook?: string|bool, fields?: string, format: string, order: string, orderby?: string} $assoc_args Associative arguments.
 	 * @return void
 	 *
 	 * @subcommand eval-file
@@ -464,11 +458,9 @@ class Command {
 
 		$file = $args[0];
 
-		/** @var array<string, bool|string> $typed_assoc_args */
-		$typed_assoc_args = self::get_typed_assoc_args( $assoc_args );
-		$order_val        = Utils\get_flag_value( $typed_assoc_args, 'order', 'ASC' );
+		$order_val        = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
 		$order            = is_string( $order_val ) ? $order_val : 'ASC';
-		$orderby_val      = Utils\get_flag_value( $typed_assoc_args, 'orderby', null );
+		$orderby_val      = Utils\get_flag_value( $assoc_args, 'orderby', null );
 		$orderby          = ( is_string( $orderby_val ) || is_null( $orderby_val ) ) ? $orderby_val : null;
 
 		if ( ! file_exists( $file ) ) {
@@ -476,7 +468,7 @@ class Command {
 		}
 
 		self::profile_eval_ish(
-			$typed_assoc_args,
+			$assoc_args,
 			function () use ( $file ) {
 				self::include_file( $file );
 			},
@@ -488,19 +480,17 @@ class Command {
 	/**
 	 * Profile an eval or eval-file statement.
 	 *
-	 * @param array<string, mixed> $assoc_args
-	 * @param callable             $profile_callback
-	 * @param string               $order
-	 * @param string|null          $orderby
+	 * @param array{hook?: string|bool} $assoc_args
+	 * @param callable                  $profile_callback
+	 * @param string                    $order
+	 * @param string|null               $orderby
 	 * @return void
 	 */
 	private static function profile_eval_ish( $assoc_args, $profile_callback, $order = 'ASC', $orderby = null ) {
-		/** @var array<string, bool|string> $typed_assoc_args */
-		$typed_assoc_args = self::get_typed_assoc_args( $assoc_args );
-		$hook             = Utils\get_flag_value( $typed_assoc_args, 'hook' );
-		$focus            = false;
-		$type             = false;
-		$fields           = array();
+		$hook   = Utils\get_flag_value( $assoc_args, 'hook' );
+		$focus  = false;
+		$type   = false;
+		$fields = array();
 		if ( $hook ) {
 			$type = 'hook';
 			if ( true !== $hook ) {
@@ -536,7 +526,7 @@ class Command {
 				'request_count',
 			)
 		);
-		$formatter = new Formatter( $typed_assoc_args, $fields );
+		$formatter = new Formatter( $assoc_args, $fields );
 		$formatter->display_items( $loggers, false, $order, $orderby );
 	}
 
@@ -606,21 +596,5 @@ class Command {
 				return isset( $logger->callback ) && false !== stripos( $logger->callback, $pattern );
 			}
 		);
-	}
-
-	/**
-	 * Get typed assoc args for get_flag_value.
-	 *
-	 * @param array<string, mixed> $assoc_args
-	 * @return array<string, bool|string>
-	 */
-	private static function get_typed_assoc_args( $assoc_args ) {
-		$typed = array();
-		foreach ( $assoc_args as $k => $v ) {
-			if ( is_bool( $v ) || is_string( $v ) ) {
-				$typed[ $k ] = $v;
-			}
-		}
-		return $typed;
 	}
 }
