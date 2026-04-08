@@ -3,6 +3,7 @@
 namespace WP_CLI\Profile;
 
 use WP_CLI;
+use WP_CLI\Path;
 
 class Profiler {
 
@@ -653,19 +654,40 @@ class Profiler {
 	 * @return string
 	 */
 	private static function get_short_location( $location ) {
+		$location     = Path::normalize( $location );
 		$real_abspath = realpath( ABSPATH );
-		$abspath      = rtrim( false !== $real_abspath ? $real_abspath : ABSPATH, '/' ) . '/';
-		if ( defined( 'WP_PLUGIN_DIR' ) && 0 === stripos( $location, WP_PLUGIN_DIR ) ) {
-			$location = str_replace( trailingslashit( WP_PLUGIN_DIR ), '', $location );
-		} elseif ( defined( 'WPMU_PLUGIN_DIR' ) && 0 === stripos( $location, WPMU_PLUGIN_DIR ) ) {
-			$location = str_replace( trailingslashit( dirname( WPMU_PLUGIN_DIR ) ), '', $location );
-		} elseif ( function_exists( 'get_theme_root' ) && 0 === stripos( $location, get_theme_root() ) ) {
-			$location = str_replace( trailingslashit( get_theme_root() ), '', $location );
-		} elseif ( 0 === stripos( $location, $abspath . 'wp-admin/' ) ) {
-			$location = str_replace( $abspath, '', $location );
-		} elseif ( 0 === stripos( $location, $abspath . 'wp-includes/' ) ) {
-			$location = str_replace( $abspath, '', $location );
+		$abspath      = rtrim( false !== $real_abspath ? Path::normalize( $real_abspath ) : Path::normalize( ABSPATH ), '/' ) . '/';
+
+		if ( defined( 'WP_PLUGIN_DIR' ) ) {
+			$plugin_dir = Path::normalize( WP_PLUGIN_DIR );
+			if ( 0 === stripos( $location, $plugin_dir ) ) {
+				return str_replace( trailingslashit( $plugin_dir ), '', $location );
+			}
 		}
+
+		if ( defined( 'WPMU_PLUGIN_DIR' ) ) {
+			$mu_plugin_dir = Path::normalize( WPMU_PLUGIN_DIR );
+			if ( 0 === stripos( $location, $mu_plugin_dir ) ) {
+				$parent_dir = Path::normalize( dirname( WPMU_PLUGIN_DIR ) );
+				return str_replace( trailingslashit( $parent_dir ), '', $location );
+			}
+		}
+
+		if ( function_exists( 'get_theme_root' ) ) {
+			$theme_root = Path::normalize( get_theme_root() );
+			if ( 0 === stripos( $location, $theme_root ) ) {
+				return str_replace( trailingslashit( $theme_root ), '', $location );
+			}
+		}
+
+		if ( 0 === stripos( $location, $abspath . 'wp-admin/' ) ) {
+			return str_replace( $abspath, '', $location );
+		}
+
+		if ( 0 === stripos( $location, $abspath . 'wp-includes/' ) ) {
+			return str_replace( $abspath, '', $location );
+		}
+
 		return $location;
 	}
 
