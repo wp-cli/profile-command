@@ -105,9 +105,10 @@ class Formatter {
 	private function compare_float( $a, $b ) {
 		$a = round( $a, 4 );
 		$b = round( $b, 4 );
-		if ( 0.0 === $a - $b ) {
+		$diff = $a - $b;
+		if ( 0.0 === $diff ) {
 			return 0;
-		} elseif ( $a - $b < 0 ) {
+		} elseif ( $diff < 0 ) {
 			return -1;
 		} else {
 			return 1;
