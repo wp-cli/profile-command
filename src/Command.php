@@ -458,10 +458,10 @@ class Command {
 
 		$file = $args[0];
 
-		$order_val        = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
-		$order            = is_string( $order_val ) ? $order_val : 'ASC';
-		$orderby_val      = Utils\get_flag_value( $assoc_args, 'orderby', null );
-		$orderby          = ( is_string( $orderby_val ) || is_null( $orderby_val ) ) ? $orderby_val : null;
+		$order_val   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
+		$order       = is_string( $order_val ) ? $order_val : 'ASC';
+		$orderby_val = Utils\get_flag_value( $assoc_args, 'orderby', null );
+		$orderby     = ( is_string( $orderby_val ) || is_null( $orderby_val ) ) ? $orderby_val : null;
 
 		if ( ! file_exists( $file ) ) {
 			WP_CLI::error( "'$file' does not exist." );

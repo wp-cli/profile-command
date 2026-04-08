@@ -103,8 +103,8 @@ class Formatter {
 	 * @return int
 	 */
 	private function compare_float( $a, $b ) {
-		$a = round( $a, 4 );
-		$b = round( $b, 4 );
+		$a    = round( $a, 4 );
+		$b    = round( $b, 4 );
 		$diff = $a - $b;
 		if ( 0.0 === $diff ) {
 			return 0;
