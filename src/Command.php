@@ -559,6 +559,9 @@ class Command {
 	 * [--callback=<callback>]
 	 * : Filter queries to only show those executed by a specific callback.
 	 *
+	 * [--time_threshold=<seconds>]
+	 * : Filter queries to only show those that took longer than or equal to a certain number of seconds.
+	 *
 	 * [--fields=<fields>]
 	 * : Limit the output to specific fields.
 	 *
@@ -603,16 +606,17 @@ class Command {
 	 * @when before_wp_load
 	 *
 	 * @param array<string> $args Positional arguments. Unused
-	 * @param array{url?: string, hook?: string, callback?: string, fields?: string, format: string, order: string, orderby: string}  $assoc_args Associative arguments.
+	 * @param array{url?: string, hook?: string, callback?: string, time_threshold?: string, fields?: string, format: string, order: string, orderby: string}  $assoc_args Associative arguments.
 	 * @return void
 	 */
 	public function queries( $args, $assoc_args ) {
 		global $wpdb;
 
-		$hook     = Utils\get_flag_value( $assoc_args, 'hook' );
-		$callback = Utils\get_flag_value( $assoc_args, 'callback' );
-		$order    = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
-		$orderby  = Utils\get_flag_value( $assoc_args, 'orderby', null );
+		$hook           = Utils\get_flag_value( $assoc_args, 'hook' );
+		$callback       = Utils\get_flag_value( $assoc_args, 'callback' );
+		$time_threshold = Utils\get_flag_value( $assoc_args, 'time_threshold' );
+		$order          = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
+		$orderby        = Utils\get_flag_value( $assoc_args, 'orderby', null );
 
 		// Set up profiler to track hooks and callbacks
 		$type  = false;
@@ -686,10 +690,30 @@ class Command {
 					continue;
 				}
 
+				$query_time = $query_data[1];
+				if ( null !== $time_threshold && $query_time < (float) $time_threshold ) {
+					continue;
+				}
+
+				$caller = isset( $query_data[2] ) ? $query_data[2] : '';
+
+				// Exclude WP-CLI frames up to load_wordpress_with_template
+				$marker = 'WP_CLI\Profile\Profiler->load_wordpress_with_template';
+				$pos    = strpos( $caller, $marker );
+				if ( false !== $pos ) {
+					$caller = substr( $caller, $pos + strlen( $marker ) );
+					if ( 0 === strpos( $caller, '()' ) ) {
+						$caller = substr( $caller, 2 );
+					}
+					$caller = ltrim( $caller, ', ' );
+				}
+
+				$caller = str_replace( ', ', "\n", $caller );
+
 				$query_obj = new QueryLogger(
 					$query_data[0], // SQL query
-					$query_data[1], // Time
-					isset( $query_data[2] ) ? $query_data[2] : '', // Caller
+					$query_time, // Time
+					$caller, // Caller
 					isset( $query_map[ $index ]['hook'] ) ? $query_map[ $index ]['hook'] : null,
 					isset( $query_map[ $index ]['callback'] ) ? $query_map[ $index ]['callback'] : null
 				);
