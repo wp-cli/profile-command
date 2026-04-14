@@ -4,13 +4,32 @@ namespace WP_CLI\Profile;
 
 class Formatter {
 
+	/**
+	 * @var \WP_CLI\Formatter
+	 */
 	private $formatter;
 
+	/**
+	 * @var array<string, mixed>
+	 */
 	private $args;
 
+	/**
+	 * @var int|null
+	 */
 	private $total_cell_index;
 
+	/**
+	 * Formatter constructor.
+	 *
+	 * @param array<mixed>         $assoc_args
+	 * @param array<string>|null   $fields
+	 * @param string|false          $prefix
+	 */
 	public function __construct( &$assoc_args, $fields = null, $prefix = false ) {
+		if ( null === $fields ) {
+			$fields = [];
+		}
 		$format_args = array(
 			'format' => 'table',
 			'fields' => $fields,
@@ -24,10 +43,19 @@ class Formatter {
 		}
 
 		if ( ! is_array( $format_args['fields'] ) ) {
-			$format_args['fields'] = explode( ',', $format_args['fields'] );
+			$fields_val            = $format_args['fields'];
+			$fields_str            = is_scalar( $fields_val ) ? (string) $fields_val : '';
+			$format_args['fields'] = explode( ',', $fields_str );
 		}
 
-		$format_args['fields'] = array_filter( array_map( 'trim', $format_args['fields'] ) );
+		$format_args['fields'] = array_filter(
+			array_map(
+				function ( $val ) {
+					return trim( is_scalar( $val ) ? (string) $val : '' );
+				},
+				$format_args['fields']
+			)
+		);
 
 		if ( isset( $assoc_args['fields'] ) ) {
 			if ( empty( $format_args['fields'] ) ) {
@@ -39,9 +67,9 @@ class Formatter {
 			}
 		}
 
-		if ( 'time' !== $fields[0] ) {
+		if ( ! empty( $fields ) && 'time' !== $fields[0] ) {
 			$index                  = array_search( $fields[0], $format_args['fields'], true );
-			$this->total_cell_index = ( false !== $index ) ? $index : null;
+			$this->total_cell_index = ( false !== $index ) ? (int) $index : null;
 		}
 
 		$this->args      = $format_args;
@@ -51,11 +79,17 @@ class Formatter {
 	/**
 	 * Display multiple items according to the output arguments.
 	 *
-	 * @param array $items
+	 * @param array<\WP_CLI\Profile\Logger> $items
+	 * @param bool                         $include_total
+	 * @param string                       $order
+	 * @param string|null                  $orderby
+	 * @return void
 	 */
 	public function display_items( $items, $include_total, $order, $orderby ) {
 		if ( 'table' === $this->args['format'] && empty( $this->args['field'] ) ) {
-			$this->show_table( $order, $orderby, $items, $this->args['fields'], $include_total );
+			/** @var array<string> $fields */
+			$fields = $this->args['fields'];
+			$this->show_table( $order, $orderby, $items, $fields, $include_total );
 		} else {
 			$this->formatter->display_items( $items );
 		}
@@ -64,15 +98,17 @@ class Formatter {
 	/**
 	 * Function to compare floats.
 	 *
-	 * @param double $a Floating number.
-	 * @param double $b Floating number.
+	 * @param float $a Floating number.
+	 * @param float $b Floating number.
+	 * @return int
 	 */
 	private function compare_float( $a, $b ) {
-		$a = number_format( $a, 4 );
-		$b = number_format( $b, 4 );
-		if ( 0 === $a - $b ) {
+		$a    = round( $a, 4 );
+		$b    = round( $b, 4 );
+		$diff = $a - $b;
+		if ( 0.0 === $diff ) {
 			return 0;
-		} elseif ( $a - $b < 0 ) {
+		} elseif ( $diff < 0 ) {
 			return -1;
 		} else {
 			return 1;
@@ -82,8 +118,12 @@ class Formatter {
 	/**
 	 * Show items in a \cli\Table.
 	 *
-	 * @param array $items
-	 * @param array $fields
+	 * @param string                       $order
+	 * @param string|null                  $orderby
+	 * @param array<\WP_CLI\Profile\Logger> $items
+	 * @param array<string>                $fields
+	 * @param bool                         $include_total
+	 * @return void
 	 */
 	private function show_table( $order, $orderby, $items, $fields, $include_total ) {
 		$table = new \cli\Table();
@@ -109,7 +149,7 @@ class Formatter {
 					list( $first, $second ) = $orderby_array;
 
 					if ( is_numeric( $first->$orderby ) && is_numeric( $second->$orderby ) ) {
-						return $this->compare_float( $first->$orderby, $second->$orderby );
+						return $this->compare_float( (float) $first->$orderby, (float) $second->$orderby );
 					}
 
 					return strcmp( $first->$orderby, $second->$orderby );
@@ -139,13 +179,16 @@ class Formatter {
 				}
 				if ( stripos( $fields[ $i ], '_ratio' ) ) {
 					if ( ! is_null( $value ) ) {
+						assert( is_array( $totals[ $i ] ) );
 						$totals[ $i ][] = $value;
 					}
 				} elseif ( is_numeric( $value ) ) {
-					$totals[ $i ] += $value;
+					$current_total = is_numeric( $totals[ $i ] ) ? $totals[ $i ] : 0;
+					$totals[ $i ]  = $current_total + $value;
 				}
 				if ( stripos( $fields[ $i ], '_time' ) || 'time' === $fields[ $i ] ) {
-					$values[ $i ] = round( $value, 4 ) . 's';
+					$value_num    = is_numeric( $value ) ? (float) $value : 0.0;
+					$values[ $i ] = round( $value_num, 4 ) . 's';
 				}
 			}
 			$table->addRow( $values );
@@ -156,11 +199,18 @@ class Formatter {
 					continue;
 				}
 				if ( stripos( $fields[ $i ], '_time' ) || 'time' === $fields[ $i ] ) {
-					$totals[ $i ] = round( $value, 4 ) . 's';
+					assert( is_numeric( $value ) );
+					$totals[ $i ] = round( (float) $value, 4 ) . 's';
 				}
 				if ( is_array( $value ) ) {
 					if ( ! empty( $value ) ) {
-						$totals[ $i ] = round( ( array_sum( array_map( 'floatval', $value ) ) / count( $value ) ), 2 ) . '%';
+						$float_values = array_map(
+							function ( $val ) {
+								return floatval( is_scalar( $val ) ? $val : 0 );
+							},
+							$value
+						);
+						$totals[ $i ] = round( ( array_sum( $float_values ) / count( $value ) ), 2 ) . '%';
 					} else {
 						$totals[ $i ] = null;
 					}

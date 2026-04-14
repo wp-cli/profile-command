@@ -5,8 +5,8 @@
 	<!--
 	#############################################################################
 	COMMAND LINE ARGUMENTS
-	For help understanding this file: https://github.com/squizlabs/PHP_CodeSniffer/wiki/Annotated-ruleset.xml
-	For help using PHPCS: https://github.com/squizlabs/PHP_CodeSniffer/wiki/Usage
+	For help understanding this file: https://github.com/PHPCSStandards/PHP_CodeSniffer/wiki/Annotated-ruleset.xml
+	For help using PHPCS: https://github.com/PHPCSStandards/PHP_CodeSniffer/wiki/Usage
 	#############################################################################
 	-->
 

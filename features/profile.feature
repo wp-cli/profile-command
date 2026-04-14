@@ -15,6 +15,9 @@ Feature: Basic profile usage
       See 'wp help profile <command>' for more information on a specific command.
       """
 
+  # Skip when object cache is used because sqlite-object-cache fails during manual wp core install
+  # due to missing wp_options table during cron scheduling.
+  @skip-object-cache
   Scenario: Error when SAVEQUERIES is defined to false
     Given an empty directory
     And WP files
