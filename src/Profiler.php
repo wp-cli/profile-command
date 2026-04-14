@@ -314,10 +314,11 @@ class Profiler {
 					if ( is_array( $the_ ) && isset( $the_['function'] ) && isset( $the_['accepted_args'] ) ) {
 						$func                         = $the_['function'];
 						$new_priority_callbacks[ $i ] = array(
-							'function'      => function () use ( $func, $i ) {
+							'function'      => function () use ( $func, $i, $current_filter ) {
 								if ( ! isset( $this->loggers[ $i ] ) ) {
 									$this->loggers[ $i ] = new Logger(
 										array(
+											'hook'     => $current_filter,
 											'callback' => $func,
 										)
 									);

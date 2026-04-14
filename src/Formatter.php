@@ -79,10 +79,10 @@ class Formatter {
 	/**
 	 * Display multiple items according to the output arguments.
 	 *
-	 * @param array<\WP_CLI\Profile\Logger> $items
-	 * @param bool                         $include_total
-	 * @param string                       $order
-	 * @param string|null                  $orderby
+	 * @param array<\WP_CLI\Profile\Logger|\WP_CLI\Profile\QueryLogger> $items
+	 * @param bool                                                    $include_total
+	 * @param string                                                  $order
+	 * @param string|null                                             $orderby
 	 * @return void
 	 */
 	public function display_items( $items, $include_total, $order, $orderby ) {
@@ -118,11 +118,11 @@ class Formatter {
 	/**
 	 * Show items in a \cli\Table.
 	 *
-	 * @param string                       $order
-	 * @param string|null                  $orderby
-	 * @param array<\WP_CLI\Profile\Logger> $items
-	 * @param array<string>                $fields
-	 * @param bool                         $include_total
+	 * @param string                                                  $order
+	 * @param string|null                                             $orderby
+	 * @param array<\WP_CLI\Profile\Logger|\WP_CLI\Profile\QueryLogger> $items
+	 * @param array<string>                                           $fields
+	 * @param bool                                                    $include_total
 	 * @return void
 	 */
 	private function show_table( $order, $orderby, $items, $fields, $include_total ) {
@@ -157,7 +157,8 @@ class Formatter {
 			);
 		}
 
-		$location_index = array_search( 'location', $fields, true );
+		$location_index     = array_search( 'location', $fields, true );
+		$non_numeric_fields = array( 'query', 'caller', 'hook', 'callback' );
 		foreach ( $items as $item ) {
 			$values = array_values( \WP_CLI\Utils\pick_fields( $item, $fields ) );
 			foreach ( $values as $i => $value ) {
@@ -167,6 +168,11 @@ class Formatter {
 
 				// Ignore 'location' for hook profiling
 				if ( false !== $location_index && $location_index === $i ) {
+					continue;
+				}
+
+				// Ignore non-numeric fields (query, caller, hook, callback)
+				if ( in_array( $fields[ $i ], $non_numeric_fields, true ) ) {
 					continue;
 				}
 
@@ -182,10 +188,8 @@ class Formatter {
 						assert( is_array( $totals[ $i ] ) );
 						$totals[ $i ][] = $value;
 					}
-				} else {
-					$current_total = is_numeric( $totals[ $i ] ) ? $totals[ $i ] : 0;
-					$add_value     = is_numeric( $value ) ? $value : 0;
-					$totals[ $i ]  = $current_total + $add_value;
+				} elseif ( is_numeric( $value ) && is_numeric( $totals[ $i ] ) ) {
+					$totals[ $i ] += $value;
 				}
 				if ( stripos( $fields[ $i ], '_time' ) || 'time' === $fields[ $i ] ) {
 					$value_num    = is_numeric( $value ) ? (float) $value : 0.0;
