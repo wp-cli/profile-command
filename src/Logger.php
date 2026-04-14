@@ -2,40 +2,78 @@
 
 namespace WP_CLI\Profile;
 
+/**
+ * Logger class.
+ *
+ * @property string $callback
+ * @property string $location
+ * @property string $hook
+ */
 class Logger {
 
-	public $time        = 0;
+	/** @var float */
+	public $time = 0.0;
+	/** @var int */
 	public $query_count = 0;
-	public $query_time  = 0;
+	/** @var float */
+	public $query_time = 0.0;
 	/**
-	 * @var array Array of query indices tracked during this logger's execution.
+	 * @var array<int> Array of query indices tracked during this logger's execution.
 	 */
-	public $query_indices       = array();
-	public $cache_hits          = 0;
-	public $cache_misses        = 0;
-	public $cache_ratio         = null;
-	public $hook_count          = 0;
-	public $hook_time           = 0;
-	public $request_count       = 0;
-	public $request_time        = 0;
-	private $start_time         = null;
-	private $query_offset       = null;
-	private $cache_hit_offset   = null;
-	private $cache_miss_offset  = null;
-	private $hook_start_time    = null;
-	private $hook_depth         = 0;
+	public $query_indices = array();
+
+	/** @var int */
+	public $cache_hits = 0;
+	/** @var int */
+	public $cache_misses = 0;
+	/** @var string|null */
+	public $cache_ratio = null;
+	/** @var int */
+	public $hook_count = 0;
+	/** @var float */
+	public $hook_time = 0;
+	/** @var int */
+	public $request_count = 0;
+	/** @var float */
+	public $request_time = 0;
+	/** @var float|null */
+	private $start_time = null;
+	/** @var int|null */
+	private $query_offset = null;
+	/** @var int|null */
+	private $cache_hit_offset = null;
+	/** @var int|null */
+	private $cache_miss_offset = null;
+	/** @var float|null */
+	private $hook_start_time = null;
+	/** @var int */
+	private $hook_depth = 0;
+	/** @var float|null */
 	private $request_start_time = null;
 
+	/** @var array<string, mixed> */
 	private $definitions = array();
 
+	/** @var array<\WP_CLI\Profile\Logger> */
 	public static $active_loggers = array();
 
+	/**
+	 * Logger constructor.
+	 *
+	 * @param array<string, mixed> $definition
+	 */
 	public function __construct( $definition = array() ) {
 		foreach ( $definition as $k => $v ) {
 			$this->definitions[ $k ] = $v;
 		}
 	}
 
+	/**
+	 * Magic getter for definitions.
+	 *
+	 * @param string $key
+	 * @return mixed
+	 */
 	public function __get( $key ) {
 		if ( isset( $this->definitions[ $key ] ) ) {
 			return $this->definitions[ $key ];
@@ -44,16 +82,31 @@ class Logger {
 		return null;
 	}
 
+	/**
+	 * Magic setter for definitions.
+	 *
+	 * @param string $key
+	 * @param mixed  $value
+	 * @return void
+	 */
 	public function __set( $key, $value ) {
 		$this->definitions[ $key ] = $value;
 	}
 
+	/**
+	 * Magic isset for definitions.
+	 *
+	 * @param string $key
+	 * @return bool
+	 */
 	public function __isset( $key ) {
 		return isset( $this->definitions[ $key ] );
 	}
 
 	/**
 	 * Start this logger
+	 *
+	 * @return void
 	 */
 	public function start() {
 		global $wpdb, $wp_object_cache;
@@ -70,6 +123,8 @@ class Logger {
 
 	/**
 	 * Whether or not the logger is running
+	 *
+	 * @return bool
 	 */
 	public function running() {
 		return ! is_null( $this->start_time );
@@ -77,6 +132,8 @@ class Logger {
 
 	/**
 	 * Stop this logger
+	 *
+	 * @return void
 	 */
 	public function stop() {
 		global $wpdb, $wp_object_cache;
@@ -120,6 +177,8 @@ class Logger {
 
 	/**
 	 * Start this logger's hook timer
+	 *
+	 * @return void
 	 */
 	public function start_hook_timer() {
 		++$this->hook_count;
@@ -133,6 +192,8 @@ class Logger {
 
 	/**
 	 * Stop this logger's hook timer
+	 *
+	 * @return void
 	 */
 	public function stop_hook_timer() {
 		if ( $this->hook_depth ) {
@@ -147,6 +208,8 @@ class Logger {
 
 	/**
 	 * Start this logger's request timer
+	 *
+	 * @return void
 	 */
 	public function start_request_timer() {
 		++$this->request_count;
@@ -155,6 +218,8 @@ class Logger {
 
 	/**
 	 * Stop this logger's request timer
+	 *
+	 * @return void
 	 */
 	public function stop_request_timer() {
 		if ( ! is_null( $this->request_start_time ) ) {

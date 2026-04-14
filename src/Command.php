@@ -129,14 +129,20 @@ class Command {
 	 *
 	 * @skipglobalargcheck
 	 * @when before_wp_load
+	 *
+	 * @param array{0?: string} $args Positional arguments.
+	 * @param array{all?: bool, spotlight?: bool, url?: string, fields?: string, format: string, order: string, orderby?: string} $assoc_args Associative arguments.
+	 * @return void
 	 */
 	public function stage( $args, $assoc_args ) {
 		global $wpdb;
 
 		$focus = Utils\get_flag_value( $assoc_args, 'all', isset( $args[0] ) ? $args[0] : null );
 
-		$order   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
-		$orderby = Utils\get_flag_value( $assoc_args, 'orderby', null );
+		$order_val   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
+		$order       = is_string( $order_val ) ? $order_val : 'ASC';
+		$orderby_val = Utils\get_flag_value( $assoc_args, 'orderby', null );
+		$orderby     = ( is_string( $orderby_val ) || is_null( $orderby_val ) ) ? $orderby_val : null;
 
 		$valid_stages = array( 'bootstrap', 'main_query', 'template' );
 		if ( $focus && ( true !== $focus && ! in_array( $focus, $valid_stages, true ) ) ) {
@@ -181,6 +187,7 @@ class Command {
 		$fields    = array_merge( $base, $metrics );
 		$formatter = new Formatter( $assoc_args, $fields );
 		$loggers   = $profiler->get_loggers();
+		/** @var array<string, bool|string> $assoc_args */
 		if ( Utils\get_flag_value( $assoc_args, 'spotlight' ) ) {
 			$loggers = self::shine_spotlight( $loggers, $metrics );
 		}
@@ -257,13 +264,19 @@ class Command {
 	 *
 	 * @skipglobalargcheck
 	 * @when before_wp_load
+	 *
+	 * @param array{0?: string} $args Positional arguments.
+	 * @param array{all?: bool, spotlight?: bool, url?: string, fields?: string, format: string, order: string, orderby?: string} $assoc_args
+	 * @return void
 	 */
 	public function hook( $args, $assoc_args ) {
 
 		$focus = Utils\get_flag_value( $assoc_args, 'all', isset( $args[0] ) ? $args[0] : null );
 
-		$order   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
-		$orderby = Utils\get_flag_value( $assoc_args, 'orderby', null );
+		$order_val   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
+		$order       = is_string( $order_val ) ? $order_val : 'ASC';
+		$orderby_val = Utils\get_flag_value( $assoc_args, 'orderby', null );
+		$orderby     = ( is_string( $orderby_val ) || is_null( $orderby_val ) ) ? $orderby_val : null;
 
 		$profiler = new Profiler( 'hook', $focus );
 		$profiler->run();
@@ -293,11 +306,14 @@ class Command {
 		$fields    = array_merge( $base, $metrics );
 		$formatter = new Formatter( $assoc_args, $fields );
 		$loggers   = $profiler->get_loggers();
+		/** @var array<string, bool|string> $assoc_args */
 		if ( Utils\get_flag_value( $assoc_args, 'spotlight' ) ) {
 			$loggers = self::shine_spotlight( $loggers, $metrics );
 		}
-		$search = Utils\get_flag_value( $assoc_args, 'search', false );
-		if ( false !== $search && '' !== $search ) {
+		/** @var array<string, bool|string> $assoc_args */
+		$search_val = Utils\get_flag_value( $assoc_args, 'search', '' );
+		$search     = is_string( $search_val ) ? $search_val : '';
+		if ( '' !== $search ) {
 			if ( ! $focus ) {
 				WP_CLI::error( '--search requires --all or a specific hook.' );
 			}
@@ -357,13 +373,19 @@ class Command {
 	 *     | 0.1009s | 100%        | 1             |
 	 *     +---------+-------------+---------------+
 	 *
+	 * @param array{0: string} $args Positional arguments.
+	 * @param array{hook?: bool|string, fields: string, format: string, order: string, orderby?: string} $assoc_args Associative arguments.
+	 * @return void
+	 *
 	 * @subcommand eval
 	 */
 	public function eval_( $args, $assoc_args ) {
 		$statement = $args[0];
 
-		$order   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
-		$orderby = Utils\get_flag_value( $assoc_args, 'orderby', null );
+		$order_val   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
+		$order       = is_string( $order_val ) ? $order_val : 'ASC';
+		$orderby_val = Utils\get_flag_value( $assoc_args, 'orderby', null );
+		$orderby     = ( is_string( $orderby_val ) || is_null( $orderby_val ) ) ? $orderby_val : null;
 
 		self::profile_eval_ish(
 			$assoc_args,
@@ -426,14 +448,20 @@ class Command {
 	 *     | 0.1009s | 100%        | 1             |
 	 *     +---------+-------------+---------------+
 	 *
+	 * @param array{0: string} $args Positional arguments.
+	 * @param array{hook?: string|bool, fields?: string, format: string, order: string, orderby?: string} $assoc_args Associative arguments.
+	 * @return void
+	 *
 	 * @subcommand eval-file
 	 */
 	public function eval_file( $args, $assoc_args ) {
 
 		$file = $args[0];
 
-		$order   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
-		$orderby = Utils\get_flag_value( $assoc_args, 'orderby', null );
+		$order_val   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
+		$order       = is_string( $order_val ) ? $order_val : 'ASC';
+		$orderby_val = Utils\get_flag_value( $assoc_args, 'orderby', null );
+		$orderby     = ( is_string( $orderby_val ) || is_null( $orderby_val ) ) ? $orderby_val : null;
 
 		if ( ! file_exists( $file ) ) {
 			WP_CLI::error( "'$file' does not exist." );
@@ -451,6 +479,12 @@ class Command {
 
 	/**
 	 * Profile an eval or eval-file statement.
+	 *
+	 * @param array{hook?: string|bool} $assoc_args
+	 * @param callable                  $profile_callback
+	 * @param string                    $order
+	 * @param string|null               $orderby
+	 * @return void
 	 */
 	private static function profile_eval_ish( $assoc_args, $profile_callback, $order = 'ASC', $orderby = null ) {
 		$hook   = Utils\get_flag_value( $assoc_args, 'hook' );
@@ -500,6 +534,7 @@ class Command {
 	 * Include a file without exposing it to current scope
 	 *
 	 * @param string $file
+	 * @return void
 	 */
 	private static function include_file( $file ) {
 		include $file;
@@ -566,6 +601,10 @@ class Command {
 	 *
 	 * @skipglobalargcheck
 	 * @when before_wp_load
+	 *
+	 * @param array<string> $args Positional arguments. Unused
+	 * @param array{url?: string, hook?: string, callback?: string, fields?: string, format: string, order: string, orderby: string}  $assoc_args Associative arguments.
+	 * @return void
 	 */
 	public function queries( $args, $assoc_args ) {
 		global $wpdb;
@@ -576,7 +615,7 @@ class Command {
 		$orderby  = Utils\get_flag_value( $assoc_args, 'orderby', null );
 
 		// Set up profiler to track hooks and callbacks
-		$type  = null;
+		$type  = false;
 		$focus = null;
 		if ( $hook && $callback ) {
 			// When both are provided, profile all hooks to find the specific callback
@@ -626,7 +665,7 @@ class Command {
 				}
 
 				// Get the query indices for this logger
-				if ( isset( $logger->query_indices ) && ! empty( $logger->query_indices ) ) {
+				if ( ! empty( $logger->query_indices ) ) {
 					foreach ( $logger->query_indices as $query_index ) {
 						// Use last-logger-wins to get the most specific hook/callback
 						$query_map[ $query_index ] = array(
@@ -675,9 +714,9 @@ class Command {
 	/**
 	 * Filter loggers with zero-ish values.
 	 *
-	 * @param array $loggers
-	 * @param array $metrics
-	 * @return array
+	 * @param array<\WP_CLI\Profile\Logger> $loggers
+	 * @param array<string>                 $metrics
+	 * @return array<\WP_CLI\Profile\Logger>
 	 */
 	private static function shine_spotlight( $loggers, $metrics ) {
 
@@ -717,9 +756,9 @@ class Command {
 	/**
 	 * Filter loggers to only those whose callback name matches a pattern.
 	 *
-	 * @param array  $loggers
-	 * @param string $pattern
-	 * @return array
+	 * @param array<\WP_CLI\Profile\Logger> $loggers
+	 * @param string                        $pattern
+	 * @return array<\WP_CLI\Profile\Logger>
 	 */
 	private static function filter_by_callback( $loggers, $pattern ) {
 		return array_filter(
