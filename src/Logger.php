@@ -7,15 +7,21 @@ namespace WP_CLI\Profile;
  *
  * @property string $callback
  * @property string $location
+ * @property string $hook
  */
 class Logger {
 
 	/** @var float */
-	public $time = 0;
+	public $time = 0.0;
 	/** @var int */
 	public $query_count = 0;
 	/** @var float */
-	public $query_time = 0;
+	public $query_time = 0.0;
+	/**
+	 * @var array<int> Array of query indices tracked during this logger's execution.
+	 */
+	public $query_indices = array();
+
 	/** @var int */
 	public $cache_hits = 0;
 	/** @var int */
@@ -142,6 +148,7 @@ class Logger {
 			for ( $i = $this->query_offset; $i < $query_total_count; $i++ ) {
 				$this->query_time += $wpdb->queries[ $i ][1];
 				++$this->query_count;
+				$this->query_indices[] = $i;
 			}
 		}
 

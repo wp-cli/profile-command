@@ -617,6 +617,201 @@ class Command {
 	}
 
 	/**
+	 * Profile database queries and their execution time.
+	 *
+	 * Displays all database queries executed during a WordPress request,
+	 * along with their execution time and caller information. You can filter
+	 * queries to only show those executed during a specific hook or by a
+	 * specific callback.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--url=<url>]
+	 * : Execute a request against a specified URL. Defaults to the home URL.
+	 *
+	 * [--hook=<hook>]
+	 * : Filter queries to only show those executed during a specific hook.
+	 *
+	 * [--callback=<callback>]
+	 * : Filter queries to only show those executed by a specific callback.
+	 *
+	 * [--time_threshold=<seconds>]
+	 * : Filter queries to only show those that took longer than or equal to a certain number of seconds.
+	 *
+	 * [--fields=<fields>]
+	 * : Limit the output to specific fields.
+	 *
+	 * [--format=<format>]
+	 * : Render output in a particular format.
+	 * ---
+	 * default: table
+	 * options:
+	 *   - table
+	 *   - json
+	 *   - yaml
+	 *   - csv
+	 * ---
+	 *
+	 * [--order=<order>]
+	 * : Ascending or Descending order.
+	 * ---
+	 * default: ASC
+	 * options:
+	 *   - ASC
+	 *   - DESC
+	 * ---
+	 *
+	 * [--orderby=<fields>]
+	 * : Set orderby which field.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     # Show all queries with their execution time
+	 *     $ wp profile queries --fields=query,time
+	 *
+	 *     # Show queries executed during the 'init' hook
+	 *     $ wp profile queries --hook=init --fields=query,time,caller
+	 *
+	 *     # Show queries executed by a specific callback
+	 *     $ wp profile queries --callback='WP_Query->get_posts()' --fields=query,time
+	 *
+	 *     # Show queries ordered by execution time
+	 *     $ wp profile queries --fields=query,time --orderby=time --order=DESC
+	 *
+	 * @skipglobalargcheck
+	 * @when before_wp_load
+	 *
+	 * @param array<string> $args Positional arguments. Unused
+	 * @param array{url?: string, hook?: string, callback?: string, time_threshold?: string, fields?: string, format: string, order: string, orderby: string}  $assoc_args Associative arguments.
+	 * @return void
+	 */
+	public function queries( $args, $assoc_args ) {
+		global $wpdb;
+
+		$hook           = Utils\get_flag_value( $assoc_args, 'hook' );
+		$callback       = Utils\get_flag_value( $assoc_args, 'callback' );
+		$time_threshold = Utils\get_flag_value( $assoc_args, 'time_threshold' );
+		$order          = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
+		$orderby        = Utils\get_flag_value( $assoc_args, 'orderby', null );
+
+		// Set up profiler to track hooks and callbacks
+		$type  = false;
+		$focus = null;
+		if ( $hook && $callback ) {
+			// When both are provided, profile all hooks to find the specific callback
+			$type  = 'hook';
+			$focus = true;
+		} elseif ( $hook ) {
+			$type  = 'hook';
+			$focus = $hook;
+		} elseif ( $callback ) {
+			$type  = 'hook';
+			$focus = true; // Profile all hooks to find the specific callback
+		}
+
+		$profiler = new Profiler( $type, $focus );
+		$profiler->run();
+
+		// Build a map of query indices to hooks/callbacks
+		// This is O(N*Q + M) where N=loggers, Q=queries per logger, M=total queries
+		// For typical WordPress sites, this performs well with the array-based lookups
+		$query_map = array();
+		if ( $hook || $callback ) {
+			$loggers = $profiler->get_loggers();
+			foreach ( $loggers as $logger ) {
+				// Skip if filtering by callback and this logger doesn't have a callback
+				if ( $callback && ! isset( $logger->callback ) ) {
+					continue;
+				}
+
+				// Skip if filtering by callback and this isn't the right one
+				if ( $callback && isset( $logger->callback ) ) {
+					// Normalize callback for comparison
+					$normalized_callback = trim( (string) $logger->callback );
+					$normalized_filter   = trim( $callback );
+					if ( false === stripos( $normalized_callback, $normalized_filter ) ) {
+						continue;
+					}
+				}
+
+				// Skip if filtering for a specific hook and this isn't the right one
+				if ( $hook && isset( $logger->hook ) && $logger->hook !== $hook ) {
+					continue;
+				}
+
+				// Skip if filtering for a specific hook and the logger has no hook property
+				if ( $hook && ! isset( $logger->hook ) ) {
+					continue;
+				}
+
+				// Get the query indices for this logger
+				if ( ! empty( $logger->query_indices ) ) {
+					foreach ( $logger->query_indices as $query_index ) {
+						// Use last-logger-wins to get the most specific hook/callback
+						$query_map[ $query_index ] = array(
+							'hook'     => isset( $logger->hook ) ? $logger->hook : null,
+							'callback' => isset( $logger->callback ) ? $logger->callback : null,
+						);
+					}
+				}
+			}
+		}
+
+		// Get all queries
+		$queries = array();
+		if ( ! empty( $wpdb->queries ) ) {
+			foreach ( $wpdb->queries as $index => $query_data ) {
+				// If filtering by hook/callback, only include queries in the map
+				if ( ( $hook || $callback ) && ! isset( $query_map[ $index ] ) ) {
+					continue;
+				}
+
+				$query_time = $query_data[1];
+				if ( null !== $time_threshold && $query_time < (float) $time_threshold ) {
+					continue;
+				}
+
+				$caller = isset( $query_data[2] ) ? $query_data[2] : '';
+
+				// Exclude WP-CLI frames up to load_wordpress_with_template
+				$marker = 'WP_CLI\Profile\Profiler->load_wordpress_with_template';
+				$pos    = strpos( $caller, $marker );
+				if ( false !== $pos ) {
+					$caller = substr( $caller, $pos + strlen( $marker ) );
+					if ( 0 === strpos( $caller, '()' ) ) {
+						$caller = substr( $caller, 2 );
+					}
+					$caller = ltrim( $caller, ', ' );
+				}
+
+				$caller = str_replace( ', ', "\n", $caller );
+
+				$query_obj = new QueryLogger(
+					$query_data[0], // SQL query
+					$query_time, // Time
+					$caller, // Caller
+					isset( $query_map[ $index ]['hook'] ) ? $query_map[ $index ]['hook'] : null,
+					isset( $query_map[ $index ]['callback'] ) ? $query_map[ $index ]['callback'] : null
+				);
+				$queries[] = $query_obj;
+			}
+		}
+
+		// Set up fields for output
+		$fields = array( 'query', 'time', 'caller' );
+		if ( $hook && ! $callback ) {
+			$fields = array( 'query', 'time', 'callback', 'caller' );
+		} elseif ( $callback && ! $hook ) {
+			$fields = array( 'query', 'time', 'hook', 'caller' );
+		} elseif ( $hook && $callback ) {
+			$fields = array( 'query', 'time', 'hook', 'callback', 'caller' );
+		}
+
+		$formatter = new Formatter( $assoc_args, $fields );
+		$formatter->display_items( $queries, true, $order, $orderby );
+	}
+
+	/**
 	 * Filter loggers with zero-ish values.
 	 *
 	 * @param array<\WP_CLI\Profile\Logger> $loggers

@@ -298,6 +298,75 @@ current theme.
     | 0.1009s | 100%        | 1             |
     +---------+-------------+---------------+
 
+
+
+### wp profile queries
+
+Profile database queries and their execution time.
+
+~~~
+wp profile queries [--url=<url>] [--hook=<hook>] [--callback=<callback>] [--time_threshold=<seconds>] [--fields=<fields>] [--format=<format>] [--order=<order>] [--orderby=<fields>]
+~~~
+
+Displays all database queries executed during a WordPress request,
+along with their execution time and caller information. You can filter
+queries to only show those executed during a specific hook or by a
+specific callback.
+
+**OPTIONS**
+
+	[--url=<url>]
+		Execute a request against a specified URL. Defaults to the home URL.
+
+	[--hook=<hook>]
+		Filter queries to only show those executed during a specific hook.
+
+	[--callback=<callback>]
+		Filter queries to only show those executed by a specific callback.
+
+	[--time_threshold=<seconds>]
+		Filter queries to only show those that took longer than or equal to a certain number of seconds.
+
+	[--fields=<fields>]
+		Limit the output to specific fields.
+
+	[--format=<format>]
+		Render output in a particular format.
+		---
+		default: table
+		options:
+		  - table
+		  - json
+		  - yaml
+		  - csv
+		---
+
+	[--order=<order>]
+		Ascending or Descending order.
+		---
+		default: ASC
+		options:
+		  - ASC
+		  - DESC
+		---
+
+	[--orderby=<fields>]
+		Set orderby which field.
+
+**EXAMPLES**
+
+    # Show all queries with their execution time
+    $ wp profile queries --fields=query,time
+
+    # Show queries executed during the 'init' hook
+    $ wp profile queries --hook=init --fields=query,time,caller
+
+    # Show queries executed by a specific callback
+    $ wp profile queries --callback='WP_Query->get_posts()' --fields=query,time
+
+    # Show queries ordered by execution time
+    $ wp profile queries --fields=query,time --orderby=time --order=DESC
+
 ## Installing
 
 Installing this package requires WP-CLI v2.13 or greater. Update to the latest stable release with `wp cli update`.
