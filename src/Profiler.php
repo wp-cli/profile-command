@@ -518,7 +518,7 @@ class Profiler {
 			);
 
 			// If request is preempted (mocked), log it now since http_api_debug won't fire
-			if ( false !== $preempt && ! is_null( $preempt ) ) {
+			if ( false !== $preempt ) {
 				$request_time = 0; // Preempted requests happen instantly
 				$status       = '';
 
