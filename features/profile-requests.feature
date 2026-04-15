@@ -41,7 +41,9 @@ Feature: Profile HTTP requests
       """
       <?php
       // Don't make any HTTP requests
-      add_filter( 'pre_http_request', '__return_false', 1 );
+      add_filter( 'pre_http_request', function() {
+        return new WP_Error( 'http_requests_disabled', 'HTTP requests are disabled during this test.' );
+      }, 1 );
       """
 
     When I run `wp profile requests --fields=method,url`
