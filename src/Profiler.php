@@ -445,7 +445,8 @@ class Profiler {
 
 					if ( ! is_null( $this->tick_redis_calls_offset ) && isset( $wp_object_cache->redis_calls ) && is_array( $wp_object_cache->redis_calls ) ) {
 						$current_redis_calls        = isset( $logger_data['redis_calls'] ) && is_numeric( $logger_data['redis_calls'] ) ? $logger_data['redis_calls'] : 0;
-						$logger_data['redis_calls'] = ( (int) array_sum( $wp_object_cache->redis_calls ) - $this->tick_redis_calls_offset ) + (int) $current_redis_calls;
+						$delta                      = (int) array_sum( $wp_object_cache->redis_calls ) - $this->tick_redis_calls_offset;
+						$logger_data['redis_calls'] = $delta + (int) $current_redis_calls;
 					}
 				}
 				$this->loggers[ $callback_hash ] = $logger_data;

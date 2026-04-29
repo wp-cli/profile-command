@@ -118,7 +118,9 @@ Feature: Profile arbitary code execution
           $this->redis_calls[ $command ] = isset( $this->redis_calls[ $command ] ) ? $this->redis_calls[ $command ] + 1 : 1;
         }
         public function add( $key, $data, $group = 'default', $expire = 0 ) {
-          if ( isset( $this->cache[ $this->cache_key( $key, $group ) ] ) ) { return false; }
+          if ( isset( $this->cache[ $this->cache_key( $key, $group ) ] ) ) {
+            return false;
+          }
           return $this->set( $key, $data, $group, $expire );
         }
         public function set( $key, $data, $group = 'default', $expire = 0 ) {
@@ -139,32 +141,45 @@ Feature: Profile arbitary code execution
         }
         public function delete( $key, $group = 'default' ) {
           $cache_key = $this->cache_key( $key, $group );
-          if ( ! isset( $this->cache[ $cache_key ] ) ) { return false; }
+          if ( ! isset( $this->cache[ $cache_key ] ) ) {
+            return false;
+          }
           unset( $this->cache[ $cache_key ] );
           $this->track( 'del' );
           return true;
         }
-        public function flush() { $this->cache = array(); return true; }
+        public function flush() {
+          $this->cache = array();
+          return true;
+        }
         public function decr( $key, $offset = 1, $group = 'default' ) {
           $cache_key = $this->cache_key( $key, $group );
-          if ( ! isset( $this->cache[ $cache_key ] ) ) { return false; }
+          if ( ! isset( $this->cache[ $cache_key ] ) ) {
+            return false;
+          }
           $this->cache[ $cache_key ] = max( 0, (int) $this->cache[ $cache_key ] - $offset );
           $this->track( 'decrby' );
           return $this->cache[ $cache_key ];
         }
         public function incr( $key, $offset = 1, $group = 'default' ) {
           $cache_key = $this->cache_key( $key, $group );
-          if ( ! isset( $this->cache[ $cache_key ] ) ) { return false; }
+          if ( ! isset( $this->cache[ $cache_key ] ) ) {
+            return false;
+          }
           $this->cache[ $cache_key ] = (int) $this->cache[ $cache_key ] + $offset;
           $this->track( 'incrby' );
           return $this->cache[ $cache_key ];
         }
         public function replace( $key, $data, $group = 'default', $expire = 0 ) {
-          if ( ! isset( $this->cache[ $this->cache_key( $key, $group ) ] ) ) { return false; }
+          if ( ! isset( $this->cache[ $this->cache_key( $key, $group ) ] ) ) {
+            return false;
+          }
           return $this->set( $key, $data, $group, $expire );
         }
         public function add_global_groups( $groups ) {
-          foreach ( (array) $groups as $group ) { $this->global_groups[ $group ] = true; }
+          foreach ( (array) $groups as $group ) {
+            $this->global_groups[ $group ] = true;
+          }
         }
       }
       """
