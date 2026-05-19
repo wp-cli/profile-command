@@ -10,9 +10,9 @@ Feature: Profile arbitary code execution
       }
       """
 
-    When I run `wp profile eval 'wp_cli_do_nothing();' --fields=query_time,query_count,cache_ratio,cache_hits,cache_misses,redis_calls,request_time,request_count`
+    When I run `wp profile eval 'wp_cli_do_nothing();' --fields=query_time,query_count,cache_ratio,cache_hits,cache_misses,cache_calls,request_time,request_count`
     Then STDOUT should be a table containing rows:
-      | query_time | query_count | cache_ratio | cache_hits | cache_misses | redis_calls | request_time | request_count |
+      | query_time | query_count | cache_ratio | cache_hits | cache_misses | cache_calls | request_time | request_count |
       | 0s         | 0           |             | 0          | 0            | 0           | 0s           | 0             |
 
   Scenario: Profile a function that makes one HTTP request
@@ -49,22 +49,22 @@ Feature: Profile arbitary code execution
       | callback        | cache_hits   | cache_misses   |
       | function(){}    | 0            | 1              |
 
-  Scenario: redis_calls shows 0 when no persistent object cache is active
+  Scenario: cache_calls shows 0 when no persistent object cache is active
     Given a WP install
 
-    When I run `wp profile eval 'wp_cache_get( "foo" );' --fields=cache_misses,redis_calls`
+    When I run `wp profile eval 'wp_cache_get( "foo" );' --fields=cache_misses,cache_calls`
     Then STDOUT should be a table containing rows:
-      | cache_misses | redis_calls |
+      | cache_misses | cache_calls |
       | 1            | 0           |
 
-  Scenario: redis_calls tracks calls to a persistent object cache that exposes redis_calls
+  Scenario: cache_calls tracks calls to a persistent object cache that exposes cache_calls
     Given a WP install
     And a wp-content/object-cache.php file:
       """
       <?php
       function wp_cache_init() {
         global $wp_object_cache;
-        $wp_object_cache = new WP_Object_Cache_With_Redis_Calls();
+        $wp_object_cache = new WP_Object_Cache_With_Cache_Calls();
       }
       function wp_cache_add( $key, $data, $group = '', $expire = 0 ) {
         global $wp_object_cache;
@@ -105,17 +105,17 @@ Feature: Profile arbitary code execution
         return $wp_object_cache->set( $key, $data, $group, (int) $expire );
       }
       function wp_cache_switch_to_blog( $blog_id ) {}
-      class WP_Object_Cache_With_Redis_Calls {
+      class WP_Object_Cache_With_Cache_Calls {
         public $cache = array();
         public $cache_hits = 0;
         public $cache_misses = 0;
-        public $redis_calls = array();
+        public $cache_calls = array();
         private $global_groups = array();
         private function cache_key( $key, $group ) {
           return $group . ':' . $key;
         }
         private function track( $command ) {
-          $this->redis_calls[ $command ] = isset( $this->redis_calls[ $command ] ) ? $this->redis_calls[ $command ] + 1 : 1;
+          $this->cache_calls[ $command ] = isset( $this->cache_calls[ $command ] ) ? $this->cache_calls[ $command ] + 1 : 1;
         }
         public function add( $key, $data, $group = 'default', $expire = 0 ) {
           if ( isset( $this->cache[ $this->cache_key( $key, $group ) ] ) ) {
@@ -184,7 +184,7 @@ Feature: Profile arbitary code execution
       }
       """
 
-    When I run `wp profile eval 'wp_cache_set( "foo", "bar" ); wp_cache_get( "foo" ); wp_cache_get( "foo" );' --fields=cache_hits,cache_misses,redis_calls`
+    When I run `wp profile eval 'wp_cache_set( "foo", "bar" ); wp_cache_get( "foo" ); wp_cache_get( "foo" );' --fields=cache_hits,cache_misses,cache_calls`
     Then STDOUT should be a table containing rows:
-      | cache_hits | cache_misses | redis_calls |
+      | cache_hits | cache_misses | cache_calls |
       | 2          | 0            | 3           |

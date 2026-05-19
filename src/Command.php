@@ -164,7 +164,7 @@ class Command {
 				'cache_ratio',
 				'cache_hits',
 				'cache_misses',
-				'redis_calls',
+				'cache_calls',
 				'request_time',
 				'request_count',
 			);
@@ -179,7 +179,7 @@ class Command {
 				'cache_ratio',
 				'cache_hits',
 				'cache_misses',
-				'redis_calls',
+				'cache_calls',
 				'hook_time',
 				'hook_count',
 				'request_time',
@@ -302,7 +302,7 @@ class Command {
 			'cache_ratio',
 			'cache_hits',
 			'cache_misses',
-			'redis_calls',
+			'cache_calls',
 			'request_time',
 			'request_count',
 		);
@@ -525,7 +525,7 @@ class Command {
 				'cache_ratio',
 				'cache_hits',
 				'cache_misses',
-				'redis_calls',
+				'cache_calls',
 				'request_time',
 				'request_count',
 			)

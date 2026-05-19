@@ -64,7 +64,7 @@ class Profiler {
 	/** @var int|null */
 	private $tick_cache_miss_offset = null;
 	/** @var int|null */
-	private $tick_redis_calls_offset = null;
+	private $tick_cache_calls_offset = null;
 
 	/** @var bool */
 	private $is_admin_request = false;
@@ -405,7 +405,7 @@ class Profiler {
 					'cache_hits'   => 0,
 					'cache_misses' => 0,
 					'cache_ratio'  => null,
-					'redis_calls'  => 0,
+					'cache_calls'  => 0,
 				);
 			}
 
@@ -443,10 +443,13 @@ class Profiler {
 						$logger_data['cache_ratio'] = round( $ratio, 2 ) . '%';
 					}
 
-					if ( ! is_null( $this->tick_redis_calls_offset ) && isset( $wp_object_cache->redis_calls ) && is_array( $wp_object_cache->redis_calls ) ) {
-						$current_redis_calls        = isset( $logger_data['redis_calls'] ) && is_numeric( $logger_data['redis_calls'] ) ? $logger_data['redis_calls'] : 0;
-						$delta                      = (int) array_sum( $wp_object_cache->redis_calls ) - $this->tick_redis_calls_offset;
-						$logger_data['redis_calls'] = $delta + (int) $current_redis_calls;
+					if ( ! is_null( $this->tick_cache_calls_offset ) ) {
+						$total = Logger::get_object_cache_calls( $wp_object_cache );
+						if ( ! is_null( $total ) ) {
+							$current_cache_calls        = isset( $logger_data['cache_calls'] ) && is_numeric( $logger_data['cache_calls'] ) ? $logger_data['cache_calls'] : 0;
+							$delta                      = $total - $this->tick_cache_calls_offset;
+							$logger_data['cache_calls'] = $delta + (int) $current_cache_calls;
+						}
 					}
 				}
 				$this->loggers[ $callback_hash ] = $logger_data;
@@ -494,7 +497,7 @@ class Profiler {
 		$this->tick_query_offset       = ! empty( $wpdb->queries ) ? count( $wpdb->queries ) : 0;
 		$this->tick_cache_hit_offset   = ! empty( $wp_object_cache->cache_hits ) ? $wp_object_cache->cache_hits : 0;
 		$this->tick_cache_miss_offset  = ! empty( $wp_object_cache->cache_misses ) ? $wp_object_cache->cache_misses : 0;
-		$this->tick_redis_calls_offset = isset( $wp_object_cache->redis_calls ) && is_array( $wp_object_cache->redis_calls ) ? (int) array_sum( $wp_object_cache->redis_calls ) : null;
+		$this->tick_cache_calls_offset = Logger::get_object_cache_calls( $wp_object_cache );
 	}
 
 	/**
