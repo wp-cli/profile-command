@@ -252,10 +252,13 @@ class Logger {
 	 * - Redis Object Cache: $wp_object_cache->cache_calls (array of command => count)
 	 * - Object Cache Pro: $wp_object_cache->metrics()->storeReads + storeWrites
 	 *
-	 * @param object $wp_object_cache
+	 * @param object|null $wp_object_cache
 	 * @return int|null Total call count, or null if not supported.
 	 */
 	public static function get_object_cache_calls( $wp_object_cache ) {
+		if ( ! is_object( $wp_object_cache ) ) {
+			return null;
+		}
 		if ( isset( $wp_object_cache->redis_calls ) && is_array( $wp_object_cache->redis_calls ) ) {
 			return (int) array_sum( $wp_object_cache->redis_calls );
 		}
