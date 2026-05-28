@@ -269,13 +269,12 @@ class Command {
 	 * @when before_wp_load
 	 *
 	 * @param array{0?: string} $args Positional arguments.
-	 * @param array{all?: bool, spotlight?: bool, plugin?: bool, url?: string, fields?: string, format: string, order: string, orderby?: string} $assoc_args
+	 * @param array{all?: bool, spotlight?: bool, plugin?: bool, search?: string, url?: string, fields?: string, format: string, order: string, orderby?: string} $assoc_args
 	 * @return void
 	 */
 	public function hook( $args, $assoc_args ) {
 
-		$focus = Utils\get_flag_value( $assoc_args, 'all', isset( $args[0] ) ? $args[0] : null );
-		/** @var array<string, bool|string> $assoc_args */
+		$focus  = Utils\get_flag_value( $assoc_args, 'all', isset( $args[0] ) ? $args[0] : null );
 		$plugin = Utils\get_flag_value( $assoc_args, 'plugin', false );
 
 		$order_val   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
@@ -860,8 +859,8 @@ class Command {
 		$location_parts = explode( ':', $location, 2 );
 		$location_file  = $location_parts[0];
 
-		if ( 0 === stripos( $location_file, 'mu-plugins/' ) ) {
-			$location_file = substr( $location_file, 11 );
+		if ( 0 === strpos( $location_file, 'mu-plugins/' ) ) {
+			$location_file = substr( $location_file, strlen( 'mu-plugins/' ) );
 		}
 
 		if ( false !== strpos( $location_file, '/' ) ) {
