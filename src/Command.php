@@ -244,6 +244,9 @@ class Command {
 	 * [--search=<pattern>]
 	 * : Filter callbacks to those matching the given search pattern (case-insensitive).
 	 *
+	 * [--plugin]
+	 * : Group callback metrics by plugin.
+	 *
 	 * ## EXAMPLES
 	 *
 	 *     # Profile a hook.
@@ -266,12 +269,14 @@ class Command {
 	 * @when before_wp_load
 	 *
 	 * @param array{0?: string} $args Positional arguments.
-	 * @param array{all?: bool, spotlight?: bool, url?: string, fields?: string, format: string, order: string, orderby?: string} $assoc_args
+	 * @param array{all?: bool, spotlight?: bool, plugin?: bool, url?: string, fields?: string, format: string, order: string, orderby?: string} $assoc_args
 	 * @return void
 	 */
 	public function hook( $args, $assoc_args ) {
 
 		$focus = Utils\get_flag_value( $assoc_args, 'all', isset( $args[0] ) ? $args[0] : null );
+		/** @var array<string, bool|string> $assoc_args */
+		$plugin = Utils\get_flag_value( $assoc_args, 'plugin', false );
 
 		$order_val   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
 		$order       = is_string( $order_val ) ? $order_val : 'ASC';
@@ -288,7 +293,9 @@ class Command {
 			remove_all_actions( 'shutdown' );
 		}
 
-		if ( $focus ) {
+		if ( $focus && $plugin ) {
+			$base = array( 'plugin' );
+		} elseif ( $focus ) {
 			$base = array( 'callback', 'location' );
 		} else {
 			$base = array( 'hook', 'callback_count' );
@@ -318,6 +325,12 @@ class Command {
 				WP_CLI::error( '--search requires --all or a specific hook.' );
 			}
 			$loggers = self::filter_by_callback( $loggers, $search );
+		}
+		if ( $plugin ) {
+			if ( ! $focus ) {
+				WP_CLI::error( '--plugin requires --all or a specific hook.' );
+			}
+			$loggers = self::group_by_plugin( $loggers );
 		}
 		$formatter->display_items( $loggers, true, $order, $orderby );
 	}
@@ -791,5 +804,75 @@ class Command {
 				return isset( $logger->callback ) && false !== stripos( $logger->callback, $pattern );
 			}
 		);
+	}
+
+	/**
+	 * Group callback loggers by plugin.
+	 *
+	 * @param array<\WP_CLI\Profile\Logger> $loggers
+	 * @return array<\WP_CLI\Profile\Logger>
+	 */
+	private static function group_by_plugin( $loggers ) {
+		$plugins = array();
+
+		foreach ( $loggers as $logger ) {
+			if ( ! isset( $logger->location ) ) {
+				continue;
+			}
+			$plugin = self::plugin_from_location( $logger->location );
+			if ( null === $plugin ) {
+				continue;
+			}
+			if ( ! isset( $plugins[ $plugin ] ) ) {
+				$plugins[ $plugin ] = new Logger(
+					array(
+						'plugin' => $plugin,
+					)
+				);
+			}
+
+			$plugins[ $plugin ]->time          += $logger->time;
+			$plugins[ $plugin ]->query_time    += $logger->query_time;
+			$plugins[ $plugin ]->query_count   += $logger->query_count;
+			$plugins[ $plugin ]->cache_hits    += $logger->cache_hits;
+			$plugins[ $plugin ]->cache_misses  += $logger->cache_misses;
+			$plugins[ $plugin ]->request_time  += $logger->request_time;
+			$plugins[ $plugin ]->request_count += $logger->request_count;
+		}
+
+		foreach ( $plugins as $plugin ) {
+			$total_cache = $plugin->cache_hits + $plugin->cache_misses;
+			if ( $total_cache ) {
+				$plugin->cache_ratio = round( ( $plugin->cache_hits / $total_cache ) * 100, 2 ) . '%';
+			}
+		}
+
+		return array_values( $plugins );
+	}
+
+	/**
+	 * Extract plugin slug from a callback location.
+	 *
+	 * @param string $location
+	 * @return string|null
+	 */
+	private static function plugin_from_location( $location ) {
+		$location_parts = explode( ':', $location, 2 );
+		$location_file  = $location_parts[0];
+
+		if ( 0 === stripos( $location_file, 'mu-plugins/' ) ) {
+			$location_file = substr( $location_file, 11 );
+		}
+
+		if ( false !== strpos( $location_file, '/' ) ) {
+			$segments = explode( '/', $location_file );
+			return $segments[0];
+		}
+
+		if ( 'php' === pathinfo( $location_file, PATHINFO_EXTENSION ) ) {
+			return pathinfo( $location_file, PATHINFO_FILENAME );
+		}
+
+		return null;
 	}
 }
