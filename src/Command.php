@@ -862,17 +862,22 @@ class Command {
 		foreach ( array( 'wp-content/plugins/', 'plugins/' ) as $prefix ) {
 			$position = strpos( $location_file, $prefix );
 			while ( false !== $position ) {
-				if ( 0 === $position || '/' === $location_file[ $position - 1 ] ) {
-					$location_file = substr( $location_file, $position + strlen( $prefix ) );
-					$segments      = explode( '/', $location_file );
-					return $segments[0];
+				if ( 0 !== $position ) {
+					if ( '/' !== substr( $location_file, $position - 1, 1 ) ) {
+						$position = strpos( $location_file, $prefix, $position + 1 );
+						continue;
+					}
 				}
-				$position = strpos( $location_file, $prefix, $position + 1 );
+
+				$location_file = substr( $location_file, $position + strlen( $prefix ) );
+				$segments      = explode( '/', $location_file );
+				return $segments[0];
 			}
 		}
 
 		if ( defined( 'WP_PLUGIN_DIR' ) ) {
-			$plugin_path = rtrim( str_replace( '\\', '/', WP_PLUGIN_DIR ), '/' ) . '/' . ltrim( $location_file, '/' );
+			$normalized_plugin_dir = rtrim( str_replace( '\\', '/', WP_PLUGIN_DIR ), '/' );
+			$plugin_path           = $normalized_plugin_dir . '/' . ltrim( $location_file, '/' );
 			if ( file_exists( $plugin_path ) ) {
 				if ( false !== strpos( $location_file, '/' ) ) {
 					$segments = explode( '/', $location_file );
@@ -889,12 +894,16 @@ class Command {
 		foreach ( array( 'wp-content/mu-plugins/', 'mu-plugins/' ) as $prefix ) {
 			$position = strpos( $location_file, $prefix );
 			while ( false !== $position ) {
-				if ( 0 === $position || '/' === $location_file[ $position - 1 ] ) {
-					$location_file   = substr( $location_file, $position + strlen( $prefix ) );
-					$found_mu_prefix = true;
-					break 2;
+				if ( 0 !== $position ) {
+					if ( '/' !== substr( $location_file, $position - 1, 1 ) ) {
+						$position = strpos( $location_file, $prefix, $position + 1 );
+						continue;
+					}
 				}
-				$position = strpos( $location_file, $prefix, $position + 1 );
+
+				$location_file   = substr( $location_file, $position + strlen( $prefix ) );
+				$found_mu_prefix = true;
+				break 2;
 			}
 		}
 
