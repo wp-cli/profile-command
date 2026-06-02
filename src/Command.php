@@ -245,7 +245,7 @@ class Command {
 	 * : Filter callbacks to those matching the given search pattern (case-insensitive).
 	 *
 	 * [--plugin]
-	 * : Group callback metrics by plugin.
+	 * : Group callback metrics by plugin. Requires --all or a specific hook.
 	 *
 	 * ## EXAMPLES
 	 *
