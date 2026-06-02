@@ -857,25 +857,48 @@ class Command {
 	 */
 	private static function plugin_from_location( $location ) {
 		$location_parts = explode( ':', $location, 2 );
-		$location_file  = ltrim( $location_parts[0], '/' );
+		$location_file  = str_replace( '\\', '/', $location_parts[0] );
 
-		if ( 0 === strpos( $location_file, 'wp-content/plugins/' ) ) {
-			$location_file = substr( $location_file, strlen( 'wp-content/plugins/' ) );
-			$segments      = explode( '/', $location_file );
-			return $segments[0];
+		foreach ( array( 'wp-content/plugins/', 'plugins/' ) as $prefix ) {
+			$position = strpos( $location_file, $prefix );
+			while ( false !== $position ) {
+				if ( 0 === $position || '/' === $location_file[ $position - 1 ] ) {
+					$location_file = substr( $location_file, $position + strlen( $prefix ) );
+					$segments      = explode( '/', $location_file );
+					return $segments[0];
+				}
+				$position = strpos( $location_file, $prefix, $position + 1 );
+			}
 		}
 
-		if ( 0 === strpos( $location_file, 'plugins/' ) ) {
-			$location_file = substr( $location_file, strlen( 'plugins/' ) );
-			$segments      = explode( '/', $location_file );
-			return $segments[0];
+		if ( defined( 'WP_PLUGIN_DIR' ) ) {
+			$plugin_path = rtrim( str_replace( '\\', '/', WP_PLUGIN_DIR ), '/' ) . '/' . ltrim( $location_file, '/' );
+			if ( file_exists( $plugin_path ) ) {
+				if ( false !== strpos( $location_file, '/' ) ) {
+					$segments = explode( '/', $location_file );
+					return $segments[0];
+				}
+
+				if ( 'php' === pathinfo( $location_file, PATHINFO_EXTENSION ) ) {
+					return pathinfo( $location_file, PATHINFO_FILENAME );
+				}
+			}
 		}
 
-		if ( 0 === strpos( $location_file, 'wp-content/mu-plugins/' ) ) {
-			$location_file = substr( $location_file, strlen( 'wp-content/mu-plugins/' ) );
-		} elseif ( 0 === strpos( $location_file, 'mu-plugins/' ) ) {
-			$location_file = substr( $location_file, strlen( 'mu-plugins/' ) );
-		} else {
+		$found_mu_prefix = false;
+		foreach ( array( 'wp-content/mu-plugins/', 'mu-plugins/' ) as $prefix ) {
+			$position = strpos( $location_file, $prefix );
+			while ( false !== $position ) {
+				if ( 0 === $position || '/' === $location_file[ $position - 1 ] ) {
+					$location_file   = substr( $location_file, $position + strlen( $prefix ) );
+					$found_mu_prefix = true;
+					break 2;
+				}
+				$position = strpos( $location_file, $prefix, $position + 1 );
+			}
+		}
+
+		if ( ! $found_mu_prefix ) {
 			return null;
 		}
 
