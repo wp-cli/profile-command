@@ -839,10 +839,10 @@ class Command {
 			$plugins[ $plugin ]->request_count += $logger->request_count;
 		}
 
-		foreach ( $plugins as $plugin ) {
-			$total_cache = $plugin->cache_hits + $plugin->cache_misses;
+		foreach ( $plugins as $plugin_logger ) {
+			$total_cache = $plugin_logger->cache_hits + $plugin_logger->cache_misses;
 			if ( $total_cache ) {
-				$plugin->cache_ratio = round( ( $plugin->cache_hits / $total_cache ) * 100, 2 ) . '%';
+				$plugin_logger->cache_ratio = round( ( $plugin_logger->cache_hits / $total_cache ) * 100, 2 ) . '%';
 			}
 		}
 
