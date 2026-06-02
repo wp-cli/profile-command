@@ -856,9 +856,11 @@ class Command {
 	 * @return string|null
 	 */
 	private static function plugin_from_location( $location ) {
-		$location_parts = explode( ':', $location, 2 );
-		$location_file  = str_replace( '\\', '/', $location_parts[0] );
-
+		$location_file = str_replace( '\\', '/', $location );
+		$colon_pos     = strrpos( $location_file, ':' );
+		if ( false !== $colon_pos && ctype_digit( substr( $location_file, $colon_pos + 1 ) ) ) {
+			$location_file = substr( $location_file, 0, $colon_pos );
+		}
 		foreach ( array( 'wp-content/plugins/', 'plugins/' ) as $prefix ) {
 			$position = strpos( $location_file, $prefix );
 			while ( false !== $position ) {
