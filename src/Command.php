@@ -857,10 +857,26 @@ class Command {
 	 */
 	private static function plugin_from_location( $location ) {
 		$location_parts = explode( ':', $location, 2 );
-		$location_file  = $location_parts[0];
+		$location_file  = ltrim( $location_parts[0], '/' );
 
-		if ( 0 === strpos( $location_file, 'mu-plugins/' ) ) {
+		if ( 0 === strpos( $location_file, 'wp-content/plugins/' ) ) {
+			$location_file = substr( $location_file, strlen( 'wp-content/plugins/' ) );
+			$segments      = explode( '/', $location_file );
+			return $segments[0];
+		}
+
+		if ( 0 === strpos( $location_file, 'plugins/' ) ) {
+			$location_file = substr( $location_file, strlen( 'plugins/' ) );
+			$segments      = explode( '/', $location_file );
+			return $segments[0];
+		}
+
+		if ( 0 === strpos( $location_file, 'wp-content/mu-plugins/' ) ) {
+			$location_file = substr( $location_file, strlen( 'wp-content/mu-plugins/' ) );
+		} elseif ( 0 === strpos( $location_file, 'mu-plugins/' ) ) {
 			$location_file = substr( $location_file, strlen( 'mu-plugins/' ) );
+		} else {
+			return null;
 		}
 
 		if ( false !== strpos( $location_file, '/' ) ) {
