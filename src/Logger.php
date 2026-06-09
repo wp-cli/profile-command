@@ -178,7 +178,6 @@ class Logger {
 				$this->cache_calls = max( 0, $total - $this->cache_calls_offset );
 			}
 		}
-		}
 
 		$this->start_time         = null;
 		$this->query_offset       = null;
