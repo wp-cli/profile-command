@@ -451,7 +451,6 @@ class Profiler {
 							$logger_data['cache_calls'] = max( 0, $delta + (int) $current_cache_calls );
 						}
 					}
-					}
 				}
 				$this->loggers[ $callback_hash ] = $logger_data;
 			}
