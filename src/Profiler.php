@@ -710,7 +710,6 @@ class Profiler {
 			$name       = get_class( $callback[0] ) . '->' . $callback[1] . '()';
 		} elseif ( is_array( $callback ) && isset( $callback[0] ) && isset( $callback[1] ) && ( is_object( $callback[0] ) || is_string( $callback[0] ) ) && is_string( $callback[1] ) && method_exists( $callback[0], $callback[1] ) ) {
 			$reflection = new \ReflectionMethod( $callback[0], $callback[1] );
-			/** @var string $class_name */
 			$class_name = $callback[0];
 			$name       = $class_name . '::' . $callback[1] . '()';
 		} elseif ( is_object( $callback ) && is_a( $callback, 'Closure' ) ) {
