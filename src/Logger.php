@@ -175,8 +175,9 @@ class Logger {
 		if ( ! is_null( $this->cache_calls_offset ) && isset( $wp_object_cache ) ) {
 			$total = self::get_object_cache_calls( $wp_object_cache );
 			if ( ! is_null( $total ) ) {
-				$this->cache_calls = $total - $this->cache_calls_offset;
+				$this->cache_calls = max( 0, $total - $this->cache_calls_offset );
 			}
+		}
 		}
 
 		$this->start_time         = null;

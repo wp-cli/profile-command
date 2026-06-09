@@ -446,10 +446,11 @@ class Profiler {
 					if ( ! is_null( $this->tick_cache_calls_offset ) ) {
 						$total = Logger::get_object_cache_calls( $wp_object_cache );
 						if ( ! is_null( $total ) ) {
-							$current_cache_calls        = isset( $logger_data['cache_calls'] ) && is_numeric( $logger_data['cache_calls'] ) ? $logger_data['cache_calls'] : 0;
-							$delta                      = $total - $this->tick_cache_calls_offset;
-							$logger_data['cache_calls'] = $delta + (int) $current_cache_calls;
+							$current_cache_calls = isset( $logger_data['cache_calls'] ) && is_numeric( $logger_data['cache_calls'] ) ? $logger_data['cache_calls'] : 0;
+							$delta               = max( 0, $total - $this->tick_cache_calls_offset );
+							$logger_data['cache_calls'] = max( 0, $delta + (int) $current_cache_calls );
 						}
+					}
 					}
 				}
 				$this->loggers[ $callback_hash ] = $logger_data;
