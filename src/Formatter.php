@@ -196,7 +196,13 @@ class Formatter {
 					$values[ $i ] = round( $value_num, 4 ) . 's';
 				}
 			}
-			$table->addRow( $values );
+			$row = array_map(
+				function ( $val ) {
+					return is_scalar( $val ) ? (string) $val : '';
+				},
+				$values
+			);
+			$table->addRow( $row );
 		}
 		if ( $include_total ) {
 			foreach ( $totals as $i => $value ) {
@@ -221,7 +227,13 @@ class Formatter {
 					}
 				}
 			}
-			$table->setFooters( $totals );
+			$footers = array_map(
+				function ( $val ) {
+					return is_scalar( $val ) ? (string) $val : '';
+				},
+				$totals
+			);
+			$table->setFooters( $footers );
 		}
 
 		foreach ( $table->getDisplayLines() as $line ) {
