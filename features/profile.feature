@@ -26,7 +26,7 @@ Feature: Basic profile usage
       """
       define( 'SAVEQUERIES', false );
       """
-    And I run `wp core config {CORE_CONFIG_SETTINGS} --skip-check --extra-php < extra-php`
+    And I run `wp config create {CORE_CONFIG_SETTINGS} --skip-check --extra-php < extra-php`
 
     When I run `wp core install --url='https://localhost' --title='Test' --admin_user=wpcli --admin_email=admin@example.com --admin_password=1`
     Then the return code should be 0
