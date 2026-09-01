@@ -5,6 +5,9 @@ namespace WP_CLI\Profile;
 use WP_CLI;
 use WP_CLI\Path;
 
+/**
+ * @phpstan-type Hook_Callbacks array<int, array<string, array{function: callable, accepted_args: int}>>
+ */
 class Profiler {
 
 	/** @var string|false */
@@ -46,7 +49,7 @@ class Profiler {
 	private $running_hook = null;
 	/** @var string|null */
 	private $previous_filter = null;
-	/** @var array<mixed>|null */
+	/** @var Hook_Callbacks|null */
 	private $previous_filter_callbacks = null;
 	/** @var int */
 	private $filter_depth = 0;
@@ -708,31 +711,23 @@ class Profiler {
 	 * Get the callbacks for a given filter
 	 *
 	 * @param string $filter
-	 * @return array<mixed>|false
+	 * @return Hook_Callbacks|false
 	 */
 	private static function get_filter_callbacks( $filter ) {
 		global $wp_filter;
 
-		if ( ! isset( $wp_filter[ $filter ] ) ) {
+		if ( ! isset( $wp_filter[ $filter ] ) || ! is_a( $wp_filter[ $filter ], 'WP_Hook' ) ) {
 			return false;
 		}
 
-		if ( is_a( $wp_filter[ $filter ], 'WP_Hook' ) ) {
-			$callbacks = $wp_filter[ $filter ]->callbacks;
-		} else {
-			$callbacks = $wp_filter[ $filter ];
-		}
-		if ( is_array( $callbacks ) ) {
-			return $callbacks;
-		}
-		return false;
+		return $wp_filter[ $filter ]->callbacks;
 	}
 
 	/**
 	 * Set the callbacks for a given filter
 	 *
-	 * @param string $filter
-	 * @param mixed  $callbacks
+	 * @param string         $filter
+	 * @param Hook_Callbacks $callbacks
 	 * @return void
 	 */
 	private static function set_filter_callbacks( $filter, $callbacks ) {
@@ -743,7 +738,6 @@ class Profiler {
 		}
 
 		if ( is_a( $wp_filter[ $filter ], 'WP_Hook' ) ) {
-			/** @var array<mixed> $callbacks */
 			$wp_filter[ $filter ]->callbacks = $callbacks;
 		} else {
 			$wp_filter[ $filter ] = $callbacks; // phpcs:ignore
