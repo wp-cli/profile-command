@@ -6,7 +6,7 @@ use WP_CLI;
 use WP_CLI\Path;
 
 /**
- * @phpstan-type Hook_Callbacks array<int, array<string, array{function: callable, accepted_args: int}>>
+ * @phpstan-type Hook_Callbacks array<int, array<non-decimal-int-string, array{function: callable, accepted_args: int}>>
  */
 class Profiler {
 
