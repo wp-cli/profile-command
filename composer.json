@@ -30,6 +30,7 @@
       "profile hook",
       "profile eval",
       "profile eval-file",
+      "profile requests",
       "profile queries"
     ],
     "readme": {
