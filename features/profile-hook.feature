@@ -152,6 +152,28 @@ Feature: Profile a specific hook
       """
     And STDERR should be empty
 
+  Scenario: Group callback metrics by plugin
+    Given a WP install
+    And a wp-content/plugins/resource-test/resource-test.php file:
+      """
+      <?php
+      /**
+       * Plugin Name: Resource Test
+       */
+      function resource_test_init_callback() {
+        wp_cache_get( 'resource_test' );
+      }
+      add_action( 'init', 'resource_test_init_callback' );
+      """
+    And I run `wp plugin activate resource-test`
+
+    When I run `wp profile hook init --plugin --fields=plugin,cache_hits,cache_misses`
+    Then STDOUT should be a table containing rows:
+      | plugin        | cache_hits | cache_misses |
+      | resource-test | 0          | 1            |
+      | total (1)     | 0          | 1            |
+    And STDERR should be empty
+
   Scenario: Hooks should only be called once
     Given a WP install
     And a wp-content/mu-plugins/action-test.php file:
