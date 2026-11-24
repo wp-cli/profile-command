@@ -188,6 +188,7 @@ class Profiler {
 		if ( 'request' === $this->type ) {
 			// Run last, so that requests preempted by any other callback are seen as such.
 			WP_CLI::add_wp_hook( 'pre_http_request', array( $this, 'wp_request_log_begin' ), PHP_INT_MAX, 3 );
+			WP_CLI::add_wp_hook( 'http_request_args', array( $this, 'wp_request_log_reorder' ), PHP_INT_MAX );
 			WP_CLI::add_wp_hook( 'http_api_debug', array( $this, 'wp_request_log_end' ), 10, 5 );
 		}
 		$this->load_wordpress_with_template();
@@ -540,6 +541,23 @@ class Profiler {
 			$this->request_start_time = null;
 		}
 		return $preempt;
+	}
+
+	/**
+	 * Move the preemption check to the end of the `pre_http_request` callbacks.
+	 *
+	 * Callbacks with the same priority run in the order they were added, so a
+	 * plugin's callback at PHP_INT_MAX would otherwise run after the check, and
+	 * a request it short-circuits would go unnoticed. `http_request_args` fires
+	 * right before `pre_http_request` for every request.
+	 *
+	 * @param array<string, mixed> $parsed_args Request arguments.
+	 * @return array<string, mixed>
+	 */
+	public function wp_request_log_reorder( $parsed_args ) {
+		remove_filter( 'pre_http_request', array( $this, 'wp_request_log_begin' ), PHP_INT_MAX );
+		add_filter( 'pre_http_request', array( $this, 'wp_request_log_begin' ), PHP_INT_MAX, 3 );
+		return $parsed_args;
 	}
 
 	/**
