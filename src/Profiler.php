@@ -69,6 +69,8 @@ class Profiler {
 	/** @var int|null */
 	private $tick_cache_calls_offset = null;
 
+	/** @var float|null */
+	private $request_start_time = null;
 	/** @var bool */
 	private $is_admin_request = false;
 
@@ -180,11 +182,17 @@ class Profiler {
 		) {
 			$start_hook = substr( $this->focus, 0, -6 );
 			WP_CLI::add_wp_hook( $start_hook, array( $this, 'wp_tick_profile_begin' ), 9999 );
-		} else {
+		} elseif ( 'request' !== $this->type ) {
 			WP_CLI::add_wp_hook( 'all', array( $this, 'wp_hook_begin' ) );
 		}
 		WP_CLI::add_wp_hook( 'pre_http_request', array( $this, 'wp_request_begin' ) );
 		WP_CLI::add_wp_hook( 'http_api_debug', array( $this, 'wp_request_end' ) );
+		if ( 'request' === $this->type ) {
+			// Run last, so that requests preempted by any other callback are seen as such.
+			WP_CLI::add_wp_hook( 'pre_http_request', array( $this, 'wp_request_log_begin' ), PHP_INT_MAX, 3 );
+			WP_CLI::add_wp_hook( 'http_request_args', array( $this, 'wp_request_log_reorder' ), PHP_INT_MAX );
+			WP_CLI::add_wp_hook( 'http_api_debug', array( $this, 'wp_request_log_end' ), 10, 5 );
+		}
 		$this->load_wordpress_with_template();
 	}
 
@@ -527,6 +535,90 @@ class Profiler {
 			$logger->stop_request_timer();
 		}
 		return $filter_value;
+	}
+
+	/**
+	 * Start timing an individual HTTP request, or log it right away if it was preempted.
+	 *
+	 * @param mixed                     $preempt     Response to short-circuit the request with, or false.
+	 * @param array<string, mixed>|null $parsed_args Request arguments.
+	 * @param string|null               $url         Request URL.
+	 * @return mixed
+	 */
+	public function wp_request_log_begin( $preempt = false, $parsed_args = null, $url = null ) {
+		if ( false === $preempt ) {
+			$this->request_start_time = microtime( true );
+		} else {
+			// http_api_debug doesn't fire for preempted requests.
+			$this->log_request( $preempt, $parsed_args, $url, 0.0 );
+			$this->request_start_time = null;
+		}
+		return $preempt;
+	}
+
+	/**
+	 * Move the preemption check to the end of the `pre_http_request` callbacks.
+	 *
+	 * Callbacks with the same priority run in the order they were added, so a
+	 * plugin's callback at PHP_INT_MAX would otherwise run after the check, and
+	 * a request it short-circuits would go unnoticed. `http_request_args` fires
+	 * right before `pre_http_request` for every request.
+	 *
+	 * @param array<string, mixed> $parsed_args Request arguments.
+	 * @return array<string, mixed>
+	 */
+	public function wp_request_log_reorder( $parsed_args ) {
+		remove_filter( 'pre_http_request', array( $this, 'wp_request_log_begin' ), PHP_INT_MAX );
+		add_filter( 'pre_http_request', array( $this, 'wp_request_log_begin' ), PHP_INT_MAX, 3 );
+		return $parsed_args;
+	}
+
+	/**
+	 * Log an individual HTTP request once it completed.
+	 *
+	 * @param mixed                     $response    Response array or WP_Error.
+	 * @param string                    $context     Context of the action.
+	 * @param string                    $transport   HTTP transport class name.
+	 * @param array<string, mixed>|null $parsed_args Request arguments.
+	 * @param string|null               $url         Request URL.
+	 * @return void
+	 */
+	public function wp_request_log_end( $response = null, $context = '', $transport = '', $parsed_args = null, $url = null ) {
+		if ( 'response' !== $context ) {
+			return;
+		}
+		$time                     = is_null( $this->request_start_time ) ? 0.0 : microtime( true ) - $this->request_start_time;
+		$this->request_start_time = null;
+		$this->log_request( $response, $parsed_args, $url, $time );
+	}
+
+	/**
+	 * Add a logger for an individual HTTP request.
+	 *
+	 * @param mixed                     $response    Response array or WP_Error.
+	 * @param array<string, mixed>|null $parsed_args Request arguments.
+	 * @param string|null               $url         Request URL.
+	 * @param float                     $time        Time the request took.
+	 * @return void
+	 */
+	private function log_request( $response, $parsed_args, $url, $time ) {
+		$status = '';
+		if ( is_wp_error( $response ) ) {
+			$status = 'error';
+		} elseif ( is_array( $response ) && isset( $response['response'] ) && is_array( $response['response'] ) && isset( $response['response']['code'] ) ) {
+			$status = $response['response']['code'];
+		}
+
+		$logger       = new Logger(
+			array(
+				'method' => is_array( $parsed_args ) && isset( $parsed_args['method'] ) ? $parsed_args['method'] : 'GET',
+				'url'    => (string) $url,
+				'status' => $status,
+			)
+		);
+		$logger->time = $time;
+
+		$this->loggers[] = $logger;
 	}
 
 	/**

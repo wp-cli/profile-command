@@ -326,6 +326,89 @@ class Command {
 	}
 
 	/**
+	 * Profile HTTP requests made during the WordPress load process.
+	 *
+	 * Lists every HTTP request made through the WordPress HTTP API while
+	 * loading a page, with its method, URL, response code and the time it
+	 * took. Requests short-circuited through the `pre_http_request` filter
+	 * are listed with a time of 0s.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--url=<url>]
+	 * : Execute a request against a specified URL. Defaults to the home URL.
+	 *
+	 * [--fields=<fields>]
+	 * : Limit the output to specific fields. Default is all fields.
+	 *
+	 * [--format=<format>]
+	 * : Render output in a particular format.
+	 * ---
+	 * default: table
+	 * options:
+	 *   - table
+	 *   - json
+	 *   - yaml
+	 *   - csv
+	 * ---
+	 *
+	 * [--order=<order>]
+	 * : Ascending or Descending order.
+	 * ---
+	 * default: ASC
+	 * options:
+	 *   - ASC
+	 *   - DESC
+	 * ---
+	 *
+	 * [--orderby=<fields>]
+	 * : Set orderby which field.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     # List all HTTP requests made while loading the home page.
+	 *     $ wp profile requests
+	 *     +-----------+------------------------------+--------+---------+
+	 *     | method    | url                          | status | time    |
+	 *     +-----------+------------------------------+--------+---------+
+	 *     | GET       | https://api.example.com/     | 200    | 0.2341s |
+	 *     | POST      | https://api.example.com/save | 201    | 0.1653s |
+	 *     +-----------+------------------------------+--------+---------+
+	 *     | total (2) |                              |        | 0.3994s |
+	 *     +-----------+------------------------------+--------+---------+
+	 *
+	 *     # Show the slowest requests first.
+	 *     $ wp profile requests --orderby=time --order=DESC
+	 *
+	 * @skipglobalargcheck
+	 * @when before_wp_load
+	 *
+	 * @param array<string> $args Positional arguments. Unused.
+	 * @param array{url?: string, fields?: string, format: string, order: string, orderby?: string} $assoc_args Associative arguments.
+	 * @return void
+	 */
+	public function requests( $args, $assoc_args ) {
+		$order_val   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
+		$order       = is_string( $order_val ) ? $order_val : 'ASC';
+		$orderby_val = Utils\get_flag_value( $assoc_args, 'orderby', null );
+		$orderby     = is_string( $orderby_val ) ? $orderby_val : null;
+
+		$profiler = new Profiler( 'request', false );
+		$profiler->run();
+
+		$fields    = array(
+			'method',
+			'url',
+			'status',
+			'time',
+		);
+		$formatter = new Formatter( $assoc_args, $fields );
+		$loggers   = $profiler->get_loggers();
+
+		$formatter->display_items( $loggers, true, $order, $orderby );
+	}
+
+	/**
 	 * Profile arbitrary code execution.
 	 *
 	 * Code execution happens after WordPress has loaded entirely, which means

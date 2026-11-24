@@ -86,10 +86,27 @@ class Formatter {
 	 * @return void
 	 */
 	public function display_items( $items, $include_total, $order, $orderby ) {
+		if ( $orderby ) {
+			usort(
+				$items,
+				function ( $a, $b ) use ( $order, $orderby ) {
+
+					$orderby_array          = 'ASC' === $order ? array( $a, $b ) : array( $b, $a );
+					list( $first, $second ) = $orderby_array;
+
+					if ( is_numeric( $first->$orderby ) && is_numeric( $second->$orderby ) ) {
+						return $this->compare_float( (float) $first->$orderby, (float) $second->$orderby );
+					}
+
+					return strcmp( $first->$orderby, $second->$orderby );
+				}
+			);
+		}
+
 		if ( 'table' === $this->args['format'] && empty( $this->args['field'] ) ) {
 			/** @var array<string> $fields */
 			$fields = $this->args['fields'];
-			$this->show_table( $order, $orderby, $items, $fields, $include_total );
+			$this->show_table( $items, $fields, $include_total );
 		} else {
 			$this->formatter->display_items( $items );
 		}
@@ -118,14 +135,12 @@ class Formatter {
 	/**
 	 * Show items in a \cli\Table.
 	 *
-	 * @param string                                                  $order
-	 * @param string|null                                             $orderby
 	 * @param array<\WP_CLI\Profile\Logger|\WP_CLI\Profile\QueryLogger> $items
 	 * @param array<string>                                           $fields
 	 * @param bool                                                    $include_total
 	 * @return void
 	 */
-	private function show_table( $order, $orderby, $items, $fields, $include_total ) {
+	private function show_table( $items, $fields, $include_total ) {
 		$table = new \cli\Table();
 
 		$enabled = \cli\Colors::shouldColorize();
@@ -140,25 +155,8 @@ class Formatter {
 			$totals[ $this->total_cell_index ] = 'total (' . count( $items ) . ')';
 		}
 
-		if ( $orderby ) {
-			usort(
-				$items,
-				function ( $a, $b ) use ( $order, $orderby ) {
-
-					$orderby_array          = 'ASC' === $order ? array( $a, $b ) : array( $b, $a );
-					list( $first, $second ) = $orderby_array;
-
-					if ( is_numeric( $first->$orderby ) && is_numeric( $second->$orderby ) ) {
-						return $this->compare_float( (float) $first->$orderby, (float) $second->$orderby );
-					}
-
-					return strcmp( $first->$orderby, $second->$orderby );
-				}
-			);
-		}
-
 		$location_index     = array_search( 'location', $fields, true );
-		$non_numeric_fields = array( 'query', 'caller', 'hook', 'callback' );
+		$non_numeric_fields = array( 'query', 'caller', 'hook', 'callback', 'method', 'url', 'status' );
 		foreach ( $items as $item ) {
 			$values = array_values( \WP_CLI\Utils\pick_fields( $item, $fields ) );
 			foreach ( $values as $i => $value ) {
@@ -171,7 +169,7 @@ class Formatter {
 					continue;
 				}
 
-				// Ignore non-numeric fields (query, caller, hook, callback)
+				// Ignore non-numeric fields
 				if ( in_array( $fields[ $i ], $non_numeric_fields, true ) ) {
 					continue;
 				}
