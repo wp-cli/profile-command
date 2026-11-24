@@ -33,6 +33,8 @@ Feature: Profile HTTP requests
       | total (2) |                          |        |
     And STDERR should be empty
 
+  # Blocked requests only trigger `http_api_debug` since WordPress 5.3.
+  @require-wp-5.3
   Scenario: Profile HTTP requests that are not short-circuited
     Given a WP install
     And a wp-content/mu-plugins/http-requests.php file:

@@ -574,7 +574,7 @@ class Profiler {
 		$status = '';
 		if ( is_wp_error( $response ) ) {
 			$status = 'error';
-		} elseif ( is_array( $response ) && isset( $response['response']['code'] ) ) {
+		} elseif ( is_array( $response ) && isset( $response['response'] ) && is_array( $response['response'] ) && isset( $response['response']['code'] ) ) {
 			$status = $response['response']['code'];
 		}
 
