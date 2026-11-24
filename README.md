@@ -300,6 +300,68 @@ current theme.
 
 
 
+### wp profile requests
+
+Profile HTTP requests made during the WordPress load process.
+
+~~~
+wp profile requests [--url=<url>] [--fields=<fields>] [--format=<format>] [--order=<order>] [--orderby=<fields>]
+~~~
+
+Lists every HTTP request made through the WordPress HTTP API while
+loading a page, with its method, URL, response code and the time it
+took. Requests short-circuited through the `pre_http_request` filter
+are listed with a time of 0s.
+
+**OPTIONS**
+
+	[--url=<url>]
+		Execute a request against a specified URL. Defaults to the home URL.
+
+	[--fields=<fields>]
+		Limit the output to specific fields. Default is all fields.
+
+	[--format=<format>]
+		Render output in a particular format.
+		---
+		default: table
+		options:
+		  - table
+		  - json
+		  - yaml
+		  - csv
+		---
+
+	[--order=<order>]
+		Ascending or Descending order.
+		---
+		default: ASC
+		options:
+		  - ASC
+		  - DESC
+		---
+
+	[--orderby=<fields>]
+		Set orderby which field.
+
+**EXAMPLES**
+
+    # List all HTTP requests made while loading the home page.
+    $ wp profile requests
+    +-----------+------------------------------+--------+---------+
+    | method    | url                          | status | time    |
+    +-----------+------------------------------+--------+---------+
+    | GET       | https://api.example.com/     | 200    | 0.2341s |
+    | POST      | https://api.example.com/save | 201    | 0.1653s |
+    +-----------+------------------------------+--------+---------+
+    | total (2) |                              |        | 0.3994s |
+    +-----------+------------------------------+--------+---------+
+
+    # Show the slowest requests first.
+    $ wp profile requests --orderby=time --order=DESC
+
+
+
 ### wp profile queries
 
 Profile database queries and their execution time.

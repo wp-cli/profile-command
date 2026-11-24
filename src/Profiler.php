@@ -69,8 +69,6 @@ class Profiler {
 
 	/** @var float|null */
 	private $request_start_time = null;
-	/** @var array<string, mixed>|null */
-	private $request_args = null;
 	/** @var bool */
 	private $is_admin_request = false;
 
@@ -185,8 +183,13 @@ class Profiler {
 		} elseif ( 'request' !== $this->type ) {
 			WP_CLI::add_wp_hook( 'all', array( $this, 'wp_hook_begin' ) );
 		}
-		WP_CLI::add_wp_hook( 'pre_http_request', array( $this, 'wp_request_begin' ), 10, 3 );
+		WP_CLI::add_wp_hook( 'pre_http_request', array( $this, 'wp_request_begin' ) );
 		WP_CLI::add_wp_hook( 'http_api_debug', array( $this, 'wp_request_end' ) );
+		if ( 'request' === $this->type ) {
+			// Run last, so that requests preempted by any other callback are seen as such.
+			WP_CLI::add_wp_hook( 'pre_http_request', array( $this, 'wp_request_log_begin' ), PHP_INT_MAX, 3 );
+			WP_CLI::add_wp_hook( 'http_api_debug', array( $this, 'wp_request_log_end' ), 10, 5 );
+		}
 		$this->load_wordpress_with_template();
 	}
 
@@ -497,101 +500,94 @@ class Profiler {
 	/**
 	 * Profiling request time for any active Loggers
 	 *
-	 * @param mixed                      $preempt     Whether to preempt the request.
-	 * @param array<string, mixed>|null $parsed_args Request arguments.
-	 * @param string|null               $url         Request URL.
+	 * @param mixed $filter_value
 	 * @return mixed
 	 */
-	public function wp_request_begin( $preempt = null, $parsed_args = null, $url = null ) {
+	public function wp_request_begin( $filter_value = null ) {
 		foreach ( Logger::$active_loggers as $logger ) {
 			$logger->start_request_timer();
 		}
-
-		// For request profiling, capture details of each HTTP request
-		if ( 'request' === $this->type ) {
-			// Reset properties first to handle cases where previous request was preempted
-			$this->request_start_time = null;
-			$this->request_args       = null;
-
-			// Now capture the new request details
-			$this->request_start_time = microtime( true );
-			$this->request_args       = array(
-				'url'    => $url,
-				'method' => ( is_array( $parsed_args ) && isset( $parsed_args['method'] ) ) ? $parsed_args['method'] : 'GET',
-			);
-
-			// If request is preempted (mocked), log it now since http_api_debug won't fire
-			if ( false !== $preempt ) {
-				$request_time = 0; // Preempted requests happen instantly
-				$status       = '';
-
-				// Extract status code from preempted response
-				if ( is_wp_error( $preempt ) ) {
-					$status = 'Error';
-				} elseif ( is_array( $preempt ) && isset( $preempt['response'] ) && is_array( $preempt['response'] ) && isset( $preempt['response']['code'] ) ) {
-					$status = $preempt['response']['code'];
-				}
-
-				$logger       = new Logger(
-					array(
-						'method' => $this->request_args['method'],
-						'url'    => $this->request_args['url'],
-						'status' => $status,
-					)
-				);
-				$logger->time = $request_time;
-
-				$this->loggers[] = $logger;
-
-				// Reset for next request
-				$this->request_start_time = null;
-				$this->request_args       = null;
-			}
-		}
-
-		return $preempt;
+		return $filter_value;
 	}
 
 	/**
 	 * Profiling request time for any active Loggers
 	 *
-	 * @param array<string, mixed>|\WP_Error|null $response Response array or WP_Error.
+	 * @param mixed $filter_value
 	 * @return mixed
 	 */
-	public function wp_request_end( $response = null ) {
+	public function wp_request_end( $filter_value = null ) {
 		foreach ( Logger::$active_loggers as $logger ) {
 			$logger->stop_request_timer();
 		}
+		return $filter_value;
+	}
 
-		// For request profiling, log individual request
-		if ( 'request' === $this->type && ! is_null( $this->request_start_time ) && is_array( $this->request_args ) ) {
-			$request_time = microtime( true ) - $this->request_start_time;
-			$status       = '';
-
-			// Extract status code from response
-			if ( is_wp_error( $response ) ) {
-				$status = 'Error';
-			} elseif ( is_array( $response ) && isset( $response['response'] ) && is_array( $response['response'] ) && isset( $response['response']['code'] ) ) {
-				$status = $response['response']['code'];
-			}
-
-			$logger       = new Logger(
-				array(
-					'method' => isset( $this->request_args['method'] ) ? $this->request_args['method'] : 'GET',
-					'url'    => isset( $this->request_args['url'] ) ? $this->request_args['url'] : '',
-					'status' => $status,
-				)
-			);
-			$logger->time = $request_time;
-
-			$this->loggers[] = $logger;
-
-			// Reset for next request
+	/**
+	 * Start timing an individual HTTP request, or log it right away if it was preempted.
+	 *
+	 * @param mixed                     $preempt     Response to short-circuit the request with, or false.
+	 * @param array<string, mixed>|null $parsed_args Request arguments.
+	 * @param string|null               $url         Request URL.
+	 * @return mixed
+	 */
+	public function wp_request_log_begin( $preempt = false, $parsed_args = null, $url = null ) {
+		if ( false === $preempt ) {
+			$this->request_start_time = microtime( true );
+		} else {
+			// http_api_debug doesn't fire for preempted requests.
+			$this->log_request( $preempt, $parsed_args, $url, 0.0 );
 			$this->request_start_time = null;
-			$this->request_args       = null;
+		}
+		return $preempt;
+	}
+
+	/**
+	 * Log an individual HTTP request once it completed.
+	 *
+	 * @param mixed                     $response    Response array or WP_Error.
+	 * @param string                    $context     Context of the action.
+	 * @param string                    $transport   HTTP transport class name.
+	 * @param array<string, mixed>|null $parsed_args Request arguments.
+	 * @param string|null               $url         Request URL.
+	 * @return void
+	 */
+	public function wp_request_log_end( $response = null, $context = '', $transport = '', $parsed_args = null, $url = null ) {
+		if ( 'response' !== $context ) {
+			return;
+		}
+		$time                     = is_null( $this->request_start_time ) ? 0.0 : microtime( true ) - $this->request_start_time;
+		$this->request_start_time = null;
+		$this->log_request( $response, $parsed_args, $url, $time );
+	}
+
+	/**
+	 * Add a logger for an individual HTTP request.
+	 *
+	 * @param mixed                     $response    Response array or WP_Error.
+	 * @param array<string, mixed>|null $parsed_args Request arguments.
+	 * @param string|null               $url         Request URL.
+	 * @param float                     $time        Time the request took.
+	 * @return void
+	 */
+	private function log_request( $response, $parsed_args, $url, $time ) {
+		$status = '';
+		if ( is_wp_error( $response ) ) {
+			$status = 'error';
+		} elseif ( is_array( $response ) && isset( $response['response']['code'] ) ) {
+			$status = $response['response']['code'];
 		}
 
-		return $response;
+		$logger       = new Logger(
+			array(
+				'method' => is_array( $parsed_args ) && isset( $parsed_args['method'] ) ? $parsed_args['method'] : 'GET',
+				'url'    => (string) $url,
+				'status' => $status,
+			)
+		);
+		$logger->time = $time;
+
+		$this->loggers[] = $logger;
 	}
 
 	/**

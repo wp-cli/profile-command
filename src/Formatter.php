@@ -158,7 +158,7 @@ class Formatter {
 		}
 
 		$location_index     = array_search( 'location', $fields, true );
-		$non_numeric_fields = array( 'query', 'caller', 'hook', 'callback' );
+		$non_numeric_fields = array( 'query', 'caller', 'hook', 'callback', 'method', 'url', 'status' );
 		foreach ( $items as $item ) {
 			$values = array_values( \WP_CLI\Utils\pick_fields( $item, $fields ) );
 			foreach ( $values as $i => $value ) {
@@ -171,7 +171,7 @@ class Formatter {
 					continue;
 				}
 
-				// Ignore non-numeric fields (query, caller, hook, callback)
+				// Ignore non-numeric fields
 				if ( in_array( $fields[ $i ], $non_numeric_fields, true ) ) {
 					continue;
 				}

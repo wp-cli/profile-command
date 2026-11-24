@@ -25,29 +25,42 @@ Feature: Profile HTTP requests
       });
       """
 
-    When I run `wp profile requests --fields=method,url`
+    When I run `wp profile requests --fields=method,url,status`
     Then STDOUT should be a table containing rows:
-      | method | url                        |
-      | GET    | https://www.apple.com/     |
-      | POST   | https://www.example.com/   |
-    And STDOUT should contain:
+      | method    | url                      | status |
+      | GET       | https://www.apple.com/   | 200    |
+      | POST      | https://www.example.com/ | 201    |
+      | total (2) |                          |        |
+    And STDERR should be empty
+
+  Scenario: Profile HTTP requests that are not short-circuited
+    Given a WP install
+    And a wp-content/mu-plugins/http-requests.php file:
       """
-      total (2)
+      <?php
+      define( 'WP_HTTP_BLOCK_EXTERNAL', true );
+      add_action( 'muplugins_loaded', function() {
+        wp_remote_head( 'https://example.org/blocked' );
+      });
+      """
+
+    When I run `wp profile requests --fields=method,url,status`
+    Then STDOUT should be a table containing rows:
+      | method    | url                         | status |
+      | HEAD      | https://example.org/blocked | error  |
+      | total (1) |                             |        |
+    And STDERR should be empty
+
+    When I run `wp profile requests --format=json --fields=url,time`
+    Then STDOUT should be JSON containing:
+      """
+      [{"url":"https://example.org/blocked"}]
       """
 
   Scenario: Profile shows no requests when none are made
     Given a WP install
-    And a wp-content/mu-plugins/no-requests.php file:
-      """
-      <?php
-      // Don't make any HTTP requests
-      add_filter( 'pre_http_request', function() {
-        return new WP_Error( 'http_requests_disabled', 'HTTP requests are disabled during this test.' );
-      }, 1 );
-      """
 
     When I run `wp profile requests --fields=method,url`
-    Then STDOUT should contain:
-      """
-      total (0)
-      """
+    Then STDOUT should be a table containing rows:
+      | method    | url |
+      | total (0) |     |

@@ -325,9 +325,10 @@ class Command {
 	/**
 	 * Profile HTTP requests made during the WordPress load process.
 	 *
-	 * Monitors all HTTP requests made during the WordPress load process,
-	 * displaying information about each request including URL, method,
-	 * execution time, and response code.
+	 * Lists every HTTP request made through the WordPress HTTP API while
+	 * loading a page, with its method, URL, response code and the time it
+	 * took. Requests short-circuited through the `pre_http_request` filter
+	 * are listed with a time of 0s.
 	 *
 	 * ## OPTIONS
 	 *
@@ -362,16 +363,20 @@ class Command {
 	 *
 	 * ## EXAMPLES
 	 *
-	 *     # List all HTTP requests during page load
+	 *     # List all HTTP requests made while loading the home page.
 	 *     $ wp profile requests
-	 *     +-----------+----------------------------+----------+---------+
-	 *     | method    | url                        | status   | time    |
-	 *     +-----------+----------------------------+----------+---------+
-	 *     | GET       | https://api.example.com    | 200      | 0.2341s |
-	 *     | POST      | https://api.example.com    | 201      | 0.1653s |
-	 *     +-----------+----------------------------+----------+---------+
-	 *     | total (2) |                            |          | 0.3994s |
-	 *     +-----------+----------------------------+----------+---------+
+	 *     +-----------+------------------------------+--------+---------+
+	 *     | method    | url                          | status | time    |
+	 *     +-----------+------------------------------+--------+---------+
+	 *     | GET       | https://api.example.com/     | 200    | 0.2341s |
+	 *     | POST      | https://api.example.com/save | 201    | 0.1653s |
+	 *     +-----------+------------------------------+--------+---------+
+	 *     | total (2) |                              |        | 0.3994s |
+	 *     +-----------+------------------------------+--------+---------+
+	 *
+	 *     # Show the slowest requests first.
+	 *     $ wp profile requests --orderby=time --order=DESC
+	 *
 	 * @skipglobalargcheck
 	 * @when before_wp_load
 	 *
@@ -380,8 +385,10 @@ class Command {
 	 * @return void
 	 */
 	public function requests( $args, $assoc_args ) {
-		$order   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
-		$orderby = Utils\get_flag_value( $assoc_args, 'orderby', null );
+		$order_val   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
+		$order       = is_string( $order_val ) ? $order_val : 'ASC';
+		$orderby_val = Utils\get_flag_value( $assoc_args, 'orderby', null );
+		$orderby     = is_string( $orderby_val ) ? $orderby_val : null;
 
 		$profiler = new Profiler( 'request', false );
 		$profiler->run();
