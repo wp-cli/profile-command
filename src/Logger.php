@@ -123,10 +123,8 @@ class Logger {
 		}
 		$this->cache_hit_offset  = ! empty( $wp_object_cache->cache_hits ) ? $wp_object_cache->cache_hits : 0;
 		$this->cache_miss_offset = ! empty( $wp_object_cache->cache_misses ) ? $wp_object_cache->cache_misses : 0;
-		$total                   = self::get_object_cache_calls( $wp_object_cache );
-		if ( ! is_null( $total ) ) {
-			$this->cache_calls_offset = $total;
-		}
+		// The object cache might not be initialized yet, e.g. during the bootstrap stage.
+		$this->cache_calls_offset = (int) self::get_object_cache_calls( $wp_object_cache );
 	}
 
 	/**
@@ -175,7 +173,7 @@ class Logger {
 		if ( ! is_null( $this->cache_calls_offset ) && isset( $wp_object_cache ) ) {
 			$total = self::get_object_cache_calls( $wp_object_cache );
 			if ( ! is_null( $total ) ) {
-				$this->cache_calls = max( 0, $total - $this->cache_calls_offset );
+				$this->cache_calls += max( 0, $total - $this->cache_calls_offset );
 			}
 		}
 
@@ -245,12 +243,12 @@ class Logger {
 	}
 
 	/**
-	 * Get the total number of object cache backend calls from the active cache.
+	 * Get the total number of calls the active persistent object cache made to its backend.
 	 *
-	 * Supports multiple implementations:
-	 * - WP Redis: $wp_object_cache->redis_calls (array of command => count)
-	 * - Redis Object Cache: $wp_object_cache->cache_calls (array of command => count)
-	 * - Object Cache Pro: $wp_object_cache->metrics()->storeReads + storeWrites
+	 * Supports:
+	 * - WP Redis: `$wp_object_cache->redis_calls` (array of command => count)
+	 * - Redis Object Cache: `$wp_object_cache->cache_calls` (int)
+	 * - Object Cache Pro: `$wp_object_cache->metrics()->storeReads + storeWrites`
 	 *
 	 * @param object|null $wp_object_cache
 	 * @return int|null Total call count, or null if not supported.
@@ -262,8 +260,13 @@ class Logger {
 		if ( isset( $wp_object_cache->redis_calls ) && is_array( $wp_object_cache->redis_calls ) ) {
 			return (int) array_sum( $wp_object_cache->redis_calls );
 		}
-		if ( isset( $wp_object_cache->cache_calls ) && is_array( $wp_object_cache->cache_calls ) ) {
-			return (int) array_sum( $wp_object_cache->cache_calls );
+		if ( isset( $wp_object_cache->cache_calls ) ) {
+			if ( is_int( $wp_object_cache->cache_calls ) ) {
+				return $wp_object_cache->cache_calls;
+			}
+			if ( is_array( $wp_object_cache->cache_calls ) ) {
+				return (int) array_sum( $wp_object_cache->cache_calls );
+			}
 		}
 		if ( method_exists( $wp_object_cache, 'metrics' ) ) {
 			$metrics = $wp_object_cache->metrics();

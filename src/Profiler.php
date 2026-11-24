@@ -500,7 +500,7 @@ class Profiler {
 		$this->tick_query_offset       = ! empty( $wpdb->queries ) ? count( $wpdb->queries ) : 0;
 		$this->tick_cache_hit_offset   = ! empty( $wp_object_cache->cache_hits ) ? $wp_object_cache->cache_hits : 0;
 		$this->tick_cache_miss_offset  = ! empty( $wp_object_cache->cache_misses ) ? $wp_object_cache->cache_misses : 0;
-		$this->tick_cache_calls_offset = Logger::get_object_cache_calls( $wp_object_cache );
+		$this->tick_cache_calls_offset = (int) Logger::get_object_cache_calls( $wp_object_cache );
 	}
 
 	/**

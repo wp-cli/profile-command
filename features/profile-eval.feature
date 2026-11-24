@@ -57,7 +57,7 @@ Feature: Profile arbitary code execution
       | cache_misses | cache_calls |
       | 1            | 0           |
 
-  Scenario: cache_calls tracks calls to a persistent object cache that exposes cache_calls
+  Scenario: cache_calls tracks backend calls of a persistent object cache
     Given a WP install
     And a wp-content/object-cache.php file:
       """
@@ -109,13 +109,13 @@ Feature: Profile arbitary code execution
         public $cache = array();
         public $cache_hits = 0;
         public $cache_misses = 0;
-        public $cache_calls = array();
+        public $cache_calls = 0;
         private $global_groups = array();
         private function cache_key( $key, $group ) {
           return $group . ':' . $key;
         }
         private function track( $command ) {
-          $this->cache_calls[ $command ] = isset( $this->cache_calls[ $command ] ) ? $this->cache_calls[ $command ] + 1 : 1;
+          $this->cache_calls++;
         }
         public function add( $key, $data, $group = 'default', $expire = 0 ) {
           if ( isset( $this->cache[ $this->cache_key( $key, $group ) ] ) ) {
