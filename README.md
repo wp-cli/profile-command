@@ -115,7 +115,7 @@ render based on the main query, and renders it.
 Profile key metrics for WordPress hooks (actions and filters).
 
 ~~~
-wp profile hook [<hook>] [--all] [--spotlight] [--url=<url>] [--fields=<fields>] [--format=<format>] [--order=<order>] [--orderby=<fields>] [--search=<pattern>]
+wp profile hook [<hook>] [--all] [--spotlight] [--url=<url>] [--fields=<fields>] [--format=<format>] [--order=<order>] [--orderby=<fields>] [--search=<pattern>] [--plugin]
 ~~~
 
 In order to profile callbacks on a specific hook, the action or filter
@@ -163,6 +163,9 @@ will need to execute during the course of the request.
 
 	[--search=<pattern>]
 		Filter callbacks to those matching the given search pattern (case-insensitive).
+
+	[--plugin]
+		Group callback metrics by plugin. Must-use plugins are listed with a `mu-plugins/` prefix. Callbacks that don't belong to a plugin or must-use plugin are left out. Requires --all or a specific hook.
 
 **EXAMPLES**
 

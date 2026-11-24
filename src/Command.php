@@ -246,6 +246,9 @@ class Command {
 	 * [--search=<pattern>]
 	 * : Filter callbacks to those matching the given search pattern (case-insensitive).
 	 *
+	 * [--plugin]
+	 * : Group callback metrics by plugin. Must-use plugins are listed with a `mu-plugins/` prefix. Callbacks that don't belong to a plugin or must-use plugin are left out. Requires --all or a specific hook.
+	 *
 	 * ## EXAMPLES
 	 *
 	 *     # Profile a hook.
@@ -268,17 +271,22 @@ class Command {
 	 * @when before_wp_load
 	 *
 	 * @param array{0?: string} $args Positional arguments.
-	 * @param array{all?: bool, spotlight?: bool, url?: string, fields?: string, format: string, order: string, orderby?: string} $assoc_args
+	 * @param array{all?: bool, spotlight?: bool, plugin?: bool, search?: string, url?: string, fields?: string, format: string, order: string, orderby?: string} $assoc_args
 	 * @return void
 	 */
 	public function hook( $args, $assoc_args ) {
 
-		$focus = Utils\get_flag_value( $assoc_args, 'all', isset( $args[0] ) ? $args[0] : null );
+		$focus  = Utils\get_flag_value( $assoc_args, 'all', isset( $args[0] ) ? $args[0] : null );
+		$plugin = Utils\get_flag_value( $assoc_args, 'plugin', false );
 
 		$order_val   = Utils\get_flag_value( $assoc_args, 'order', 'ASC' );
 		$order       = is_string( $order_val ) ? $order_val : 'ASC';
 		$orderby_val = Utils\get_flag_value( $assoc_args, 'orderby', null );
 		$orderby     = ( is_string( $orderby_val ) || is_null( $orderby_val ) ) ? $orderby_val : null;
+
+		if ( $plugin && ! $focus ) {
+			WP_CLI::error( '--plugin requires --all or a specific hook.' );
+		}
 
 		$profiler = new Profiler( 'hook', $focus );
 		$profiler->run();
@@ -290,7 +298,9 @@ class Command {
 			remove_all_actions( 'shutdown' );
 		}
 
-		if ( $focus ) {
+		if ( $focus && $plugin ) {
+			$base = array( 'plugin' );
+		} elseif ( $focus ) {
 			$base = array( 'callback', 'location' );
 		} else {
 			$base = array( 'hook', 'callback_count' );
@@ -321,6 +331,9 @@ class Command {
 				WP_CLI::error( '--search requires --all or a specific hook.' );
 			}
 			$loggers = self::filter_by_callback( $loggers, $search );
+		}
+		if ( $plugin ) {
+			$loggers = self::group_by_plugin( $loggers );
 		}
 		$formatter->display_items( $loggers, true, $order, $orderby );
 	}
@@ -878,5 +891,46 @@ class Command {
 				return isset( $logger->callback ) && false !== stripos( $logger->callback, $pattern );
 			}
 		);
+	}
+
+	/**
+	 * Group callback loggers by plugin.
+	 *
+	 * @param array<\WP_CLI\Profile\Logger> $loggers
+	 * @return array<\WP_CLI\Profile\Logger>
+	 */
+	private static function group_by_plugin( $loggers ) {
+		$plugins = array();
+
+		foreach ( $loggers as $logger ) {
+			if ( ! isset( $logger->plugin ) ) {
+				continue;
+			}
+			$plugin = (string) $logger->plugin;
+			if ( ! isset( $plugins[ $plugin ] ) ) {
+				$plugins[ $plugin ] = new Logger(
+					array(
+						'plugin' => $plugin,
+					)
+				);
+			}
+
+			$plugins[ $plugin ]->time          += $logger->time;
+			$plugins[ $plugin ]->query_time    += $logger->query_time;
+			$plugins[ $plugin ]->query_count   += $logger->query_count;
+			$plugins[ $plugin ]->cache_hits    += $logger->cache_hits;
+			$plugins[ $plugin ]->cache_misses  += $logger->cache_misses;
+			$plugins[ $plugin ]->request_time  += $logger->request_time;
+			$plugins[ $plugin ]->request_count += $logger->request_count;
+		}
+
+		foreach ( $plugins as $plugin_logger ) {
+			$total_cache = $plugin_logger->cache_hits + $plugin_logger->cache_misses;
+			if ( $total_cache ) {
+				$plugin_logger->cache_ratio = round( ( $plugin_logger->cache_hits / $total_cache ) * 100, 2 ) . '%';
+			}
+		}
+
+		return array_values( $plugins );
 	}
 }

@@ -8,6 +8,7 @@ namespace WP_CLI\Profile;
  * @property string $callback
  * @property string $location
  * @property string $hook
+ * @property string $plugin
  */
 class Logger {
 
