@@ -165,7 +165,7 @@ will need to execute during the course of the request.
 		Filter callbacks to those matching the given search pattern (case-insensitive).
 
 	[--plugin]
-		Group callback metrics by plugin. Callbacks that don't belong to a plugin or must-use plugin are left out. Requires --all or a specific hook.
+		Group callback metrics by plugin. Must-use plugins are listed with a `mu-plugins/` prefix. Callbacks that don't belong to a plugin or must-use plugin are left out. Requires --all or a specific hook.
 
 **EXAMPLES**
 

@@ -165,7 +165,12 @@ Feature: Profile a specific hook
       }
       add_action( 'init', 'resource_test_init_callback' );
       """
-    And a wp-content/mu-plugins/mu-resource-test.php file:
+    And a wp-content/plugins/resource-test/functions.php file:
+      """
+      <?php
+      // Never loaded, only shares its relative path with the theme's functions.php.
+      """
+    And a wp-content/mu-plugins/resource-test.php file:
       """
       <?php
       add_action( 'init', function () {
@@ -173,14 +178,35 @@ Feature: Profile a specific hook
         wp_cache_get( 'mu_resource_test_2' );
       } );
       """
+    And a wp-content/themes/resource-test/style.css file:
+      """
+      /*
+      Theme Name: Resource Test Theme
+      */
+      """
+    And a wp-content/themes/resource-test/index.php file:
+      """
+      <?php
+      """
+    And a wp-content/themes/resource-test/functions.php file:
+      """
+      <?php
+      add_action( 'init', function () {
+        wp_cache_get( 'theme_resource_test_1' );
+        wp_cache_get( 'theme_resource_test_2' );
+        wp_cache_get( 'theme_resource_test_3' );
+        wp_cache_get( 'theme_resource_test_4' );
+      } );
+      """
     And I run `wp plugin activate resource-test`
+    And I run `wp theme activate resource-test`
 
     When I run `wp profile hook init --plugin --fields=plugin,cache_hits,cache_misses --orderby=plugin`
     Then STDOUT should be a table containing rows:
-      | plugin           | cache_hits | cache_misses |
-      | mu-resource-test | 0          | 2            |
-      | resource-test    | 0          | 1            |
-      | total (2)        | 0          | 3            |
+      | plugin                   | cache_hits | cache_misses |
+      | mu-plugins/resource-test | 0          | 2            |
+      | resource-test            | 0          | 1            |
+      | total (2)                | 0          | 3            |
     And STDERR should be empty
 
     When I try `wp profile hook --plugin`

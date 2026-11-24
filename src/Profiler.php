@@ -100,6 +100,13 @@ class Profiler {
 				$logger->callback        = $name;
 				$logger->location        = $location;
 			}
+			if ( ! isset( $logger->plugin ) ) {
+				// Determine plugin ownership from the full path, before it gets shortened.
+				$plugin = self::get_plugin_from_location( $logger->location );
+				if ( null !== $plugin ) {
+					$logger->plugin = $plugin;
+				}
+			}
 			$logger->location    = self::get_short_location( $logger->location );
 			$this->loggers[ $i ] = $logger;
 		}
@@ -648,6 +655,50 @@ class Profiler {
 			$location = $reflection->getFileName() . ':' . $reflection->getStartLine();
 		}
 		return array( $name, $location );
+	}
+
+	/**
+	 * Get the plugin or must-use plugin a full callback location belongs to.
+	 *
+	 * Regular plugins are identified by their slug (e.g. `akismet`), must-use
+	 * plugins by their slug prefixed with `mu-plugins/` (e.g. `mu-plugins/example`),
+	 * so that a regular and a must-use plugin with the same slug stay separate.
+	 *
+	 * @param string $location Full location, e.g. `/path/to/wp-content/plugins/akismet/akismet.php:12`.
+	 * @return string|null Null if the location doesn't belong to a plugin.
+	 */
+	private static function get_plugin_from_location( $location ) {
+		$file = (string) preg_replace( '/:\d+$/', '', Path::normalize( $location ) );
+		if ( '' === $file ) {
+			return null;
+		}
+
+		$dirs = array();
+		if ( defined( 'WPMU_PLUGIN_DIR' ) ) {
+			$dirs['mu-plugins/'] = WPMU_PLUGIN_DIR;
+		}
+		if ( defined( 'WP_PLUGIN_DIR' ) ) {
+			$dirs[''] = WP_PLUGIN_DIR;
+		}
+
+		foreach ( $dirs as $prefix => $dir ) {
+			$candidates = array( Path::normalize( $dir ) );
+			$real_dir   = realpath( $dir );
+			if ( false !== $real_dir ) {
+				$candidates[] = Path::normalize( $real_dir );
+			}
+			foreach ( array_unique( $candidates ) as $candidate ) {
+				$candidate = rtrim( $candidate, '/' ) . '/';
+				if ( 0 !== stripos( $file, $candidate ) ) {
+					continue;
+				}
+				$segments = explode( '/', substr( $file, strlen( $candidate ) ) );
+				$slug     = count( $segments ) > 1 ? $segments[0] : basename( $segments[0], '.php' );
+				return '' === $slug ? null : $prefix . $slug;
+			}
+		}
+
+		return null;
 	}
 
 	/**

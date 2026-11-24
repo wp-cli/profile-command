@@ -245,7 +245,7 @@ class Command {
 	 * : Filter callbacks to those matching the given search pattern (case-insensitive).
 	 *
 	 * [--plugin]
-	 * : Group callback metrics by plugin. Callbacks that don't belong to a plugin or must-use plugin are left out. Requires --all or a specific hook.
+	 * : Group callback metrics by plugin. Must-use plugins are listed with a `mu-plugins/` prefix. Callbacks that don't belong to a plugin or must-use plugin are left out. Requires --all or a specific hook.
 	 *
 	 * ## EXAMPLES
 	 *
@@ -816,13 +816,10 @@ class Command {
 		$plugins = array();
 
 		foreach ( $loggers as $logger ) {
-			if ( ! isset( $logger->location ) ) {
+			if ( ! isset( $logger->plugin ) ) {
 				continue;
 			}
-			$plugin = self::plugin_from_location( $logger->location );
-			if ( null === $plugin ) {
-				continue;
-			}
+			$plugin = (string) $logger->plugin;
 			if ( ! isset( $plugins[ $plugin ] ) ) {
 				$plugins[ $plugin ] = new Logger(
 					array(
@@ -848,48 +845,5 @@ class Command {
 		}
 
 		return array_values( $plugins );
-	}
-
-	/**
-	 * Get the slug of the plugin or must-use plugin a callback location belongs to.
-	 *
-	 * Expects a location as shortened by the profiler, e.g. `akismet/akismet.php:12`
-	 * or `mu-plugins/example.php:3`.
-	 *
-	 * @param string $location
-	 * @return string|null
-	 */
-	private static function plugin_from_location( $location ) {
-		$file = (string) preg_replace( '/:\d+$/', '', str_replace( '\\', '/', $location ) );
-		if ( '' === $file ) {
-			return null;
-		}
-
-		if ( defined( 'WPMU_PLUGIN_DIR' ) ) {
-			$mu_prefix = basename( WPMU_PLUGIN_DIR ) . '/';
-			if ( 0 === strpos( $file, $mu_prefix ) && is_file( dirname( WPMU_PLUGIN_DIR ) . '/' . $file ) ) {
-				return self::plugin_slug_from_path( substr( $file, strlen( $mu_prefix ) ) );
-			}
-		}
-
-		if ( defined( 'WP_PLUGIN_DIR' ) && is_file( WP_PLUGIN_DIR . '/' . $file ) ) {
-			return self::plugin_slug_from_path( $file );
-		}
-
-		return null;
-	}
-
-	/**
-	 * Get the plugin slug from a path relative to the plugins directory.
-	 *
-	 * @param string $path
-	 * @return string
-	 */
-	private static function plugin_slug_from_path( $path ) {
-		$segments = explode( '/', $path );
-		if ( count( $segments ) > 1 ) {
-			return $segments[0];
-		}
-		return basename( $path, '.php' );
 	}
 }
