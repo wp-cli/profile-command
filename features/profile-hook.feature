@@ -165,14 +165,30 @@ Feature: Profile a specific hook
       }
       add_action( 'init', 'resource_test_init_callback' );
       """
+    And a wp-content/mu-plugins/mu-resource-test.php file:
+      """
+      <?php
+      add_action( 'init', function () {
+        wp_cache_get( 'mu_resource_test_1' );
+        wp_cache_get( 'mu_resource_test_2' );
+      } );
+      """
     And I run `wp plugin activate resource-test`
 
-    When I run `wp profile hook init --plugin --fields=plugin,cache_hits,cache_misses`
+    When I run `wp profile hook init --plugin --fields=plugin,cache_hits,cache_misses --orderby=plugin`
     Then STDOUT should be a table containing rows:
-      | plugin        | cache_hits | cache_misses |
-      | resource-test | 0          | 1            |
-      | total (1)     | 0          | 1            |
+      | plugin           | cache_hits | cache_misses |
+      | mu-resource-test | 0          | 2            |
+      | resource-test    | 0          | 1            |
+      | total (2)        | 0          | 3            |
     And STDERR should be empty
+
+    When I try `wp profile hook --plugin`
+    Then STDERR should be:
+      """
+      Error: --plugin requires --all or a specific hook.
+      """
+    And the return code should be 1
 
   Scenario: Hooks should only be called once
     Given a WP install

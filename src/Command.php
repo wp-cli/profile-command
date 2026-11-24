@@ -245,7 +245,7 @@ class Command {
 	 * : Filter callbacks to those matching the given search pattern (case-insensitive).
 	 *
 	 * [--plugin]
-	 * : Group callback metrics by plugin. Requires --all or a specific hook.
+	 * : Group callback metrics by plugin. Callbacks that don't belong to a plugin or must-use plugin are left out. Requires --all or a specific hook.
 	 *
 	 * ## EXAMPLES
 	 *
@@ -281,6 +281,10 @@ class Command {
 		$order       = is_string( $order_val ) ? $order_val : 'ASC';
 		$orderby_val = Utils\get_flag_value( $assoc_args, 'orderby', null );
 		$orderby     = ( is_string( $orderby_val ) || is_null( $orderby_val ) ) ? $orderby_val : null;
+
+		if ( $plugin && ! $focus ) {
+			WP_CLI::error( '--plugin requires --all or a specific hook.' );
+		}
 
 		$profiler = new Profiler( 'hook', $focus );
 		$profiler->run();
@@ -326,9 +330,6 @@ class Command {
 			$loggers = self::filter_by_callback( $loggers, $search );
 		}
 		if ( $plugin ) {
-			if ( ! $focus ) {
-				WP_CLI::error( '--plugin requires --all or a specific hook.' );
-			}
 			$loggers = self::group_by_plugin( $loggers );
 		}
 		$formatter->display_items( $loggers, true, $order, $orderby );
@@ -850,78 +851,45 @@ class Command {
 	}
 
 	/**
-	 * Extract plugin slug from a callback location.
+	 * Get the slug of the plugin or must-use plugin a callback location belongs to.
+	 *
+	 * Expects a location as shortened by the profiler, e.g. `akismet/akismet.php:12`
+	 * or `mu-plugins/example.php:3`.
 	 *
 	 * @param string $location
 	 * @return string|null
 	 */
 	private static function plugin_from_location( $location ) {
-		$location_file = str_replace( '\\', '/', $location );
-		$colon_pos     = strrpos( $location_file, ':' );
-		if ( false !== $colon_pos && ctype_digit( substr( $location_file, $colon_pos + 1 ) ) ) {
-			$location_file = substr( $location_file, 0, $colon_pos );
-		}
-		foreach ( array( 'wp-content/plugins/', 'plugins/' ) as $prefix ) {
-			$position = strpos( $location_file, $prefix );
-			while ( false !== $position ) {
-				if ( 0 !== $position ) {
-					if ( '/' !== substr( $location_file, $position - 1, 1 ) ) {
-						$position = strpos( $location_file, $prefix, $position + 1 );
-						continue;
-					}
-				}
-
-				$location_file = substr( $location_file, $position + strlen( $prefix ) );
-				$segments      = explode( '/', $location_file );
-				return $segments[0];
-			}
-		}
-
-		if ( defined( 'WP_PLUGIN_DIR' ) ) {
-			$normalized_plugin_dir = rtrim( str_replace( '\\', '/', WP_PLUGIN_DIR ), '/' );
-			$plugin_path           = $normalized_plugin_dir . '/' . ltrim( $location_file, '/' );
-			if ( file_exists( $plugin_path ) ) {
-				if ( false !== strpos( $location_file, '/' ) ) {
-					$segments = explode( '/', $location_file );
-					return $segments[0];
-				}
-
-				if ( 'php' === pathinfo( $location_file, PATHINFO_EXTENSION ) ) {
-					return pathinfo( $location_file, PATHINFO_FILENAME );
-				}
-			}
-		}
-
-		$found_mu_prefix = false;
-		foreach ( array( 'wp-content/mu-plugins/', 'mu-plugins/' ) as $prefix ) {
-			$position = strpos( $location_file, $prefix );
-			while ( false !== $position ) {
-				if ( 0 !== $position ) {
-					if ( '/' !== substr( $location_file, $position - 1, 1 ) ) {
-						$position = strpos( $location_file, $prefix, $position + 1 );
-						continue;
-					}
-				}
-
-				$location_file   = substr( $location_file, $position + strlen( $prefix ) );
-				$found_mu_prefix = true;
-				break 2;
-			}
-		}
-
-		if ( ! $found_mu_prefix ) {
+		$file = (string) preg_replace( '/:\d+$/', '', str_replace( '\\', '/', $location ) );
+		if ( '' === $file ) {
 			return null;
 		}
 
-		if ( false !== strpos( $location_file, '/' ) ) {
-			$segments = explode( '/', $location_file );
-			return $segments[0];
+		if ( defined( 'WPMU_PLUGIN_DIR' ) ) {
+			$mu_prefix = basename( WPMU_PLUGIN_DIR ) . '/';
+			if ( 0 === strpos( $file, $mu_prefix ) && is_file( dirname( WPMU_PLUGIN_DIR ) . '/' . $file ) ) {
+				return self::plugin_slug_from_path( substr( $file, strlen( $mu_prefix ) ) );
+			}
 		}
 
-		if ( 'php' === pathinfo( $location_file, PATHINFO_EXTENSION ) ) {
-			return pathinfo( $location_file, PATHINFO_FILENAME );
+		if ( defined( 'WP_PLUGIN_DIR' ) && is_file( WP_PLUGIN_DIR . '/' . $file ) ) {
+			return self::plugin_slug_from_path( $file );
 		}
 
 		return null;
+	}
+
+	/**
+	 * Get the plugin slug from a path relative to the plugins directory.
+	 *
+	 * @param string $path
+	 * @return string
+	 */
+	private static function plugin_slug_from_path( $path ) {
+		$segments = explode( '/', $path );
+		if ( count( $segments ) > 1 ) {
+			return $segments[0];
+		}
+		return basename( $path, '.php' );
 	}
 }
