@@ -151,6 +151,18 @@ Feature: Profile the template render stage
 
   Scenario: Use spotlight mode to filter out the zero-ish values
     Given a WP install
+    # Run a query on these hooks so they always have a non-zero metric,
+    # regardless of how fast the machine running the tests is.
+    And a wp-content/mu-plugins/spotlight-test.php file:
+      """
+      <?php
+      function wp_cli_profile_spotlight_query() {
+        global $wpdb;
+        $wpdb->query( 'SELECT 1 AS spotlight_test' );
+      }
+      add_action( 'init', 'wp_cli_profile_spotlight_query' );
+      add_action( 'wp_loaded', 'wp_cli_profile_spotlight_query' );
+      """
 
     When I run `wp profile stage bootstrap --fields=hook`
     Then STDOUT should be a table containing rows:
@@ -164,7 +176,7 @@ Feature: Profile the template render stage
     Then STDOUT should be a table containing rows:
       | hook              |
       | init              |
-      | wp_loaded:after   |
+      | wp_loaded         |
 
   @require-wp-4.0
   Scenario: Admin URL runs as a backend request and skips frontend stages
